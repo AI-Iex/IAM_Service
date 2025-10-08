@@ -1,0 +1,10 @@
+{
+  "permissions": [
+    "users:create",
+    "users:read",
+    "users:update",
+    "users:delete",
+    "roles:assign",
+    "roles:revoke"
+  ]
+}
