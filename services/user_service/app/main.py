@@ -25,7 +25,7 @@ def startup_event():
     logger.info("startup complete")
 
 # Include routers
-app.include_router(users_router, prefix="/api/v1")
+app.include_router(users_router, prefix="/user_service")
 
 # Domain exception handlers
 @app.exception_handler(DomainError)
