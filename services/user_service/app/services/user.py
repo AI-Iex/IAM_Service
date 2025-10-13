@@ -1,38 +1,56 @@
-from sqlalchemy.orm import Session
-from typing import Optional, List
-from app.core.security import hash_password, verify_password
-from app.models.user import User
-from app.schemas.user import UserBase, UserCreate, UserUpdate, UserRead, UserLogin, UserInDB, PasswordChange
-from app.repositories.user import UserRepository
+from app.repositories.interfaces import IUserRepository
+from app.db.unit_of_work import UnitOfWorkFactory
+from app.schemas.user import UserCreate, UserCreateInDB, UserRead
+from app.db.unit_of_work import unit_of_work
+from app.core.security import hash_password
+from app.core.exceptions import EntityAlreadyExists, DomainError
+import logging
+
+logger = logging.getLogger("nebulaops.user_service")
+
+class UserService:
+    def __init__(self, user_repo: IUserRepository, uow_factory: UnitOfWorkFactory = unit_of_work):
+        self.user_repo = user_repo
+        self.uow_factory = uow_factory
 
 # region CREATE
 
-# Function to create a new user
-def create(db: Session, user_data: UserCreate) -> User:
-    try:
+    # Create a new user
+    def create(self, payload: UserCreate) -> UserRead :
+        
+        # 0. Log the attempt
+        logger.info("Creating user", extra={"email": payload.email})
+
         # 1. Validate email format
-        if "@" not in user_data.email:
-            raise ValueError("Invalid email format")
+        if not payload.email or "@" not in payload.email:
+            raise DomainError("Invalid email format")
         
-        # 2. Verify the email is not already in use
-        if UserRepository.get_by_email(db, user_data.email) is not None:
-            raise ValueError("Email is already in use")
-        
-        # 3. Hash the password
-        hashed_password = hash_password(user_data.password)
+        with self.uow_factory() as db:
 
-        # 4. Create the user in the database
-        user_create = UserBase(
-            email = user_data.email,
-            full_name = user_data.full_name,
-            is_active = user_data.is_active,
-            is_superuser = user_data.is_superuser
-        )
-        
-        return UserRepository.create(db, user_create, hashed_password)
+            # 2. Check if email already exists
+            existing = self.user_repo.get_by_email(db, payload.email)
+            if existing:
+                raise EntityAlreadyExists("Email is already in use")
 
-    except Exception as e:
-        print(f"Error creating user: {e}")
-        return None
+            # 3. Hash the password and prepare DTO for repository
+            hashed = hash_password(payload.password)
+            dto = UserCreateInDB(
+                email=payload.email,
+                full_name=payload.full_name,
+                hashed_password=hashed,
+                is_active=payload.is_active,
+                is_superuser=payload.is_superuser
+            )
 
+            # 4. Create the user in the database
+            user = self.user_repo.create(db, dto)
+            
+            # 5. Build a plain dict while session is still open to avoid DetachedInstanceError
+            user_schema = UserRead.model_validate(user)
+
+            # 6. Log the success
+            logger.info("User created successfully", extra={"user_id": user.id, "email": payload.email})
+            
+        return user_schema
+    
 # endregion CREATE

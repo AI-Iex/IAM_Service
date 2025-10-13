@@ -1,11 +1,11 @@
 from sqlalchemy.orm import declarative_base
 
-# Clase base de todos los modelos SQLAlchemy
 Base = declarative_base()
 
 def init_db(engine):
-    """
-    Crea las tablas en la base de datos a partir de los modelos importados.
-    """
-    # import app.models.user  # importa tus modelos aquí
+
+    # Import all modules here that might define models so that
+    import app.models.user 
+    import app.models.user_role 
+    import app.models.role
     Base.metadata.create_all(bind=engine)

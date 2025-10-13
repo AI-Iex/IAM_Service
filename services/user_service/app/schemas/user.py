@@ -9,9 +9,15 @@ class UserBase(BaseModel):
     is_active: bool = Field(default = True, example = True, description="Is the user active?")
     is_superuser: bool = Field(default = False, example = False, description="Is the user a superuser for get all permissions?")
 
-# Schema for user creation (includes password)
+# Schema for user creation (includes password, received in service only, never used by repository)
 class UserCreate(UserBase):
     password: str = Field(..., min_length = 8, example = "strongpassword123", repr=False)
+
+# Internal schema for user creation in DB (includes hashed_password, used by repository)
+class UserCreateInDB(UserBase):
+    hashed_password: str = Field(..., description="The hashed password of the user", repr=False)
+
+    model_config = {"from_attributes": True}
 
 # Schema for user update (all fields optional)
 class UserUpdate(BaseModel):

@@ -1,60 +1,45 @@
+from typing import Optional
+from sqlalchemy.exc import IntegrityError
 from sqlalchemy.orm import Session
-from typing import Optional, List
-from pydantic import EmailStr
-from app.schemas.user import UserBase, UserCreate, UserUpdate, UserRead, UserLogin, UserInDB, PasswordChange
 from app.models.user import User
-from app.models.role import Role
+from app.schemas.user import UserCreateInDB
+from app.core.exceptions import EntityAlreadyExists, RepositoryError
+from app.repositories.interfaces import IUserRepository
 
-class UserRepository:
+class UserRepository(IUserRepository):
 
 # region CREATE
 
-    # Function to create a new user
-    def create(self, db: Session, user_data: UserBase, hashed_password: str) -> User:
-        pass
+    # Create a new user in the database
+    def create(self, db: Session, dto: UserCreateInDB) -> User:
+        try:
+            user = User(
+                email=dto.email,
+                full_name=dto.full_name,
+                hashed_password=dto.hashed_password,
+                is_active=dto.is_active,
+                is_superuser=dto.is_superuser
+            )
+            db.add(user)
+            db.flush()
+            db.refresh(user)
+            return user
+        except IntegrityError as e:
+            db.rollback()
+            if "unique" in str(e).lower() or "duplicate" in str(e).lower():
+                raise EntityAlreadyExists("User with that email already exists") from e
+            raise RepositoryError("Database integrity error") from e
+        except Exception as e:
+            db.rollback()
+            raise RepositoryError("Unexpected database error") from e
 
 # endregion CREATE
 
 # region READ
 
-    # Function to get a user by ID
-    def get_by_id(self, db: Session, user_id: int) -> Optional[User]:
-        pass
+    # Get a user by email
+    def get_by_email(self, db: Session, email: str) -> Optional[User]:
+        return db.query(User).filter(User.email == email).first()
 
-    # Function to get a user by email
-    def get_by_email(self, db: Session, email: EmailStr) -> Optional[User]:
-        pass
-
-    # Function to get all users with pagination
-    def get_all(self, db: Session, skip: int = 0, limit: int = 100) -> List[User]:
-        pass
-
-    # Function to get all the active users with pagination
-    def get_all_active(self, db: Session, skip: int = 0, limit: int = 100) -> List[User]:
-        pass
-
-    # Function to get all the superusers with pagination
-    def get_all_superusers(self, db: Session, skip: int = 0, limit: int = 100) -> List[User]:
-        pass
-
+    
 # endregion READ
-
-# region UPDATE
-
-    # Function to update a user
-    def update(db: Session, user_id: int, user: UserUpdate) -> Optional[UserRead]:
-        pass
-
-    # Function to update the last login timestamp
-    def update_last_login(db: Session, user_id: int, last_login) -> Optional[UserRead]:
-        pass
-
-# endregion UPDATE
-
-# region DELETE
-
-    # Function to delete a user
-    def delete(db: Session, user_id: int) -> bool:
-       pass
-
-# endregion DELETE

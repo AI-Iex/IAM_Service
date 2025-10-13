@@ -2,13 +2,13 @@ from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker
 from app.core.config import settings
 
-# Crear el motor de conexión (SQLAlchemy Engine)
+# Create the SQLAlchemy engine
 engine = create_engine(settings.DATABASE_URL)
 
-# Crear una factoría de sesiones para interactuar con la BBDD
+# Create a session factory to interact with the database
 SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
 
-# Dependencia de FastAPI para obtener una sesión
+# FastAPI dependency to get a session
 def get_db():
     db = SessionLocal()
     try:
