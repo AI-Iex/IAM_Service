@@ -4,6 +4,7 @@ from functools import lru_cache
 class Settings(BaseSettings):
     PROJECT_NAME: str = "NebulaOps - User Service"
     DATABASE_URL: str
+    BUSINESS_RULES_PATH: str = "app/config/business_rules.json"
 
     model_config = SettingsConfigDict(
         env_file=".env",

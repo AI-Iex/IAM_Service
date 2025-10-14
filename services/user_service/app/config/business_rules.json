@@ -1,0 +1,23 @@
+{
+  "password_policy": {
+    "min_length": 8,
+    "character_requirements": {
+      "uppercase": {
+        "required": true,
+        "min_count": 1
+      },
+      "numbers": {
+        "required": true,
+        "min_count": 1
+      },
+      "special_chars": {
+        "required": true,
+        "min_count": 1,
+        "allowed_chars": "-_.!@#$%^&*()+=<>¿?"
+      }
+    }
+  },
+  "name_policy": {
+    "min_length": 2
+  }
+}
