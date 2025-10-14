@@ -4,7 +4,7 @@ from typing import Optional, List
 
 # Base schema with common fields
 class UserBase(BaseModel):
-    email: EmailStr = Field(..., example = "user@email.com", description="The user's email address")
+    email: str = Field(..., example = "user@email.com", description="The user's email address")
     full_name: str = Field(..., example = "Name Surname", description="The user's full name")
     is_active: bool = Field(default = True, example = True, description="Is the user active?")
     is_superuser: bool = Field(default = False, example = False, description="Is the user a superuser for get all permissions?")
@@ -21,7 +21,7 @@ class UserCreateInDB(UserBase):
 
 # Schema for user update (all fields optional)
 class UserUpdate(BaseModel):
-    email: Optional[EmailStr] = Field(None, example = "user@email.com", description="The user's email address")
+    email: Optional[str] = Field(None, example = "user@email.com", description="The user's email address")
     full_name: Optional[str] = Field(None, example = "Name Surname", description="The user's full name")
     is_active: Optional[bool] = Field(None, example = True, description="Is the user active?")
     is_superuser: Optional[bool] = Field(None, example = False, description="Is the user a superuser for get all permissions?")
@@ -38,7 +38,7 @@ class UserRead(UserBase):
 
 # Schema for user login (used for authentication)
 class UserLogin(BaseModel):
-    email: EmailStr = Field(..., example = "user@email.com", description="The user's email")
+    email: str = Field(..., example = "user@email.com", description="The user's email")
     password: str = Field(..., example = "strongpassword123", description="The user's password",  repr=False) 
 
 # Internal schema for know if the user is in the database

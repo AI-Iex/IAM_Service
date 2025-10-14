@@ -40,6 +40,20 @@ class UserRepository(IUserRepository):
     # Get a user by email
     def get_by_email(self, db: Session, email: str) -> Optional[User]:
         return db.query(User).filter(User.email == email).first()
+    
+    # Get a user by ID
+    def get_by_id(self, db: Session, user_id: int) -> Optional[User]:
+        return db.query(User).filter(User.id == user_id).first()
+    
+    # Get users by name
+    def get_by_name(self, db: Session, name: str, skip: int = 0, limit: int = 100) -> list[User]:
+        return (
+            db.query(User)
+              .filter(User.full_name.ilike(f"%{name}%"))
+              .offset(skip)
+              .limit(limit)
+              .all()
+        )
 
     
 # endregion READ

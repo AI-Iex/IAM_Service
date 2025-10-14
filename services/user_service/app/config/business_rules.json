@@ -18,6 +18,20 @@
     }
   },
   "name_policy": {
-    "min_length": 2
+    "min_length": 2,
+    "character_requirements": {
+      "numbers": {
+        "allowed": false
+      },
+      "special_chars": {
+        "allowed": false,
+        "allowed_special_chars": " "
+      }
+    }
+  },
+  "email_policy": {
+    "min_length": 5,
+    "max_length": 254,
+    "valid_domains": ["gmail.com", "hotmail.com", "yahoo.com", "outlook.com", "mahle.com"]
   }
 }
