@@ -1,19 +1,18 @@
-from contextlib import contextmanager
-from typing import Iterator, Callable, ContextManager
-from sqlalchemy.orm import Session
-from app.db.session import SessionLocal
+from contextlib import asynccontextmanager
+from typing import AsyncIterator, Callable, AsyncContextManager
+from sqlalchemy.ext.asyncio import AsyncSession
+from app.db.session import AsyncSessionLocal
 
-UnitOfWorkFactory = Callable[[], ContextManager[Session]]
+UnitOfWorkFactory = Callable[[], AsyncContextManager[AsyncSession]]
 
-@contextmanager
-def unit_of_work() -> Iterator[Session]:
-
-    db = SessionLocal()
+@asynccontextmanager
+async def async_unit_of_work() -> AsyncIterator[AsyncSession]:
+    db = AsyncSessionLocal()
     try:
         yield db
-        db.commit()
+        await db.commit()
     except Exception:
-        db.rollback()
+        await db.rollback()
         raise
     finally:
-        db.close()
+        await db.close()

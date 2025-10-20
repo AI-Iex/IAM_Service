@@ -1,6 +1,7 @@
 from pydantic import BaseModel, EmailStr, Field
 from datetime import datetime
 from typing import Optional, List
+from uuid import UUID
 
 # Base schema with common fields
 class UserBase(BaseModel):
@@ -25,11 +26,11 @@ class UserUpdate(BaseModel):
     full_name: Optional[str] = Field(None, example = "Name Surname", description="The user's full name")
     is_active: Optional[bool] = Field(None, example = True, description="Is the user active?")
     is_superuser: Optional[bool] = Field(None, example = False, description="Is the user a superuser for get all permissions?")
-    roles: Optional[List[str]] = Field(None, example = ["admin", "user"], description="List of roles assigned to the user")
+    # roles: Optional[List[str]] = Field(None, example = ["admin", "user"], description="List of roles assigned to the user")
 
 # Schema for reading user data (includes id, timestamps, and roles)
 class UserRead(UserBase):
-    id: int = Field(..., example = 1, description="The unique identifier of the user")
+    id: UUID = Field(..., example = 1, description="Unique user identifier")
     created_at: Optional[datetime] = Field(None, example = "2023-01-01T00:00:00Z", description="The date and time when the user was created")
     last_login: Optional[datetime] = Field(None, example = "2023-01-10T12:34:56Z", description="The date and time of the user's last login")
     roles: List[str] = Field(default = [], example = ["admin", "user"], description="List of roles assigned to the user")
@@ -43,7 +44,7 @@ class UserLogin(BaseModel):
 
 # Internal schema for know if the user is in the database
 class UserInDB(UserBase):
-    id: int = Field(..., example = 1, description="The unique identifier of the user")
+    id: UUID = Field(..., example = 1, description="Unique user identifier")
     hashed_password: str = Field(..., description="The hashed password of the user", repr=False)
     roles: List[str] = Field(default = [], example = ["admin", "user"], description="List of roles assigned to the user")
 

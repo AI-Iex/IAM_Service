@@ -1,5 +1,7 @@
-from fastapi import APIRouter, Depends, status, Query
-from app.schemas.user import UserCreate, UserRead
+from fastapi import APIRouter, Depends, status, Query, Path
+from typing import List, Optional
+from uuid import UUID
+from app.schemas.user import UserCreate, UserRead, UserUpdate
 from app.services.user import UserService
 from app.dependencies import get_user_service
 from app.api.routes.wrapper import ExceptionHandlingRoute
@@ -9,93 +11,148 @@ router = APIRouter(route_class = ExceptionHandlingRoute, prefix = "/users", tags
 # region CREATE
 
 # Create a new user
-@router.post("", response_model = UserRead, status_code = status.HTTP_201_CREATED, summary = "Create a new user", response_description = "The created user")
-def create_user(payload: UserCreate, user_service: UserService = Depends(get_user_service)):
-    user = user_service.create(payload)
-    return user
+@router.post(
+    "",   
+    response_model = UserRead,
+    status_code = status.HTTP_201_CREATED,
+    summary = "Create a new user",
+    description = "Create a new user with the provided details",
+    response_description = "The created user" 
+)
+async def create_user(
+    payload: UserCreate,
+    user_service: UserService = Depends(get_user_service)
+) -> UserRead:
+    return await user_service.create(payload)
 
 # endregion CREATE
 
 # region READ
 
-
-# Read users by name (search with pagination)
+# Read users with filters
 @router.get(
-    "/search",
-    response_model=list[UserRead],
-    status_code=status.HTTP_200_OK,
-    summary="Get a list of users by name with pagination",
-    description="Search for users by their full name (partial match).",
-    response_description="List of users matching the name (may be empty)"
+    "",
+    response_model = List[UserRead],
+    status_code = status.HTTP_200_OK,
+    summary = "Get users with filtering and pagination",
+    description = "Retrieve users with optional filtering by name, email, status and pagination",
+    response_description = "List of users matching criteria"
 )
-def read_users_by_name(
-    name: str = Query(..., min_length=2, description="Partial or full name to search for"),
-    skip: int = Query(0, ge=0, description="Number of records to skip (offset)"),
-    limit: int = Query(100, ge=1, le=1000, description="Maximum number of records to return"),
+async def read_users(
+    name: Optional[str] = Query(None, min_length = 2, description = "Partial name search"),
+    email: Optional[str] = Query(None, description = "Exact email match"),
+    active: Optional[bool] = Query(None, description = "Filter by active status"),
+    is_superuser: Optional[bool] = Query(None, description = "Filter by superuser status"),
+    skip: int = Query(0, ge = 0, description = "Number of records to skip (offset)"),
+    limit: int = Query(100, ge = 1, le = 1000, description = "Maximum records to return"),
     user_service: UserService = Depends(get_user_service)
-) -> list[UserRead]:
-    return user_service.read_by_name(name=name, skip=skip, limit=limit)
-
-# Read user by email
-@router.get("/by_email", response_model = UserRead, status_code = status.HTTP_200_OK, summary="Get a user by email", response_description="The user with the specified email")
-def read_user_by_email(email: str, user_service: UserService = Depends(get_user_service)):
-    user = user_service.read_by_email(email)
-    return user
+) -> List[UserRead]:
+    return await user_service.read_all(
+        name=name, email=email, active=active, 
+        is_superuser=is_superuser, skip=skip, limit=limit
+    )
 
 # Read a user by ID
-@router.get("/{user_id}", response_model = UserRead, status_code = status.HTTP_200_OK, summary="Get a user by ID", response_description="The user with the specified ID")
-def read_user(user_id: int, user_service: UserService = Depends(get_user_service)):
-    user = user_service.read_by_id(user_id)
-    return user
+@router.get(
+        "/{user_id}",
+        response_model = UserRead,
+        status_code = status.HTTP_200_OK,
+        summary = "Get a user by unique identifier",
+        description = "Retrieve a user by their unique identifier",
+        response_description = "The requested user"
+)
+async def read_user_by_id(
+    user_id: UUID = Path(..., description = "Unique user identifier"),
+    user_service: UserService = Depends(get_user_service)
+) -> UserRead:
+    return await user_service.read_by_id(user_id = user_id)
 
 # Read all users with pagination
-@router.get("/{skip}/{limit}", response_model=list[UserRead], status_code=200)
-def read_all_users_with_pagination(skip: int = 0, limit: int = 100, user_service: UserService = Depends(get_user_service)):
-    users = user_service.read_all(skip=skip, limit=limit)
-    return users
-
-# Read active users with pagination
-@router.get("/active/{skip}/{limit}", response_model=list[UserRead], status_code=200)
-def read_active_users_with_pagination(skip: int = 0, limit: int = 100, user_service: UserService = Depends(get_user_service)):
-    users = user_service.read_active(skip=skip, limit=limit)
-    return users
-
-# Read superusers with pagination
-@router.get("/superusers/{skip}/{limit}", response_model=list[UserRead], status_code=200)
-def read_superusers_with_pagination(skip: int = 0, limit: int = 100, user_service: UserService = Depends(get_user_service)):
-    users = user_service.read_superusers(skip=skip, limit=limit)
-    return users
+@router.get(
+        "/all",
+        response_model = List[UserRead],
+        status_code = status.HTTP_200_OK,
+        summary = "Get all users with pagination",
+        description = "Retrieve all users with pagination support",
+        response_description = "List of users"
+)
+async def read_all_users(
+    skip: int = Query(0, ge = 0, description = "Number of records to skip (offset)"),
+    limit: int = Query(100, ge = 1, le = 1000, description = "Maximum records to return"),
+    user_service: UserService = Depends(get_user_service)
+) -> List[UserRead]:
+    return await user_service.read_all(skip = skip, limit = limit)
 
 # endregion READ
 
 # region UPDATE
 
 # Update a user by ID
-@router.put("/{user_id}", response_model=UserRead, status_code=200)
-def update_user(user_id: str, payload: UserCreate, user_service: UserService = Depends(get_user_service)):
-    user = user_service.update(user_id, payload)
-    return user
+@router.patch(
+    "/{user_id}",
+    response_model = UserRead,
+    status_code = status.HTTP_200_OK,
+    summary = "Update a user partially",
+    description = "Update specific fields of a user account",
+    response_description = "Updated user"
+)
+async def update_user(
+    user_id: UUID = Path(..., description = "Unique user identifier"),
+    payload: UserUpdate = None,
+    user_service: UserService = Depends(get_user_service)
+) -> UserRead: 
+    return await user_service.update(user_id, payload)
 
 # Set user roles
-@router.post("/{user_id}/roles", response_model=UserRead, status_code=200)
-def set_user_roles(user_id: str, roles: list[str], user_service: UserService = Depends(get_user_service)):
-    user = user_service.set_roles(user_id, roles)
-    return user
+@router.put(
+    "/{user_id}/roles",
+    response_model = UserRead,
+    status_code = status.HTTP_200_OK,
+    summary = "Update the user's roles",
+    description = "Update the user with the given list of roles",
+    response_description = "User with the updated roles"
+)
+async def set_user_roles(
+    user_id: int = Path(..., description = "Unique user identifier"),
+    # !Cambiar a recibir una lista de DTOs de Roles? Mirar para mantenerlo desacoplado, hacerlo al final.
+    roles: list[str] = Query(..., description = "List of roles to assign"),
+    user_service: UserService = Depends(get_user_service)
+) -> UserRead:
+    return await user_service.set_roles(user_id, roles)
 
+ # !Eliminarlo como ruta y mover funcionalidad a servicio
 # Update last login
-@router.put("/{user_id}/last_login", response_model=UserRead, status_code=200)
-def update_last_login(user_id: str, user_service: UserService = Depends(get_user_service)):
-    user = user_service.update_last_login(user_id)
-    return user
+@router.put(
+    "/{user_id}/last-login",
+    response_model = UserRead,
+    status_code = status.HTTP_200_OK,
+    summary = "Update last login timestamp",
+    description = "Update the last login time for a user (typically automated)",
+    response_description = "User with updated last login"
+)
+async def update_last_login(
+    user_id: UUID = Path(..., description = "Unique user identifier"),
+    user_service: UserService = Depends(get_user_service)
+) -> UserRead:
+    return await user_service.update_last_login(user_id)
 
 # endregion UPDATE
 
 # region DELETE
 
 # Delete a user by ID
-@router.delete("/{user_id}", status_code=204)
-def delete_user(user_id: str, user_service: UserService = Depends(get_user_service)):
-    user_service.delete(user_id)
-    return
+@router.delete(
+    "/{user_id}",
+    status_code = status.HTTP_204_NO_CONTENT,
+    summary = "Delete a user",
+    description = "Permanently delete a user account",
+    response_description = "User successfully deleted"
+)
+async def delete_user(
+        user_id: UUID = Path(..., description = "Unique ID of the user"),
+        user_service: UserService = Depends(get_user_service)
+) -> None:
+    await user_service.delete(user_id)
+    return None
 
 # endregion DELETE

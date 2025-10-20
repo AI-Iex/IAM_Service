@@ -1,17 +1,19 @@
+from typing import List, Optional
 from app.repositories.interfaces import IUserRepository
 from app.services.interfaces import IUserService
 from app.db.unit_of_work import UnitOfWorkFactory
-from app.schemas.user import UserCreate, UserCreateInDB, UserRead
-from app.db.unit_of_work import unit_of_work
+from app.schemas.user import UserCreate, UserCreateInDB, UserRead, UserUpdate
+from app.db.unit_of_work import async_unit_of_work
 from app.core.security import hash_password
 from app.core.exceptions import EntityAlreadyExists, DomainError, NotFoundError
 import logging, re
 from app.core.business_config import BusinessConfig
+from uuid import UUID
 
 logger = logging.getLogger("nebulaops.user_service")
 
 class UserService(IUserService):
-    def __init__(self, user_repo: IUserRepository, uow_factory: UnitOfWorkFactory = unit_of_work):
+    def __init__(self, user_repo: IUserRepository, uow_factory: UnitOfWorkFactory = async_unit_of_work): 
         self.user_repo = user_repo
         self.uow_factory = uow_factory
         self.policy = BusinessConfig.load()
@@ -155,7 +157,7 @@ class UserService(IUserService):
 # region CREATE
 
     # Create a new user
-    def create(self, payload: UserCreate) -> UserRead :
+    async def create(self, payload: UserCreate) -> UserRead :
         
         # 0. Log the attempt
         logger.info("Creating user", extra={"email": payload.email})
@@ -169,10 +171,10 @@ class UserService(IUserService):
         # 3. Validate name policy
         self._validate_name(payload.full_name)
 
-        with self.uow_factory() as db:
+        async with self.uow_factory() as db:
 
             # 4. Check if email already exists
-            existing = self.user_repo.get_by_email(db, payload.email)
+            existing = await self.user_repo.get_by_email(db, payload.email)
             if existing:
                 raise EntityAlreadyExists("Email is already in use")
 
@@ -187,7 +189,7 @@ class UserService(IUserService):
             )
 
             # 6. Create the user in the database
-            user = self.user_repo.create(db, dto)
+            user = await self.user_repo.create(db, dto)
 
             # 7. Build a plain dict while session is still open to avoid DetachedInstanceError
             user_schema = UserRead.model_validate(user)
@@ -199,38 +201,33 @@ class UserService(IUserService):
     
 # endregion CREATE
 
-
 # region READ
 
     # Read a user by ID
-    def read_by_id(self, user_id: int) -> UserRead:
+    async def read_by_id(self, user_id: UUID) -> Optional[UserRead]:
         
         # 0. Log the attempt
         logger.info("Reading user", extra={"user_id": user_id})
 
-        # 1. Check if user_id is valid
-        if user_id <= 0 or user_id is None or not isinstance(user_id, int):
-            raise DomainError("Invalid user ID")
+        async with self.uow_factory() as db:
 
-        with self.uow_factory() as db:
+            # 1. Query the user
+            user = await self.user_repo.get_by_id(db, user_id)
 
-            # 2. Query the user
-            user = self.user_repo.get_by_id(db, user_id)
-
-            # 3. Check if user exists
+            # 2. Check if user exists
             if not user:
                 raise NotFoundError("User not found")
             
-             # 4. Build a plain dict while session is still open to avoid DetachedInstanceError
+            # 3. Build a plain dict while session is still open to avoid DetachedInstanceError
             user_schema = UserRead.model_validate(user)
 
-            # 5. Log the success
+            # 4. Log the success
             logger.info("User read successfully", extra = {"user_id": user_id})
 
         return user_schema
 
     # Read a user by email
-    def read_by_email(self, email: str) -> UserRead:
+    async def read_by_email(self, email: str) -> UserRead:
         
         # 0. Log the attempt
         logger.info("Reading user", extra={"email": email})
@@ -239,10 +236,10 @@ class UserService(IUserService):
         if not email or "@" not in email:
             raise DomainError("Invalid email format")
 
-        with self.uow_factory() as db:
+        async with self.uow_factory() as db:
 
             # 2. Query the user
-            user = self.user_repo.get_by_email(db, email)
+            user = await self.user_repo.get_by_email(db, email)
 
             # 3. Check if user exists
             if not user:
@@ -257,7 +254,7 @@ class UserService(IUserService):
         return user_schema
     
     # Read users by name
-    def read_by_name(self, name: str, skip: int = 0, limit: int = 100) -> list[UserRead]:
+    async def read_by_name(self, name: str, skip: int = 0, limit: int = 100) -> list[UserRead]:
         
         # 0. Log the attempt
         logger.info("Reading users by name", extra={"query_name": name, "skip": skip, "limit": limit})
@@ -266,10 +263,10 @@ class UserService(IUserService):
         if not name or len(name.strip()) < 2:
             raise DomainError("Invalid name format")
 
-        with self.uow_factory() as db:
+        async with self.uow_factory() as db:
 
             # 2. Query users by name with pagination
-            users = self.user_repo.get_by_name(db, name = name, skip = skip, limit = limit)
+            users = await self.user_repo.get_by_name(db, name = name, skip = skip, limit = limit)
 
             # 3. If no users found, return empty list (expected for searches)
             if not users:
@@ -283,5 +280,20 @@ class UserService(IUserService):
             logger.info("Users read successfully", extra = {"query_name": name, "count": len(user_schemas)})
 
         return user_schemas
-
+    
 # endregion READ
+
+    async def delete(self, user_id: UUID) -> bool:
+        raise NotImplementedError("Delete method not implemented")
+
+    async def read_all(self, skip: int, limit: int) -> List[UserRead]:
+        return []
+
+    async def read_active(self, skip: int, limit: int) -> List[UserRead]:
+        return []
+
+    async def read_superusers(self, skip: int, limit: int) -> List[UserRead]:
+        return []
+
+    async def update(self, user_id: UUID, payload) -> Optional[UserRead]:
+        raise NotImplementedError("Update method not implemented")
