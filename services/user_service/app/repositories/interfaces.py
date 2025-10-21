@@ -12,6 +12,19 @@ class IUserRepository(ABC):
         pass
 
     @abstractmethod
+    async def get_with_filters(
+        self,
+        db: AsyncSession,
+        name: Optional[str] = None,
+        email: Optional[str] = None, 
+        active: Optional[bool] = None,
+        is_superuser: Optional[bool] = None,
+        skip: int = 0,
+        limit: int = 100
+    ) -> List[User]:
+        pass
+
+    @abstractmethod
     async def get_by_id(self, db: AsyncSession, user_id: UUID) -> Optional[User]:
         pass
 
@@ -20,17 +33,9 @@ class IUserRepository(ABC):
         pass
 
     @abstractmethod
-    async def get_by_name(self, db: AsyncSession, name: str, skip: int, limit: int) -> List[User]:
-        pass
-
-    @abstractmethod
-    async def update(self, db: AsyncSession, user_id: UUID, update_data: UserUpdate) -> Optional[User]:
+    async def update(self, db: AsyncSession, user_id: UUID, update_data: UserUpdate) -> User:
         pass
 
     @abstractmethod
     async def delete(self, db: AsyncSession, user_id: UUID) -> bool:
-        pass
-
-    @abstractmethod
-    async def get_all(self, db: AsyncSession, skip: int, limit: int) -> List[User]:
         pass

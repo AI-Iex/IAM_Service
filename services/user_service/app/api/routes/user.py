@@ -1,7 +1,7 @@
 from fastapi import APIRouter, Depends, status, Query, Path
 from typing import List, Optional
 from uuid import UUID
-from app.schemas.user import UserCreate, UserRead, UserUpdate
+from app.schemas.user import UserCreate, UserRead, UserUpdate, UserChangeEmail
 from app.services.user import UserService
 from app.dependencies import get_user_service
 from app.api.routes.wrapper import ExceptionHandlingRoute
@@ -38,18 +38,18 @@ async def create_user(
     description = "Retrieve users with optional filtering by name, email, status and pagination",
     response_description = "List of users matching criteria"
 )
-async def read_users(
+async def read_with_filters(
     name: Optional[str] = Query(None, min_length = 2, description = "Partial name search"),
     email: Optional[str] = Query(None, description = "Exact email match"),
     active: Optional[bool] = Query(None, description = "Filter by active status"),
     is_superuser: Optional[bool] = Query(None, description = "Filter by superuser status"),
     skip: int = Query(0, ge = 0, description = "Number of records to skip (offset)"),
-    limit: int = Query(100, ge = 1, le = 1000, description = "Maximum records to return"),
+    limit: int = Query(100, ge = 1, le = 100, description = "Maximum records to return"),
     user_service: UserService = Depends(get_user_service)
 ) -> List[UserRead]:
-    return await user_service.read_all(
-        name=name, email=email, active=active, 
-        is_superuser=is_superuser, skip=skip, limit=limit
+    return await user_service.read_with_filters(
+        name = name, email = email, active = active, 
+        is_superuser = is_superuser, skip = skip, limit = limit
     )
 
 # Read a user by ID
@@ -67,22 +67,6 @@ async def read_user_by_id(
 ) -> UserRead:
     return await user_service.read_by_id(user_id = user_id)
 
-# Read all users with pagination
-@router.get(
-        "/all",
-        response_model = List[UserRead],
-        status_code = status.HTTP_200_OK,
-        summary = "Get all users with pagination",
-        description = "Retrieve all users with pagination support",
-        response_description = "List of users"
-)
-async def read_all_users(
-    skip: int = Query(0, ge = 0, description = "Number of records to skip (offset)"),
-    limit: int = Query(100, ge = 1, le = 1000, description = "Maximum records to return"),
-    user_service: UserService = Depends(get_user_service)
-) -> List[UserRead]:
-    return await user_service.read_all(skip = skip, limit = limit)
-
 # endregion READ
 
 # region UPDATE
@@ -93,7 +77,7 @@ async def read_all_users(
     response_model = UserRead,
     status_code = status.HTTP_200_OK,
     summary = "Update a user partially",
-    description = "Update specific fields of a user account",
+    description = "Update user fields (name, active status, superuser status)",
     response_description = "Updated user"
 )
 async def update_user(
@@ -102,6 +86,22 @@ async def update_user(
     user_service: UserService = Depends(get_user_service)
 ) -> UserRead: 
     return await user_service.update(user_id, payload)
+
+# Change the mail of the user
+@router.put(
+    "/{user_id}/email",
+    response_model = UserRead,
+    status_code = status.HTTP_200_OK,
+    summary = "Change user email",
+    description = "Change user email address with verification of current email and password",
+    response_description = "User with updated email"
+)
+async def change_user_email(
+    user_id: UUID = Path(..., description = "Unique user identifier"),
+    payload: UserChangeEmail = None,
+    user_service: UserService = Depends(get_user_service)
+) -> UserRead:
+    return await user_service.change_email(user_id, payload)
 
 # Set user roles
 @router.put(

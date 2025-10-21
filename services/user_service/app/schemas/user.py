@@ -22,15 +22,19 @@ class UserCreateInDB(UserBase):
 
 # Schema for user update (all fields optional)
 class UserUpdate(BaseModel):
-    email: Optional[str] = Field(None, example = "user@email.com", description="The user's email address")
     full_name: Optional[str] = Field(None, example = "Name Surname", description="The user's full name")
     is_active: Optional[bool] = Field(None, example = True, description="Is the user active?")
     is_superuser: Optional[bool] = Field(None, example = False, description="Is the user a superuser for get all permissions?")
-    # roles: Optional[List[str]] = Field(None, example = ["admin", "user"], description="List of roles assigned to the user")
+
+# Schema for change the user email
+class UserChangeEmail(BaseModel):
+    current_email: str = Field(..., example = "currentemail@email.com", description = "Current email address for verification")
+    new_email: str = Field(..., example = "newemail@email.com", description = "The new email address")
+    current_password: str = Field(..., example = "CurrentPassword123!", description = "Current password for verification")
 
 # Schema for reading user data (includes id, timestamps, and roles)
 class UserRead(UserBase):
-    id: UUID = Field(..., example = 1, description="Unique user identifier")
+    id: UUID = Field(..., example = "c55df1d2-216a-4359-81xx-1d805801vg0g", description="Unique user identifier")
     created_at: Optional[datetime] = Field(None, example = "2023-01-01T00:00:00Z", description="The date and time when the user was created")
     last_login: Optional[datetime] = Field(None, example = "2023-01-10T12:34:56Z", description="The date and time of the user's last login")
     roles: List[str] = Field(default = [], example = ["admin", "user"], description="List of roles assigned to the user")
@@ -44,7 +48,7 @@ class UserLogin(BaseModel):
 
 # Internal schema for know if the user is in the database
 class UserInDB(UserBase):
-    id: UUID = Field(..., example = 1, description="Unique user identifier")
+    id: UUID = Field(..., example = "c55df1d2-216a-4359-81xx-1d805801vg0g", description="Unique user identifier")
     hashed_password: str = Field(..., description="The hashed password of the user", repr=False)
     roles: List[str] = Field(default = [], example = ["admin", "user"], description="List of roles assigned to the user")
 

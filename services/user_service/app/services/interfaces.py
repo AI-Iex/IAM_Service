@@ -1,6 +1,6 @@
 from abc import ABC, abstractmethod
 from typing import List, Optional
-from app.schemas.user import UserCreate, UserRead
+from app.schemas.user import UserCreate, UserRead, UserUpdate, UserChangeEmail
 from uuid import UUID
 
 class IUserService(ABC):
@@ -10,33 +10,29 @@ class IUserService(ABC):
         pass
 
     @abstractmethod
-    async def read_by_id(self, user_id: UUID) -> Optional[UserRead]:
+    async def read_with_filters(
+        self,
+        name: Optional[str] = None,
+        email: Optional[str] = None, 
+        active: Optional[bool] = None,
+        is_superuser: Optional[bool] = None,
+        skip: int = 0,
+        limit: int = 100
+    ) -> List[UserRead]:
         pass
 
     @abstractmethod
-    async def read_by_email(self, email: str) -> Optional[UserRead]:
+    async def read_by_id(self, user_id: UUID) -> UserRead:
         pass
 
     @abstractmethod
-    async def read_by_name(self, name: str, skip: int, limit: int) -> List[UserRead]:
+    async def update(self, user_id: UUID, payload: UserUpdate) -> UserRead:
         pass
 
     @abstractmethod
-    async def update(self, user_id: UUID, payload) -> Optional[UserRead]:
+    async def change_email(self, user_id: UUID, payload: UserChangeEmail) -> UserRead:
         pass
 
     @abstractmethod
     async def delete(self, user_id: UUID) -> bool:
-        pass
-
-    @abstractmethod
-    async def read_all(self, skip: int, limit: int) -> List[UserRead]:
-        pass
-
-    @abstractmethod
-    async def read_active(self, skip: int, limit: int) -> List[UserRead]:
-        pass
-
-    @abstractmethod
-    async def read_superusers(self, skip: int, limit: int) -> List[UserRead]:
         pass

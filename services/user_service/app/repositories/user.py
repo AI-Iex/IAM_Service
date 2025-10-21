@@ -37,9 +37,46 @@ class UserRepository(IUserRepository):
 
     # region READ
 
+    async def get_with_filters(
+        self,
+        db: AsyncSession,
+        name: Optional[str] = None,
+        email: Optional[str] = None,
+        active: Optional[bool] = None,
+        is_superuser: Optional[bool] = None,
+        skip: int = 0,
+        limit: int = 100
+    ) -> List[User]:
+    
+        # Construir query base
+        query = select(User).options(selectinload(User.roles))
+        
+        # Aplicar filtros dinámicamente
+        if name is not None:
+            query = query.where(User.full_name.ilike(f"%{name}%"))
+        
+        if email is not None:
+            query = query.where(User.email == email)
+        
+        if active is not None:
+            query = query.where(User.is_active == active)
+        
+        if is_superuser is not None:
+            query = query.where(User.is_superuser == is_superuser)
+        
+        # Aplicar paginación
+        query = query.offset(skip).limit(limit)
+        
+        # Ejecutar UNA sola query
+        result = await db.execute(query)
+        return result.scalars().all()
+
+
     async def get_by_email(self, db: AsyncSession, email: str) -> Optional[User]:
         result = await db.execute(
-            select(User).where(User.email == email)
+            select(User)
+            .where(User.email == email)
+            .options(selectinload(User.roles))
         )
         return result.scalar_one_or_none()
 
@@ -51,30 +88,25 @@ class UserRepository(IUserRepository):
         )
         return result.scalar_one_or_none() 
 
-    async def get_by_name(self, db: AsyncSession, name: str, skip: int = 0, limit: int = 100) -> List[User]:
-        result = await db.execute(
-            select(User)
-            .where(User.full_name.ilike(f"%{name}%"))
-            .offset(skip)
-            .limit(limit)
-        )
-        return result.scalars().all()
-
     # endregion READ
 
     # region UPDATE
 
-    async def update(self, db: AsyncSession, user_id: UUID, update_data: dict) -> Optional[User]:
+    async def update(self, db: AsyncSession, user_id: UUID, update_data: dict) -> User:
         try:
             result = await db.execute(
-                select(User).where(User.id == user_id)
+                select(User)
+                .where(User.id == user_id)
+                .options(selectinload(User.roles))
             )
             user = result.scalar_one_or_none()
             if user:
                 for key, value in update_data.items():
                     setattr(user, key, value)
+                
+                await db.flush()
                 await db.refresh(user)
-            return user
+                return user
         except Exception as e:
             raise RepositoryError(f"Error updating user: {str(e)}") from e
 
@@ -96,33 +128,3 @@ class UserRepository(IUserRepository):
             raise RepositoryError(f"Error deleting user: {str(e)}") from e
 
     # endregion DELETE
-
-    # region LIST
-
-    async def get_all(self, db: AsyncSession, skip: int = 0, limit: int = 100) -> List[User]:
-        result = await db.execute(
-            select(User)
-            .offset(skip)
-            .limit(limit)
-        )
-        return result.scalars().all()
-
-    async def get_active(self, db: AsyncSession, skip: int = 0, limit: int = 100) -> List[User]:
-        result = await db.execute(
-            select(User)
-            .where(User.is_active == True)
-            .offset(skip)
-            .limit(limit)
-        )
-        return result.scalars().all()
-
-    async def get_superusers(self, db: AsyncSession, skip: int = 0, limit: int = 100) -> List[User]:
-        result = await db.execute(
-            select(User)
-            .where(User.is_superuser == True)
-            .offset(skip)
-            .limit(limit)
-        )
-        return result.scalars().all()
-
-    # endregion LIST

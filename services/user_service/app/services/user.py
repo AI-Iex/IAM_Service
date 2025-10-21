@@ -2,9 +2,9 @@ from typing import List, Optional
 from app.repositories.interfaces import IUserRepository
 from app.services.interfaces import IUserService
 from app.db.unit_of_work import UnitOfWorkFactory
-from app.schemas.user import UserCreate, UserCreateInDB, UserRead, UserUpdate
+from app.schemas.user import UserCreate, UserCreateInDB, UserRead, UserUpdate, UserChangeEmail
 from app.db.unit_of_work import async_unit_of_work
-from app.core.security import hash_password
+from app.core.security import hash_password, verify_password
 from app.core.exceptions import EntityAlreadyExists, DomainError, NotFoundError
 import logging, re
 from app.core.business_config import BusinessConfig
@@ -160,7 +160,7 @@ class UserService(IUserService):
     async def create(self, payload: UserCreate) -> UserRead :
         
         # 0. Log the attempt
-        logger.info("Creating user", extra={"email": payload.email})
+        logger.info("Creating user", extra = {"email": payload.email})
 
         # 1. Validate email format
         self._validate_email(payload.email)
@@ -181,11 +181,11 @@ class UserService(IUserService):
             # 5. Hash the password and prepare DTO for repository
             hashed = hash_password(payload.password)
             dto = UserCreateInDB(
-                email=payload.email,
-                full_name=payload.full_name,
-                hashed_password=hashed,
-                is_active=payload.is_active,
-                is_superuser=payload.is_superuser
+                email = payload.email,
+                full_name = payload.full_name,
+                hashed_password = hashed,
+                is_active = payload.is_active,
+                is_superuser = payload.is_superuser
             )
 
             # 6. Create the user in the database
@@ -203,11 +203,54 @@ class UserService(IUserService):
 
 # region READ
 
+    # Read users with filters
+    async def read_with_filters(
+        self,
+        name: Optional[str] = None,
+        email: Optional[str] = None,
+        active: Optional[bool] = None,
+        is_superuser: Optional[bool] = None,
+        skip: int = 0,
+        limit: int = 100
+    ) -> List[UserRead]:
+    
+        # 0. Log the attempt
+        logger.info("Reading users with filters",
+        extra = {
+            "name_filter": name,
+            "email_filter": email, 
+            "active_filter": active,
+            "superuser_filter": is_superuser,
+            "skip": skip,
+            "limit": limit
+            }
+        )
+
+        async with self.uow_factory() as db:
+            # 1. Query the users
+            users = await self.user_repo.get_with_filters(
+            db = db,
+            name = name,
+            email = email,
+            active = active,
+            is_superuser = is_superuser,
+            skip = skip,
+            limit = limit
+        )
+            
+        # 2. Build a plain dict while session is still open to avoid DetachedInstanceError
+        user_schemas = [UserRead.model_validate(user) for user in users]
+        
+        # 3. Log the success
+        logger.info("Users retrieved successfully", extra = {"count": len(user_schemas)})
+        
+        return user_schemas
+
     # Read a user by ID
-    async def read_by_id(self, user_id: UUID) -> Optional[UserRead]:
+    async def read_by_id(self, user_id: UUID) -> UserRead:
         
         # 0. Log the attempt
-        logger.info("Reading user", extra={"user_id": user_id})
+        logger.info("Reading user using the uuid", extra = {"user_id": user_id})
 
         async with self.uow_factory() as db:
 
@@ -225,75 +268,80 @@ class UserService(IUserService):
             logger.info("User read successfully", extra = {"user_id": user_id})
 
         return user_schema
-
-    # Read a user by email
-    async def read_by_email(self, email: str) -> UserRead:
-        
-        # 0. Log the attempt
-        logger.info("Reading user", extra={"email": email})
-
-        # 1. Check if email is valid
-        if not email or "@" not in email:
-            raise DomainError("Invalid email format")
-
-        async with self.uow_factory() as db:
-
-            # 2. Query the user
-            user = await self.user_repo.get_by_email(db, email)
-
-            # 3. Check if user exists
-            if not user:
-                raise NotFoundError("User not found")
-
-            # 4. Build a plain dict while session is still open to avoid DetachedInstanceError
-            user_schema = UserRead.model_validate(user)
-
-            # 5. Log the success
-            logger.info("User read successfully", extra = {"email": email})
-
-        return user_schema
-    
-    # Read users by name
-    async def read_by_name(self, name: str, skip: int = 0, limit: int = 100) -> list[UserRead]:
-        
-        # 0. Log the attempt
-        logger.info("Reading users by name", extra={"query_name": name, "skip": skip, "limit": limit})
-
-        # 1. Validate name
-        if not name or len(name.strip()) < 2:
-            raise DomainError("Invalid name format")
-
-        async with self.uow_factory() as db:
-
-            # 2. Query users by name with pagination
-            users = await self.user_repo.get_by_name(db, name = name, skip = skip, limit = limit)
-
-            # 3. If no users found, return empty list (expected for searches)
-            if not users:
-                logger.info("No users found for name", extra = {"query_name": name})
-                return []
-
-            # 4. Build Pydantic schemas while session is open to avoid DetachedInstanceError
-            user_schemas = [UserRead.model_validate(user) for user in users]
-
-            # 5. Log the success
-            logger.info("Users read successfully", extra = {"query_name": name, "count": len(user_schemas)})
-
-        return user_schemas
     
 # endregion READ
 
     async def delete(self, user_id: UUID) -> bool:
         raise NotImplementedError("Delete method not implemented")
 
-    async def read_all(self, skip: int, limit: int) -> List[UserRead]:
-        return []
+    # Update some fields of the user
+    async def update(self, user_id: UUID, payload: UserUpdate) -> UserRead:
+        
+        # 0. Log the attempt
+        logger.info("Updating user", extra = {"user_id": user_id, "fields": list(payload.model_dump(exclude_unset=True).keys())})
 
-    async def read_active(self, skip: int, limit: int) -> List[UserRead]:
-        return []
+        async with self.uow_factory() as db:
 
-    async def read_superusers(self, skip: int, limit: int) -> List[UserRead]:
-        return []
+            # 1. Verify that the user exists
+            existing_user = await self.user_repo.get_by_id(db, user_id)
+            if not existing_user:
+                raise NotFoundError("User not found")
+            
+            # 2. Prepare data for updating
+            update_data = payload.model_dump(exclude_unset=True, exclude_none=True)
+            
+            # 3. Validate name policy
+            if 'full_name' in update_data:
+                self._validate_name(update_data['full_name'])
+            
+            # 4. Update in repository
+            user = await self.user_repo.update(db, user_id, update_data)
 
-    async def update(self, user_id: UUID, payload) -> Optional[UserRead]:
-        raise NotImplementedError("Update method not implemented")
+            # 5. Build a plain dict while session is still open to avoid DetachedInstanceError
+            user_schema = UserRead.model_validate(user)
+
+            # 6. Log the success
+            logger.info("User updated successfully", extra={"user_id": user_id})
+        
+        return UserRead.model_validate(user_schema)
+    
+    # Update the email of the user
+    async def change_email(self, user_id: UUID, payload: UserChangeEmail) -> UserRead:
+    
+         # 0. Log the attempt
+        logger.info("Requesting email change", extra={"user_id": user_id})
+
+        async with self.uow_factory() as db:
+
+            # 1. Verify that the user exists
+            user = await self.user_repo.get_by_id(db, user_id)
+            if not user:
+                raise NotFoundError("User not found")
+            
+            # 2. Verify that the current email matches
+            if user.email.lower() != payload.current_email.lower():
+                raise DomainError("Current email does not match our records")
+            
+            # 3. Verify current password
+            if not verify_password(payload.current_password, user.hashed_password):
+                raise DomainError("Current password is incorrect")
+            
+            # 4. Validate email format
+            self._validate_email(payload.new_email)
+            
+            # 5. Verify that the new email address is not in use
+            existing_user = await self.user_repo.get_by_email(db, payload.new_email)
+            if existing_user and existing_user.id != user_id:
+                raise EntityAlreadyExists("Email already in use by another user")
+            
+            # 6. Verify that it is not the same email address
+            if payload.new_email.lower() == user.email.lower():
+                raise DomainError("New email cannot be the same as current email")
+            
+            # 7. Update email
+            updated_user = await self.user_repo.update(db, user_id, {"email": payload.new_email.lower()})
+            
+            # 8. Log the success
+            logger.info("Email changed successfully", extra={"user_id": user_id, "new_email": payload.new_email})
+
+            return UserRead.model_validate(updated_user)
