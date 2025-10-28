@@ -1,12 +1,16 @@
 from abc import ABC, abstractmethod
 from typing import List, Optional
-from app.schemas.user import UserCreate, UserRead, UserUpdate, UserChangeEmail
+from app.schemas.user import UserCreate, UserRead, UserUpdate, UserChangeEmail, UserRegister
 from uuid import UUID
 
 class IUserService(ABC):
 
     @abstractmethod
-    async def create(self, payload: UserCreate) -> UserRead:
+    async def register_user(self, payload: UserRegister) -> UserRead:
+        pass
+
+    @abstractmethod
+    async def admin_register_user(self, payload: UserCreate) -> UserRead:
         pass
 
     @abstractmethod
@@ -34,5 +38,5 @@ class IUserService(ABC):
         pass
 
     @abstractmethod
-    async def delete(self, user_id: UUID) -> bool:
+    async def delete(self, user_id: UUID) -> None:
         pass

@@ -1,46 +1,41 @@
 import logging
-from fastapi import FastAPI, Request, status
-from fastapi.responses import JSONResponse
+from fastapi import FastAPI
 from app.api.routes.user import router as users_router
-from app.core.exceptions import DomainError, RepositoryError
-from app.core.logging import setup_logging
-from app.middleware.logging import AccessLogMiddleware
+from app.api.routes.auth import router as auth_router
+from app.middleware.logging import access_log_middleware
+from app.middleware.context import context_middleware
+from app.middleware.auth_context import auth_context_middleware
+from app.middleware.exception_handler import exception_handling_middleware
 from app.db.base import init_db
-from app.db.session import engine
+from app.db.session import get_engine
+from app.core.config import settings
+from app.core.logging_config import setup_logging, configure_third_party_loggers
 
-# Setup logging early
-setup_logging()
-logger = logging.getLogger("nebulaops.user_service")
+logger = setup_logging()
+configure_third_party_loggers(level = logging.WARNING, attach_json_handler = False)
 
-app = FastAPI(title = "NebulaOps - User Service")
+app = FastAPI(
+    title=settings.SERVICE_NAME,
+    version=settings.SERVICE_VERSION,
+    description=settings.SERVICE_DESCRIPTION,
+    license_info={"name": settings.SERVICE_LICENSE},
+    docs_url="/docs",
+    redoc_url="/redoc"
+)
 
-# Add middleware that logs access and sets request_id
-app.add_middleware(AccessLogMiddleware)
+# Register middlewares so that the access-log middleware is the outermost wrapper.
+app.middleware("http")(access_log_middleware)
+app.middleware("http")(exception_handling_middleware)
+app.middleware("http")(auth_context_middleware)
+app.middleware("http")(context_middleware)
 
 @app.on_event("startup")
 async def startup_event():
-    # !DB initialization, will use migrations in production ** to change in future **
+    # Ensure engine exists and run DB initialization (creates tables if needed)
+    engine = get_engine()
     await init_db(engine)
-    logger.info("startup complete")
+    logger.info("Service started successfully")
 
 # Include routers
-app.include_router(users_router, prefix = "/user_service")
-
-# Domain exception handlers
-@app.exception_handler(DomainError)
-async def handle_domain_error(request: Request, exc: DomainError):
-    return JSONResponse(status_code = status.HTTP_400_BAD_REQUEST, content = {"detail": str(exc)})
-
-@app.exception_handler(RepositoryError)
-async def handle_repo_error(request: Request, exc: RepositoryError):
-    logger.exception("Repository error: %s", exc)
-    return JSONResponse(status_code = status.HTTP_500_INTERNAL_SERVER_ERROR, content = {"detail": "Database error"})
-
-# Fallback middleware: catches any unhandled exceptions
-@app.middleware("http")
-async def catch_exceptions_middleware(request: Request, call_next):
-    try:
-        return await call_next(request)
-    except Exception as exc:
-        logger.exception("Unhandled exception: %s", exc)
-        return JSONResponse(status_code = status.HTTP_500_INTERNAL_SERVER_ERROR, content = {"detail": "Internal server error"})
+app.include_router(auth_router)
+app.include_router(users_router)

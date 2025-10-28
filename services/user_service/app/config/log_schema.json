@@ -1,0 +1,30 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "type": "object",
+  "required": ["timestamp", "level", "service", "module", "function", "message", "context"],
+  "properties": {
+    "timestamp": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "level": {
+      "type": "string",
+      "enum": ["DEBUG", "INFO", "WARNING", "ERROR", "CRITICAL"]
+    },
+    "service": { "type": "string" },
+    "version": { "type": "string" },
+    "module": { "type": "string" },
+    "function": { "type": "string" },
+    "message": { "type": "string" },
+    "context": {
+      "type": "object",
+      "properties": {
+        "user_id": { "type": ["string","null"] },
+        "request_id": { "type": ["string","null"] },
+        "extra": { "type": ["object","null"] }
+      },
+      "additionalProperties": true
+    }
+  },
+  "additionalProperties": false
+}

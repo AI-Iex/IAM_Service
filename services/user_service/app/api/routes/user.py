@@ -1,12 +1,12 @@
-from fastapi import APIRouter, Depends, status, Query, Path
+from fastapi import APIRouter, Depends, status, Query, Path, HTTPException
 from typing import List, Optional
 from uuid import UUID
-from app.schemas.user import UserCreate, UserRead, UserUpdate, UserChangeEmail
+from app.schemas.user import UserCreate, UserRead, UserUpdate, UserChangeEmail, PasswordChange
 from app.services.user import UserService
-from app.dependencies import get_user_service
-from app.api.routes.wrapper import ExceptionHandlingRoute
+from app.dependencies.services import get_user_service
+from app.dependencies.auth import get_current_user
 
-router = APIRouter(route_class = ExceptionHandlingRoute, prefix = "/users", tags = ["Users"])
+router = APIRouter(prefix = "/users", tags = ["Users"])
 
 # region CREATE
 
@@ -87,22 +87,6 @@ async def update_user(
 ) -> UserRead: 
     return await user_service.update(user_id, payload)
 
-# Change the mail of the user
-@router.put(
-    "/{user_id}/email",
-    response_model = UserRead,
-    status_code = status.HTTP_200_OK,
-    summary = "Change user email",
-    description = "Change user email address with verification of current email and password",
-    response_description = "User with updated email"
-)
-async def change_user_email(
-    user_id: UUID = Path(..., description = "Unique user identifier"),
-    payload: UserChangeEmail = None,
-    user_service: UserService = Depends(get_user_service)
-) -> UserRead:
-    return await user_service.change_email(user_id, payload)
-
 # Set user roles
 @router.put(
     "/{user_id}/roles",
@@ -121,20 +105,41 @@ async def set_user_roles(
     return await user_service.set_roles(user_id, roles)
 
  # !Eliminarlo como ruta y mover funcionalidad a servicio
-# Update last login
+
+ # ✅ Change email (UserService)
 @router.put(
-    "/{user_id}/last-login",
-    response_model = UserRead,
-    status_code = status.HTTP_200_OK,
-    summary = "Update last login timestamp",
-    description = "Update the last login time for a user (typically automated)",
-    response_description = "User with updated last login"
+    "/{user_id}/email",
+    response_model=UserRead,
+    status_code=status.HTTP_200_OK,
+    summary="Change user email"
 )
-async def update_last_login(
-    user_id: UUID = Path(..., description = "Unique user identifier"),
+async def change_user_email(
+    user_id: UUID = Path(..., description="Unique user identifier"),
+    payload: UserChangeEmail = None,
+    current_user: UserRead = Depends(get_current_user),
     user_service: UserService = Depends(get_user_service)
 ) -> UserRead:
-    return await user_service.update_last_login(user_id)
+    if current_user.id != user_id and not current_user.is_superuser:
+        raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Insufficient permissions")
+    return await user_service.change_email(user_id, payload)
+
+
+# ✅ Change password (UserService)
+@router.put(
+    "/{user_id}/password",
+    status_code=status.HTTP_204_NO_CONTENT,
+    summary="Change user password"
+)
+async def change_user_password(
+    user_id: UUID = Path(..., description="Unique user identifier"),
+    payload: PasswordChange = None,
+    current_user: UserRead = Depends(get_current_user),
+    user_service: UserService = Depends(get_user_service)
+) -> None:
+    if current_user.id != user_id and not current_user.is_superuser:
+        raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Insufficient permissions")
+    await user_service.change_password(user_id, payload)
+
 
 # endregion UPDATE
 
@@ -149,7 +154,7 @@ async def update_last_login(
     response_description = "User successfully deleted"
 )
 async def delete_user(
-        user_id: UUID = Path(..., description = "Unique ID of the user"),
+        user_id: UUID = Path(..., description = "Unique user identifier"),
         user_service: UserService = Depends(get_user_service)
 ) -> None:
     await user_service.delete(user_id)

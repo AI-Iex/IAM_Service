@@ -1,75 +1,97 @@
 import time
 import uuid
 import logging
-import contextvars
-from typing import Optional
-
-from starlette.middleware.base import BaseHTTPMiddleware
+from fastapi import HTTPException
 from starlette.requests import Request
 from starlette.responses import Response
 
-logger = logging.getLogger("nebulaops.user_service")
+from app.core.logging_config import set_request_context, reset_request_context
 
-# Context var to hold request id per async context
-_request_id_ctx_var: contextvars.ContextVar[Optional[str]] = contextvars.ContextVar(
-    "request_id", default=None
-)
+logger = logging.getLogger("access")
 
 
-def set_request_id(request_id: str) -> None:
-   # Set the request_id in the context variable for the current context
-    _request_id_ctx_var.set(request_id)
+async def access_log_middleware(request: Request, call_next):
+    
+    """Structured access log middleware.
 
+    Responsibilities:
+    - Ensure a request_id exists and set it on request.state
+    - Populate contextvars with request_id so log filters can inject it
+    - Measure request duration and log structured info (route, status, duration, client_ip, user_id)
+    - Return X-Request-Id header for client correlation
+    """
+    start = time.perf_counter()
 
-class RequestIdFilter(logging.Filter):
-    # Logging filter that injects request_id from contextvar into log records
-    def filter(self, record):
-        record.request_id = _request_id_ctx_var.get()
-        return True
+    # Ensure request_id (may be set by middleware); generate if missing
+    request_id = getattr(request.state, "request_id", None) or str(uuid.uuid4())
+    request.state.request_id = request_id
 
-class AccessLogMiddleware(BaseHTTPMiddleware):
+    # Set request context so RequestIdFilter can pick it up for all logs in this request
+    request_token, user_token = set_request_context(request_id)
 
-    # Middleware that logs access details and manages request IDs
-    async def dispatch(self, request: Request, call_next):
-        request_id = request.headers.get("X-Request-Id") or str(uuid.uuid4())
-        request.state.request_id = request_id
-        set_request_id(request_id)
-        start = time.time()
-
-        # Execute downstream; let exceptions propagate upwards
+    try:
+        response: Response = await call_next(request)
+    except Exception as exc:
+        duration_ms = (time.perf_counter() - start) * 1000
+        # Determine an appropriate HTTP status code when possible.
+        status_code = None
         try:
-            response: Response = await call_next(request)
+            if isinstance(exc, HTTPException):
+                status_code = exc.status_code
+            else:
+                status_code = getattr(exc, "status_code", None)
         except Exception:
-            raise
+            status_code = None
+        if status_code is None:
+            status_code = 500
 
-        # Successful response path:
-        duration_ms = (time.time() - start) * 1000
-        user_id = getattr(request.state, "user_id", None)
-
-        # Wrap logging
+        # Minimal summary in access log: avoid full traceback and internal paths.
+        logger.error(
+            "HTTP request error (summary)",
+            extra={
+                "request_id": request_id,
+                "method": request.method,
+                "path": request.url.path,
+                "route": getattr(request.scope.get("route"), "name", None),
+                "status_code": status_code,
+                "duration_ms": round(duration_ms, 2),
+                "client_ip": request.client.host if request.client else None,
+                # short summary only
+                "error_type": type(exc).__name__,
+                "error_message": str(exc)[:200],
+            },
+        )
+        # cleanup context before re-raising so outer exception handlers/middlewares can run
         try:
-            logger.info(
-                "access",
-                extra={
-                    "request_id": request_id,
-                    "method": request.method,
-                    "path": request.url.path,
-                    "status_code": getattr(response, "status_code", None),
-                    "duration_ms": round(duration_ms, 2),
-                    "user_id": user_id,
-                },
-            )
-        except Exception as log_exc:
-            fallback = logging.getLogger("nebulaops")
-            fallback.exception("Failed to write access log: %s", log_exc)
-
-        try:
-            response.headers["X-Request-Id"] = request_id
+            reset_request_context(request_token, user_token)
         except Exception:
-            
-            # Defensive: If response.headers is read-only for some reason, ignore
             pass
+        raise
 
-        return response
+    # Compute duration and log
+    duration_ms = (time.perf_counter() - start) * 1000
+    logger.info(
+        "HTTP request completed",
+        extra={
+            "request_id": request_id,
+            "method": request.method,
+            "path": request.url.path,
+            "route": getattr(request.scope.get("route"), "name", None),
+            "status_code": response.status_code,
+            "duration_ms": round(duration_ms, 2),
+            "client_ip": request.client.host if request.client else None,
+            "user_id": getattr(request.state, "user_id", None),
+        },
+    )
 
-__all__ = ["AccessLogMiddleware", "RequestIdFilter", "set_request_id"]
+    # Ensure header for correlation
+    if isinstance(response, Response):
+        response.headers.setdefault("X-Request-Id", request_id)
+
+    # Cleanup context after logging
+    try:
+        reset_request_context(request_token, user_token)
+    except Exception:
+        pass
+
+    return response

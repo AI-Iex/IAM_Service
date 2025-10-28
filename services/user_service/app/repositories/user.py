@@ -1,12 +1,13 @@
+from datetime import datetime, timedelta, timezone
 from typing import Optional, List
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import selectinload
-from sqlalchemy import select
+from sqlalchemy import select, delete, update
 from app.models.user import User
 from app.schemas.user import UserCreateInDB
 from app.core.exceptions import EntityAlreadyExists, RepositoryError
-from app.repositories.interfaces import IUserRepository
+from app.repositories.interfaces.user import IUserRepository
 from uuid import UUID
 
 class UserRepository(IUserRepository):
@@ -109,21 +110,33 @@ class UserRepository(IUserRepository):
                 return user
         except Exception as e:
             raise RepositoryError(f"Error updating user: {str(e)}") from e
+        
 
+    async def update_last_login(self, db: AsyncSession, user_id: UUID) -> User:
+        try:
+            result = await db.execute(
+                select(User)
+                .where(User.id == user_id)
+                .options(selectinload(User.roles))
+            )
+            user = result.scalar_one_or_none()
+            if user:
+                user.last_login = datetime.now(timezone.utc)
+                
+                await db.flush()
+                await db.refresh(user)
+                return user
+        except Exception as e:
+            raise RepositoryError(f"Error updating last_login: {str(e)}") from e
     # endregion UPDATE
 
     # region DELETE
 
-    async def delete(self, db: AsyncSession, user_id: UUID) -> bool:
+    async def delete(self, db: AsyncSession, user_id: UUID) -> None:
         try:
-            result = await db.execute(
-                select(User).where(User.id == user_id)
-            )
-            user = result.scalar_one_or_none()
-            if user:
-                await db.delete(user)
-                return True
-            return False
+            
+            result = await db.execute( delete(User).where(User.id == user_id))
+
         except Exception as e:
             raise RepositoryError(f"Error deleting user: {str(e)}") from e
 

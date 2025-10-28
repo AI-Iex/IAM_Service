@@ -12,3 +12,6 @@ pydantic-settings
 python-dotenv
 pytest
 asyncpg
+jsonschema
+python-multipart
+httpx

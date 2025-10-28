@@ -1,16 +1,19 @@
 from typing import List, Optional
-from app.repositories.interfaces import IUserRepository
-from app.services.interfaces import IUserService
+from sqlalchemy import func
+from app.repositories.interfaces.user import IUserRepository
+from app.services.interfaces.user import IUserService
 from app.db.unit_of_work import UnitOfWorkFactory
-from app.schemas.user import UserCreate, UserCreateInDB, UserRead, UserUpdate, UserChangeEmail
+from app.schemas.user import UserCreate, UserCreateInDB, UserRead, UserUpdate, UserChangeEmail, UserRegister
 from app.db.unit_of_work import async_unit_of_work
 from app.core.security import hash_password, verify_password
 from app.core.exceptions import EntityAlreadyExists, DomainError, NotFoundError
 import logging, re
+import hmac
 from app.core.business_config import BusinessConfig
 from uuid import UUID
+from app.core.config import settings
 
-logger = logging.getLogger("nebulaops.user_service")
+logger = logging.getLogger(__name__)
 
 class UserService(IUserService):
     def __init__(self, user_repo: IUserRepository, uow_factory: UnitOfWorkFactory = async_unit_of_work): 
@@ -151,16 +154,80 @@ class UserService(IUserService):
         local_part = email.split('@')[0]
         if local_part.startswith('.') or local_part.endswith('.'):
             raise DomainError("Invalid email format - local part cannot start or end with a dot")
+    
+    # Update the last login timestamp for a user
+    def _update_last_login(self,user_id: UUID):
+        n=0
+        
 
 # endregion Internal Methods
 
 # region CREATE
 
-    # Create a new user
-    async def create(self, payload: UserCreate) -> UserRead :
+
+    async def register_user(self, payload: UserRegister) -> UserRead :
+
+        """
+        Register a new user account.\n
+        Used for self-service user registration.
+        """
         
         # 0. Log the attempt
-        logger.info("Creating user", extra = {"email": payload.email})
+        logger.info("Trying to register a new user", extra={"extra": {"email": payload.email}})
+
+        # 1. Validate email format
+        self._validate_email(payload.email)
+        
+        # 2. Validate password policy
+        self._validate_password(payload.password)
+
+        # 3. Validate name policy
+        self._validate_name(payload.full_name)
+
+        async with self.uow_factory() as db:
+
+            # 4. Check if email already exists
+            existing = await self.user_repo.get_by_email(db, payload.email)
+            if existing:
+                raise EntityAlreadyExists("Email is already in use")
+
+            # 5. Hash the password and prepare DTO for repository
+            hashed = hash_password(payload.password)
+            dto = UserCreateInDB(
+                email = payload.email,
+                full_name = payload.full_name,
+                hashed_password = hashed,
+                is_active = True,
+                is_superuser = False,
+                require_password_change = False
+            )
+
+            # 6. Create the user in the database
+            user = await self.user_repo.create(db, dto)
+
+            # 7. Log the success
+            logger.info(
+                "User registered successfully",
+                extra={
+                    "extra": {
+                        "user_created": user.id,
+                        "email": user.email
+                    }
+                }
+            ) 
+            
+        return UserRead.model_validate(user)
+    
+   
+    async def admin_register_user(self, payload: UserCreate) -> UserRead :
+        
+        # 0. Log the attempt
+        logger.info(
+            "Creating user",
+            extra={
+                "extra": {"email": payload.email}
+            }
+        )
 
         # 1. Validate email format
         self._validate_email(payload.email)
@@ -195,7 +262,15 @@ class UserService(IUserService):
             user_schema = UserRead.model_validate(user)
 
             # 8. Log the success
-            logger.info("User created successfully", extra = {"user_id": user.id, "email": payload.email})
+            logger.info(
+                "User created successfully",
+                extra={
+                    "extra": {
+                        "user_created": user_schema.id,
+                        "email": user_schema.email
+                    }
+                }
+            ) 
             
         return user_schema
     
@@ -215,34 +290,40 @@ class UserService(IUserService):
     ) -> List[UserRead]:
     
         # 0. Log the attempt
-        logger.info("Reading users with filters",
-        extra = {
-            "name_filter": name,
-            "email_filter": email, 
-            "active_filter": active,
-            "superuser_filter": is_superuser,
-            "skip": skip,
-            "limit": limit
+        logger.info(
+            "Reading users with filters",
+            extra={  
+                "name_filter": name,
+                "email_filter": email, 
+                "active_filter": active,
+                "superuser_filter": is_superuser,
+                "skip": skip,
+                "limit": limit
             }
         )
 
         async with self.uow_factory() as db:
             # 1. Query the users
             users = await self.user_repo.get_with_filters(
-            db = db,
-            name = name,
-            email = email,
-            active = active,
-            is_superuser = is_superuser,
-            skip = skip,
-            limit = limit
-        )
+                db = db,
+                name = name,
+                email = email,
+                active = active,
+                is_superuser = is_superuser,
+                skip = skip,
+                limit = limit
+            )
             
-        # 2. Build a plain dict while session is still open to avoid DetachedInstanceError
-        user_schemas = [UserRead.model_validate(user) for user in users]
-        
-        # 3. Log the success
-        logger.info("Users retrieved successfully", extra = {"count": len(user_schemas)})
+            # 2. Build a plain dict while session is still open to avoid DetachedInstanceError
+            user_schemas = [UserRead.model_validate(user) for user in users]
+            
+            # 3. Log the success
+            logger.info(
+                "Users retrieved successfully", 
+                extra={  # ← DIRECTO
+                    "Users read count": len(user_schemas)
+                }
+            )
         
         return user_schemas
 
@@ -250,7 +331,12 @@ class UserService(IUserService):
     async def read_by_id(self, user_id: UUID) -> UserRead:
         
         # 0. Log the attempt
-        logger.info("Reading user using the uuid", extra = {"user_id": user_id})
+        logger.info(
+            "Reading user by ID",
+            extra = {
+                "extra": { "retrieve_user_id": user_id}
+            }
+        )
 
         async with self.uow_factory() as db:
 
@@ -265,20 +351,29 @@ class UserService(IUserService):
             user_schema = UserRead.model_validate(user)
 
             # 4. Log the success
-            logger.info("User read successfully", extra = {"user_id": user_id})
+            logger.info(
+                "User read successfully",
+                extra = {
+                    "extra": { "user_found": user_schema.id}
+                }
+            )
 
         return user_schema
     
 # endregion READ
 
-    async def delete(self, user_id: UUID) -> bool:
-        raise NotImplementedError("Delete method not implemented")
+# region UPDATE
 
-    # Update some fields of the user
+ # Update some fields of the user
     async def update(self, user_id: UUID, payload: UserUpdate) -> UserRead:
         
         # 0. Log the attempt
-        logger.info("Updating user", extra = {"user_id": user_id, "fields": list(payload.model_dump(exclude_unset=True).keys())})
+        logger.info(
+            "Updating user",
+            extra = {
+                "extra": { "user_id_to_update": user_id}
+            }
+        )
 
         async with self.uow_factory() as db:
 
@@ -301,15 +396,25 @@ class UserService(IUserService):
             user_schema = UserRead.model_validate(user)
 
             # 6. Log the success
-            logger.info("User updated successfully", extra={"user_id": user_id})
+            logger.info(
+                "User updated successfully",
+                extra={
+                    "extra": {"user_updated_id": user_id}
+                }
+            )
         
         return UserRead.model_validate(user_schema)
     
     # Update the email of the user
     async def change_email(self, user_id: UUID, payload: UserChangeEmail) -> UserRead:
-    
-         # 0. Log the attempt
-        logger.info("Requesting email change", extra={"user_id": user_id})
+
+        # 0. Log the attempt
+        logger.info(
+            "Requesting email change",
+            extra = {
+                "extra": { "current_email": payload.current_email, "new_email": payload.new_email}
+            }
+        )
 
         async with self.uow_factory() as db:
 
@@ -342,6 +447,52 @@ class UserService(IUserService):
             updated_user = await self.user_repo.update(db, user_id, {"email": payload.new_email.lower()})
             
             # 8. Log the success
-            logger.info("Email changed successfully", extra={"user_id": user_id, "new_email": payload.new_email})
+            logger.info(
+            "Email changed successfully",
+            extra = {
+                "extra": { "new_email": payload.new_email}
+            }
+        )
 
             return UserRead.model_validate(updated_user)
+
+# endregion UPDATE
+
+# region DELETE
+
+# Delete the user with that identifier
+    async def delete(self, user_id: UUID) -> None:
+        
+        # 0. Log the attempt
+        logger.info(
+            "Deleting user by ID",
+            extra = {
+                "extra": { "user_id_to_delete": user_id}
+            }
+        )
+
+        async with self.uow_factory() as db:
+
+            # 1. Verify that the user exists
+            existing_user = await self.user_repo.get_by_id(db, user_id)
+            if not existing_user:
+                raise NotFoundError("User not found")
+            
+            # 2. Delete the user
+            await self.user_repo.delete(db, user_id)
+
+            # 3. Log the success
+            logger.info(
+                "User deleted successfully",
+                extra={
+                    "extra": {
+                        "user_deleted": user_id,
+                        "email": existing_user.email
+                    }
+                }
+            )
+
+# endregion DELETE
+
+
+

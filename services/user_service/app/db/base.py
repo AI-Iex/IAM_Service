@@ -4,10 +4,14 @@ from sqlalchemy.ext.asyncio import AsyncEngine
 Base = declarative_base()
 
 async def init_db(engine: AsyncEngine):
-    # Import all modules that might define the models
+    
+    """ Initialize the database by creating all tables defined in the models """
+
     import app.models.user 
     import app.models.user_role 
     import app.models.role
+    import app.models.refresh_token
+    import app.models.client
     
     async with engine.begin() as conn:
         await conn.run_sync(Base.metadata.create_all)
