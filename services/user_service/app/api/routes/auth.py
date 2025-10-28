@@ -64,13 +64,13 @@ async def login_user(
 
     # Create and set the refresh token cookie
     response.set_cookie(
-        key = "refresh",                                            # Name of the cookie
-        value = f"{token.refresh_token}::{token.jti}",              # Token + JTI for tracking
-        httponly = True,                                            # Prevent access via JavaScript for more security
-        secure = True,                                              # Only over HTTPS
-        samesite = "lax",                                           # Protection against CSRF
-        max_age = settings.REFRESH_TOKEN_EXPIRE_DAYS * 24 * 3600,   # Expiration time in seconds
-        path = "/auth/refresh"                                      # Only send to specific routes
+        key = "refresh",                                                # Name of the cookie
+        value = f"{token.refresh_token}::{token.jti}",                  # Token + JTI for tracking
+        httponly = True,                                                # Prevent access via JavaScript for more security
+        secure = not settings.is_development,                           # Only over HTTPS
+        samesite = "lax",                                               # Protection against CSRF
+        max_age = settings.REFRESH_TOKEN_EXPIRE_DAYS * 24 * 3600,       # Expiration time in seconds
+        path = "/auth" if settings.is_development else "/auth/refresh"  # Only send to specific routes
     )
 
     return login_response
@@ -86,7 +86,7 @@ async def login_user(
     "Log out the user revoking the refresh token.\n"
     "\nSupports both cookie-based and Swagger/manual requests.\n"
     "- For **cookie-based** requests, the `refresh` cookie will be used.\n"
-    "- For **Swagger/manual** requests, provide the `refresh_token` in the request body or <raw>::<jti> format.",
+    "- For non-cookie **Swagger/manual** requests, provide the `refresh_token` in the request body or <raw>::<jti> format.",
 )
 async def logout_user(
     request: Request,
@@ -152,7 +152,7 @@ async def logout_user(
 
     # 6️. Clean up cookie if present
     if response:
-        response.delete_cookie("refresh", path="/auth/refresh")
+        response.delete_cookie("refresh")
 
     return Response(status_code=status.HTTP_204_NO_CONTENT)
 
@@ -174,7 +174,7 @@ async def logout_all_devices_handler(
 ):
     await auth_service.logout_all_devices(current_user.id)
     if response:
-        response.delete_cookie("refresh", path="/auth/refresh")
+        response.delete_cookie("refresh")
     return Response(status_code=status.HTTP_204_NO_CONTENT)
 
 
@@ -186,7 +186,7 @@ async def logout_all_devices_handler(
     summary = "🔄 Refresh access token",
     description =
     "Refresh endpoint. Supports multiple input methods to make it easy to use from both browser and API clients:\n"
-    "- Cookie: `refresh` (format: `<raw>::<jti>` or `<raw>`).\n"
+    "- Cookie: `refresh` sent as cookie by the client automatically.\n"
     "- Header: `Refresh-Token` (raw or raw::jti) and optional `Refresh-JTI`.\n"
     "- Body JSON: { \"refresh_token\": \"<raw>\" } or { \"refresh_token\": \"<raw>::<jti>\" }.\n"
     "Cookie has priority over header, which has priority over body.",
@@ -195,8 +195,7 @@ async def logout_all_devices_handler(
 async def refresh_token(
     request: Request,
     response: Response,
-    refresh_cookie: Optional[str] = Cookie(None),
-    refresh_token: Optional[str] = Header(None, alias = "refresh_token"),
+    refresh_token: Optional[str] = Header(None, alias = "refresh"),
     refresh_jti: Optional[str] = Header(None, alias = "refresh_jti"),
     body: Optional[LogoutRequest] = None,
     auth_service: AuthService = Depends(get_auth_service)
@@ -205,6 +204,8 @@ async def refresh_token(
     raw = None
     jti = None
     jti_uuid = None
+
+    refresh_cookie = request.cookies.get("refresh")
 
     # 1. Get from cookie first if present, with highest priority
     if refresh_cookie:
@@ -251,13 +252,13 @@ async def refresh_token(
 
     # 7. Rotate cookie for security
     response.set_cookie(
-        key = "refresh",                                            # Name of the cookie
-        value = f"{token.refresh_token}::{token.jti}",              # Token + JTI for tracking
-        httponly = True,                                            # Prevent access via JavaScript for more security
-        secure = True,                                              # Only over HTTPS
-        samesite = "lax",                                           # Protection against CSRF
-        max_age = settings.REFRESH_TOKEN_EXPIRE_DAYS * 24 * 3600,   # Expiration time in seconds
-        path = "/auth/refresh"                                      # Only send to specific routes
+        key = "refresh",                                                # Name of the cookie
+        value = f"{token.refresh_token}::{token.jti}",                  # Token + JTI for tracking
+        httponly = True,                                                # Prevent access via JavaScript for more security
+        secure = not settings.is_development,                           # Only over HTTPS
+        samesite = "lax",                                               # Protection against CSRF
+        max_age = settings.REFRESH_TOKEN_EXPIRE_DAYS * 24 * 3600,       # Expiration time in seconds
+        path = "/auth" if settings.is_development else "/auth/refresh"  # Only send to specific routes
     )
 
     return refresh_response

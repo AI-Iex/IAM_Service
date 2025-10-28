@@ -1,5 +1,6 @@
 import logging
 from fastapi import FastAPI
+from fastapi.middleware.cors import CORSMiddleware
 from app.api.routes.user import router as users_router
 from app.api.routes.auth import router as auth_router
 from app.middleware.logging import access_log_middleware
@@ -14,6 +15,7 @@ from app.core.logging_config import setup_logging, configure_third_party_loggers
 logger = setup_logging()
 configure_third_party_loggers(level = logging.WARNING, attach_json_handler = False)
 
+
 app = FastAPI(
     title=settings.SERVICE_NAME,
     version=settings.SERVICE_VERSION,
@@ -21,6 +23,14 @@ app = FastAPI(
     license_info={"name": settings.SERVICE_LICENSE},
     docs_url="/docs",
     redoc_url="/redoc"
+)
+
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=["http://127.0.0.1:8000", "http://localhost:8000"],
+    allow_credentials = True,  # ← ESTO ES CRÍTICO para cookies
+    allow_methods=["*"],
+    allow_headers=["*"],
 )
 
 # Register middlewares so that the access-log middleware is the outermost wrapper.

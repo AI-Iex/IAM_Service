@@ -52,6 +52,22 @@ async def read_with_filters(
         is_superuser = is_superuser, skip = skip, limit = limit
     )
 
+
+# Read current user profile
+@router.get(
+    "/me",
+    response_model = UserRead,
+    status_code = status.HTTP_200_OK,
+    summary = "👤 Get current user profile",
+    description = "Get the complete profile of the currently authenticated user",
+    response_description = "The current user"
+)
+async def get_current_user_profile(
+    current_user: UserRead = Depends(get_current_user)
+) -> UserRead:
+    return current_user
+
+
 # Read a user by ID
 @router.get(
         "/{user_id}",

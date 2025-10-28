@@ -29,6 +29,13 @@ class Settings(BaseSettings):
     REFRESH_TOKEN_EXPIRE_DAYS: int = 30
     REFRESH_TOKEN_BYTES: int = 64
 
+    # Environment config
+    ENVIRONMENT: str = "development"
+
+    @property
+    def is_development(self):
+        return self.ENVIRONMENT == "development"
+
     model_config = SettingsConfigDict(
         env_file=".env",
         env_file_encoding="utf-8",
