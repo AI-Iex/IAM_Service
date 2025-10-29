@@ -10,16 +10,17 @@ class UserBase(BaseModel):
     is_active: bool = Field(default = True, example = True, description="Is the user active?")
     is_superuser: bool = Field(default = False, example = False, description="Is the user a superuser for get all permissions?")
 
+
 # Schema for self-service user registration
 class UserRegister(BaseModel):
     email: str = Field(..., example = "user@email.com", description = "The user's email address")
     full_name: str = Field(..., example = "Name Surname", description = "The user's name and surname")
     password: str = Field(..., example = "strongpassword123", repr = False, description = "The user's password")
 
+
 # Schema for user creation by admin (includes temporary password)
-class UserCreate(UserBase):
+class UserCreateByAdmin(UserBase):
     password: str = Field(..., example = "strongpassword123", repr = False, description = "The user's password")
-    require_password_change: bool = Field(default = False, example = False, description = "Flag to force the user change the password")
 
 
 # Internal schema for user creation in DB (includes hashed_password, used by repository)
@@ -29,17 +30,20 @@ class UserCreateInDB(UserBase):
 
     model_config = {"from_attributes": True}
 
+
 # Schema for user update (all fields optional)
 class UserUpdate(BaseModel):
     full_name: Optional[str] = Field(None, example = "Name Surname", description="The user's name and surname")
     is_active: Optional[bool] = Field(None, example = True, description="Is the user active?")
     is_superuser: Optional[bool] = Field(None, example = False, description="Is the user a superuser for get all permissions?")
 
+
 # Schema for change the user email
 class UserChangeEmail(BaseModel):
     current_email: str = Field(..., example = "currentemail@email.com", description = "Current email address for verification")
     new_email: str = Field(..., example = "newemail@email.com", description = "The new email address")
     current_password: str = Field(..., example = "CurrentPassword123!", description = "Current password for verification")
+
 
 # Schema for reading user data (includes id, timestamps, and roles)
 class UserRead(UserBase):
@@ -51,10 +55,12 @@ class UserRead(UserBase):
 
     model_config = {"from_attributes": True}
 
+
 # Schema for user login (used for authentication)
 class UserLogin(BaseModel):
     email: str = Field(..., example = "user@email.com", description="The user's email")
     password: str = Field(..., example = "strongpassword123", description="The user's password",  repr=False) 
+
 
 # Internal schema for know if the user is in the database
 class UserInDB(UserBase):
@@ -63,6 +69,7 @@ class UserInDB(UserBase):
     roles: List[str] = Field(default = [], example = ["admin", "user"], description="List of roles assigned to the user")
 
     model_config = {"from_attributes": True}
+
 
 # Schema for password change
 class PasswordChange(BaseModel):

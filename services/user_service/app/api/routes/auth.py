@@ -20,7 +20,7 @@ router = APIRouter(prefix="/auth", tags=["Auth"])
     "",
     response_model = UserRead,
     status_code = status.HTTP_201_CREATED,
-    summary = "👤 Register a new user",
+    summary = "Register a new user",
     description = 
     "Register a new user, necessary fields:\n "
     "- `Email`: The user's email address. **Valid domains**: gmail.com, yahoo.com, outlook.com, hotmail.com, mahle.com\n" \
@@ -39,7 +39,7 @@ async def create_user(
     "/login",
     response_model = UserAndToken,
     status_code = status.HTTP_200_OK,
-    summary = "🔐 Log in",
+    summary = "Log in",
     description = 
     "Log in the user and creates a access token, refresh token, and refresh cookie.\n"
     "- `Username`: The **email** address.\n"
@@ -81,7 +81,7 @@ async def login_user(
     "/logout",
     response_model = None,
     status_code = status.HTTP_204_NO_CONTENT,
-    summary = "🚪 Log out",
+    summary = "Log out",
     description =
     "Log out the user revoking the refresh token.\n"
     "\nSupports both cookie-based and Swagger/manual requests.\n"
@@ -162,7 +162,7 @@ async def logout_user(
     "/logout_all_devices",
     response_model = None,
     status_code = status.HTTP_204_NO_CONTENT,
-    summary = "🚪 Log out the user from all devices",
+    summary = "Log out the user from all devices",
     description = 
     "Logs out the user from all logged-in devices by revoking all refresh tokens",
     response_description = None
@@ -183,7 +183,7 @@ async def logout_all_devices_handler(
     "/refresh",
     response_model = UserAndToken,
     status_code = status.HTTP_200_OK,
-    summary = "🔄 Refresh access token",
+    summary = "Refresh access token",
     description =
     "Refresh endpoint. Supports multiple input methods to make it easy to use from both browser and API clients:\n"
     "- Cookie: `refresh` sent as cookie by the client automatically.\n"

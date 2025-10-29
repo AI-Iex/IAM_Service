@@ -3,7 +3,7 @@ from sqlalchemy import func
 from app.repositories.interfaces.user import IUserRepository
 from app.services.interfaces.user import IUserService
 from app.db.unit_of_work import UnitOfWorkFactory
-from app.schemas.user import UserCreate, UserCreateInDB, UserRead, UserUpdate, UserChangeEmail, UserRegister
+from app.schemas.user import UserCreateByAdmin, UserCreateInDB, UserRead, UserUpdate, UserChangeEmail, UserRegister
 from app.db.unit_of_work import async_unit_of_work
 from app.core.security import hash_password, verify_password
 from app.core.exceptions import EntityAlreadyExists, DomainError, NotFoundError
@@ -219,7 +219,7 @@ class UserService(IUserService):
         return UserRead.model_validate(user)
     
    
-    async def admin_register_user(self, payload: UserCreate) -> UserRead :
+    async def admin_register_user(self, payload: UserCreateByAdmin) -> UserRead :
         
         # 0. Log the attempt
         logger.info(
@@ -252,7 +252,8 @@ class UserService(IUserService):
                 full_name = payload.full_name,
                 hashed_password = hashed,
                 is_active = payload.is_active,
-                is_superuser = payload.is_superuser
+                is_superuser = payload.is_superuser,
+                require_password_change = True
             )
 
             # 6. Create the user in the database

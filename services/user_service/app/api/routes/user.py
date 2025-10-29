@@ -1,7 +1,7 @@
 from fastapi import APIRouter, Depends, status, Query, Path, HTTPException
 from typing import List, Optional
 from uuid import UUID
-from app.schemas.user import UserCreate, UserRead, UserUpdate, UserChangeEmail, PasswordChange
+from app.schemas.user import UserCreateByAdmin, UserRead, UserUpdate, UserChangeEmail, PasswordChange
 from app.services.user import UserService
 from app.dependencies.services import get_user_service
 from app.dependencies.auth import get_current_user
@@ -20,10 +20,11 @@ router = APIRouter(prefix = "/users", tags = ["Users"])
     response_description = "The created user" 
 )
 async def create_user(
-    payload: UserCreate,
-    user_service: UserService = Depends(get_user_service)
+    payload: UserCreateByAdmin,
+    user_service: UserService = Depends(get_user_service),
+    current_user: UserRead = Depends(get_current_user)
 ) -> UserRead:
-    return await user_service.create(payload)
+    return await user_service.admin_register_user(payload)
 
 # endregion CREATE
 
@@ -45,7 +46,8 @@ async def read_with_filters(
     is_superuser: Optional[bool] = Query(None, description = "Filter by superuser status"),
     skip: int = Query(0, ge = 0, description = "Number of records to skip (offset)"),
     limit: int = Query(100, ge = 1, le = 100, description = "Maximum records to return"),
-    user_service: UserService = Depends(get_user_service)
+    user_service: UserService = Depends(get_user_service),
+    current_user: UserRead = Depends(get_current_user)
 ) -> List[UserRead]:
     return await user_service.read_with_filters(
         name = name, email = email, active = active, 
@@ -58,7 +60,7 @@ async def read_with_filters(
     "/me",
     response_model = UserRead,
     status_code = status.HTTP_200_OK,
-    summary = "👤 Get current user profile",
+    summary = "Get current user profile",
     description = "Get the complete profile of the currently authenticated user",
     response_description = "The current user"
 )
@@ -79,7 +81,8 @@ async def get_current_user_profile(
 )
 async def read_user_by_id(
     user_id: UUID = Path(..., description = "Unique user identifier"),
-    user_service: UserService = Depends(get_user_service)
+    user_service: UserService = Depends(get_user_service),
+    current_user: UserRead = Depends(get_current_user)
 ) -> UserRead:
     return await user_service.read_by_id(user_id = user_id)
 
@@ -99,7 +102,8 @@ async def read_user_by_id(
 async def update_user(
     user_id: UUID = Path(..., description = "Unique user identifier"),
     payload: UserUpdate = None,
-    user_service: UserService = Depends(get_user_service)
+    user_service: UserService = Depends(get_user_service),
+    current_user: UserRead = Depends(get_current_user)
 ) -> UserRead: 
     return await user_service.update(user_id, payload)
 
@@ -116,7 +120,8 @@ async def set_user_roles(
     user_id: int = Path(..., description = "Unique user identifier"),
     # !Cambiar a recibir una lista de DTOs de Roles? Mirar para mantenerlo desacoplado, hacerlo al final.
     roles: list[str] = Query(..., description = "List of roles to assign"),
-    user_service: UserService = Depends(get_user_service)
+    user_service: UserService = Depends(get_user_service),
+    current_user: UserRead = Depends(get_current_user)
 ) -> UserRead:
     return await user_service.set_roles(user_id, roles)
 
@@ -171,7 +176,8 @@ async def change_user_password(
 )
 async def delete_user(
         user_id: UUID = Path(..., description = "Unique user identifier"),
-        user_service: UserService = Depends(get_user_service)
+        user_service: UserService = Depends(get_user_service),
+        current_user: UserRead = Depends(get_current_user)
 ) -> None:
     await user_service.delete(user_id)
     return None
