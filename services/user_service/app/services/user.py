@@ -8,7 +8,6 @@ from app.db.unit_of_work import async_unit_of_work
 from app.core.security import hash_password, verify_password
 from app.core.exceptions import EntityAlreadyExists, DomainError, NotFoundError
 import logging, re
-import hmac
 from app.core.business_config import BusinessConfig
 from uuid import UUID
 from app.core.config import settings
@@ -304,6 +303,7 @@ class UserService(IUserService):
         )
 
         async with self.uow_factory() as db:
+
             # 1. Query the users
             users = await self.user_repo.get_with_filters(
                 db = db,
@@ -315,18 +315,15 @@ class UserService(IUserService):
                 limit = limit
             )
             
-            # 2. Build a plain dict while session is still open to avoid DetachedInstanceError
-            user_schemas = [UserRead.model_validate(user) for user in users]
-            
-            # 3. Log the success
+            # 2. Log the success
             logger.info(
                 "Users retrieved successfully", 
-                extra={  # ← DIRECTO
-                    "Users read count": len(user_schemas)
+                extra={
+                    "Users read count": len(users)
                 }
             )
         
-        return user_schemas
+        return [UserRead.model_validate(user) for user in users]
 
     # Read a user by ID
     async def read_by_id(self, user_id: UUID) -> UserRead:
@@ -347,19 +344,16 @@ class UserService(IUserService):
             # 2. Check if user exists
             if not user:
                 raise NotFoundError("User not found")
-            
-            # 3. Build a plain dict while session is still open to avoid DetachedInstanceError
-            user_schema = UserRead.model_validate(user)
-
-            # 4. Log the success
+           
+            # 3. Log the success
             logger.info(
                 "User read successfully",
                 extra = {
-                    "extra": { "user_found": user_schema.id}
+                    "extra": { "user_found": user.id}
                 }
             )
 
-        return user_schema
+        return UserRead.model_validate(user)
     
 # endregion READ
 

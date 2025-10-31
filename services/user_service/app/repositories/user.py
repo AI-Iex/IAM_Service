@@ -49,10 +49,8 @@ class UserRepository(IUserRepository):
         limit: int = 100
     ) -> List[User]:
     
-        # Construir query base
         query = select(User).options(selectinload(User.roles))
         
-        # Aplicar filtros dinámicamente
         if name is not None:
             query = query.where(User.full_name.ilike(f"%{name}%"))
         
@@ -65,10 +63,8 @@ class UserRepository(IUserRepository):
         if is_superuser is not None:
             query = query.where(User.is_superuser == is_superuser)
         
-        # Aplicar paginación
         query = query.offset(skip).limit(limit)
         
-        # Ejecutar UNA sola query
         result = await db.execute(query)
         return result.scalars().all()
 

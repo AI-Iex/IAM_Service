@@ -7,9 +7,17 @@ class Settings(BaseSettings):
 
     # SERVICE config
     SERVICE_NAME: str
-    SERVICE_VERSION: str
+    SERVICE_VERSION: str = "1.0.0"
     SERVICE_DESCRIPTION: str
     SERVICE_LICENSE: str
+
+    # API config
+    API_VERSION: float = 1.0
+
+    @property
+    def route_prefix(self) -> str:
+        """Returns API route prefix using the configured API version."""
+        return f"/api/v{self.API_VERSION}"
 
     # DDBB config
     DATABASE_URL: str
@@ -41,6 +49,7 @@ class Settings(BaseSettings):
         env_file_encoding="utf-8",
         extra="ignore"
     )
+
 
 @lru_cache()
 def get_settings():

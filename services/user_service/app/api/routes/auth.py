@@ -3,6 +3,8 @@ from fastapi import (
 )
 from uuid import UUID
 from typing import Optional
+from fastapi.responses import JSONResponse
+from fastapi.encoders import jsonable_encoder
 from fastapi.security import OAuth2PasswordRequestForm
 from app.core.config import settings
 from app.schemas.user import UserRead, UserRegister
@@ -70,7 +72,7 @@ async def login_user(
         secure = not settings.is_development,                           # Only over HTTPS
         samesite = "lax",                                               # Protection against CSRF
         max_age = settings.REFRESH_TOKEN_EXPIRE_DAYS * 24 * 3600,       # Expiration time in seconds
-        path = "/auth" if settings.is_development else "/auth/refresh"  # Only send to specific routes
+        path = f"{settings.route_prefix}/auth" if settings.is_development else f"{settings.route_prefix}/auth/refresh"  # Only send to specific routes
     )
 
     return login_response
@@ -258,16 +260,16 @@ async def refresh_token(
         secure = not settings.is_development,                           # Only over HTTPS
         samesite = "lax",                                               # Protection against CSRF
         max_age = settings.REFRESH_TOKEN_EXPIRE_DAYS * 24 * 3600,       # Expiration time in seconds
-        path = "/auth" if settings.is_development else "/auth/refresh"  # Only send to specific routes
+        path = f"{settings.route_prefix}/auth" if settings.is_development else f"{settings.route_prefix}/auth/refresh"  # Only send to specific routes
     )
 
     return refresh_response
 
 
-# ⚙️ Token endpoint (for Swagger / dev tools)
+# Token endpoint (for Swagger / dev tools)
 @router.post(
     "/token",
-    summary="Token endpoint for Swagger or client_credentials flow"
+    summary="Token endpoint for Swagger, OAuth2 password and client_credentials flows"
 )
 async def token_endpoint(
     form_data: OAuth2PasswordRequestForm = Depends(),
@@ -277,7 +279,7 @@ async def token_endpoint(
     """
     Token endpoint supporting both client_credentials and password grants.
 
-    - `grant_type=client_credentials`: username=client_id, password=client_secret
+    - `grant_type=client_credentials`: username=client_id, password=client_secret  
     - `grant_type=password`: username=email, password=password
     """
     grant_type = getattr(form_data, "grant_type", None) or "client_credentials"
@@ -288,18 +290,40 @@ async def token_endpoint(
         if grant_type == "client_credentials":
             res = await auth_service.client_credentials(form_data.username, form_data.password)
         elif grant_type == "password":
-            res = await auth_service.login(form_data.username, form_data.password, ip = ip, user_agent = ua)
+            res = await auth_service.login(form_data.username, form_data.password, ip=ip, user_agent=ua)
         else:
             raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=f"Unsupported grant_type: {grant_type}")
     except Exception as e:
         raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail=str(e))
 
     tokens = res.token
-    return {
-        "access_token": tokens.access_token,
-        "token_type": tokens.token_type,
-        "expires_in": tokens.expires_in,
-        "refresh_token": tokens.refresh_token,
-        "jti": getattr(tokens, "jti", None),
-    }
+
+    # Build token response
+    token_data = TokenPair(
+        access_token = tokens.access_token,
+        refresh_token = tokens.refresh_token,
+        jti = tokens.jti,
+        token_type = "bearer",
+        expires_in = tokens.expires_in
+    )
+
+
+    content = jsonable_encoder(token_data)
+
+    # Create response
+    response = JSONResponse(content = content)
+
+    # Only set refresh cookie for password grant
+    if grant_type == "password":
+        response.set_cookie(
+            key = "refresh",                                                # Name of the cookie
+            value = f"{tokens.refresh_token}::{tokens.jti}",                # Token + JTI for tracking
+            httponly = True,                                                # Prevent access via JavaScript for more security
+            secure = not settings.is_development,                           # Only over HTTPS
+            samesite = "lax",                                               # Protection against CSRF
+            max_age = settings.REFRESH_TOKEN_EXPIRE_DAYS * 24 * 3600,       # Expiration time in seconds
+            path = f"{settings.route_prefix}/auth" if settings.is_development else f"{settings.route_prefix}/auth/refresh"  # Only send to specific routes
+        )
+
+    return response
 

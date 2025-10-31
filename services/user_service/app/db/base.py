@@ -12,6 +12,8 @@ async def init_db(engine: AsyncEngine):
     import app.models.role
     import app.models.refresh_token
     import app.models.client
+    import app.models.permission
+    import app.models.role_permission
     
     async with engine.begin() as conn:
         await conn.run_sync(Base.metadata.create_all)

@@ -49,6 +49,7 @@ class UserChangeEmail(BaseModel):
 class UserRead(UserBase):
     id: UUID = Field(..., example = "c55df1d2-216a-4359-81xx-1d805801vg0g", description="Unique user identifier")
     created_at: Optional[datetime] = Field(None, example = "2023-01-01T00:00:00Z", description="The date and time when the user was created")
+    updated_at: Optional[datetime] = Field(None, example = "2023-01-05T15:30:00Z", description="The date and time when the user was last updated")
     last_login: Optional[datetime] = Field(None, example = "2023-01-10T12:34:56Z", description="The date and time of the user's last login")
     roles: List[str] = Field(default = [], example = ["admin", "user"], description="List of roles assigned to the user")
     require_password_change: bool = Field(default = False, example = False, description = "Flag to force the user change the password")

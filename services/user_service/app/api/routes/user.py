@@ -172,7 +172,6 @@ async def change_user_password(
     status_code = status.HTTP_204_NO_CONTENT,
     summary = "Delete a user",
     description = "Permanently delete a user account",
-    response_description = "User successfully deleted"
 )
 async def delete_user(
         user_id: UUID = Path(..., description = "Unique user identifier"),
@@ -180,6 +179,5 @@ async def delete_user(
         current_user: UserRead = Depends(get_current_user)
 ) -> None:
     await user_service.delete(user_id)
-    return None
 
 # endregion DELETE

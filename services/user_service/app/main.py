@@ -3,6 +3,9 @@ from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from app.api.routes.user import router as users_router
 from app.api.routes.auth import router as auth_router
+from app.api.routes.role import router as role_router
+from app.api.routes.health import router as health_router
+from app.api.routes.permission import router as permission_router
 from app.middleware.logging import access_log_middleware
 from app.middleware.context import context_middleware
 from app.middleware.auth_context import auth_context_middleware
@@ -11,6 +14,7 @@ from app.db.base import init_db
 from app.db.session import get_engine
 from app.core.config import settings
 from app.core.logging_config import setup_logging, configure_third_party_loggers
+
 
 logger = setup_logging()
 configure_third_party_loggers(level = logging.WARNING, attach_json_handler = False)
@@ -47,5 +51,8 @@ async def startup_event():
     logger.info("Service started successfully")
 
 # Include routers
-app.include_router(auth_router)
-app.include_router(users_router)
+app.include_router(auth_router, prefix = settings.route_prefix)
+app.include_router(users_router, prefix = settings.route_prefix)
+app.include_router(role_router, prefix = settings.route_prefix)
+app.include_router(permission_router, prefix = settings.route_prefix)
+app.include_router(health_router, prefix = settings.route_prefix)

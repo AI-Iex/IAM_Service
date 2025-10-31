@@ -6,9 +6,11 @@ from app.services.interfaces.user import IUserService
 from app.dependencies.services import get_user_service
 from uuid import UUID
 from app.schemas.user import UserRead
+from app.core.config import settings
 
 # OAuth2 scheme for token extraction
-oauth2_scheme = OAuth2PasswordBearer(tokenUrl="/auth/token")
+oauth2_scheme = OAuth2PasswordBearer(tokenUrl=f"/api/v{settings.API_VERSION}/auth/token")
+f"/api/v{settings.API_VERSION}"
 
     
 async def get_current_user(

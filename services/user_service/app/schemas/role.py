@@ -1,25 +1,24 @@
-from pydantic import BaseModel, EmailStr, Field
+from pydantic import BaseModel, Field
 from datetime import datetime
 from typing import Optional, List
 from uuid import UUID
 
-# Base schema with common fields
 class RoleBase(BaseModel):
     name: str = Field(..., example = "admin", description = "The name of the role")
+    description: Optional[str] = Field(None, example = "Administrator with full access", description = "Description of the role")
 
-# Schema for role creation (inherits from RoleBase)
 class RoleCreate(RoleBase):
-    pass
+    permissions: Optional[List[str]] = Field(default = [], example = ["view_users", "edit_users"], description = "List of permission names assigned to this role")
 
-# Schema for reading role data (includes id)
+class RoleUpdate(BaseModel):
+    name: Optional[str] = Field(None, example = "manager", description = "Updated role name")
+    description: Optional[str] = Field(None, example = "Manager role", description = "Updated role description")
+    permissions: Optional[List[str]] = Field(default = None, example = ["view_reports"], description = "Updated list of permissions")
+
 class RoleRead(RoleBase):
-    id: UUID = Field(..., example = "c55df1d2-216a-4359-81xx-1d805801vg0g", description = "Unique role identifier")
+    id: UUID = Field(..., example = "d44b9c8f-4b36-4ffb-xxxx-1f0b70cced7d", description = "Unique role identifier")
+    created_at: Optional[datetime] = Field(None, example = "2025-01-01T12:00:00Z", description = "Creation timestamp")
+    updated_at: Optional[datetime] = Field(None, example = "2025-01-02T12:00:00Z", description = "Last update timestamp")
+    permissions: List[str] = Field(default = [], example = ["view_users", "edit_roles"], description = "List of permissions names assigned to this role")
 
     model_config = {"from_attributes": True}
-
-# Schema for know if the role is in the database
-class RoleInDB(RoleBase):
-    id: UUID = Field(..., example = "c55df1d2-216a-4359-81xx-1d805801vg0g", description = "Unique role identifier")
-
-    model_config = {"from_attributes": True}
-    pass
