@@ -5,7 +5,7 @@ from app.core.security import decode_token
 from app.services.interfaces.user import IUserService
 from app.dependencies.services import get_user_service
 from uuid import UUID
-from app.schemas.user import UserRead
+from app.schemas.user import UserRead, UserReadDetailed
 from app.core.config import settings
 
 # OAuth2 scheme for token extraction
@@ -16,7 +16,7 @@ f"/api/v{settings.API_VERSION}"
 async def get_current_user(
     token: str = Depends(oauth2_scheme),
     user_service: IUserService = Depends(get_user_service)
-) -> UserRead:
+) -> UserReadDetailed:
 
     """ Obtain the current authenticated user based on the provided JWT token """
 
@@ -36,7 +36,7 @@ async def get_current_user(
 
     try:
         user = await user_service.read_by_id(UUID(sub))
-        
+
     except Exception as exc:
         raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="User not found or inactive")
     
@@ -46,7 +46,7 @@ async def get_current_user(
 async def get_current_user_optional(
     token: str = Depends(oauth2_scheme),
     user_service: IUserService = Depends(get_user_service)
-) -> Optional[UserRead]:
+) -> Optional[UserReadDetailed]:
     
     """
     Optional version of get_current_user.

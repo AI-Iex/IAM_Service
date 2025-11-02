@@ -58,21 +58,30 @@ def get_health_repository() -> IHealthRepository:
     return HealthRepository()
 
 
-# User service
-def get_user_service(
-    repo: IUserRepository = Depends(get_user_repository)
-) -> IUserService:
-    ''' Get user service instance '''
-    return UserService(user_repo = repo)
+# Permission service
+def get_permission_service(
+    repo: IPermissionRepository = Depends(get_permission_repository)
+) -> IPermissionService:
+    ''' Get permission service instance '''
+    return PermissionService(permission_repo = repo)
 
 
 # Role service
 def get_role_service(
-    repo: IRoleRepository = Depends(get_role_repository)
+    repo: IRoleRepository = Depends(get_role_repository),
+    permission_repo: IPermissionRepository = Depends(get_permission_repository)
 ) -> IRoleService:
     ''' Get role service instance '''
-    return RoleService(role_repo = repo)
+    return RoleService(role_repo = repo, permission_repo = permission_repo)
 
+
+# User service
+def get_user_service(
+    repo: IUserRepository = Depends(get_user_repository),
+    role_repo: IRoleRepository = Depends(get_role_repository)
+) -> IUserService:
+    ''' Get user service instance '''
+    return UserService(user_repo = repo, role_repo = role_repo)
 
 # Auth service
 def get_auth_service(
@@ -80,15 +89,7 @@ def get_auth_service(
     user_repo: IUserRepository = Depends(get_user_repository)
 ) -> IAuthService:
     ''' Get auth service instance '''
-    return AuthService(user_repo = user_repo, auth_repo=repo)
-
-
-# Permission service
-def get_permission_service(
-    repo: IPermissionRepository = Depends(get_permission_repository)
-) -> IPermissionService:
-    ''' Get permission service instance '''
-    return PermissionService(permission_repo = repo)
+    return AuthService(user_repo = user_repo, auth_repo = repo)
 
 
 # Health service

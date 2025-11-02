@@ -5,10 +5,10 @@ from app.schemas.user import UserCreateByAdmin, UserRead, UserUpdate, UserChange
 from app.services.user import UserService
 from app.dependencies.services import get_user_service
 from app.dependencies.auth import get_current_user
+from app.core.permissions import requires_permission
+from uuid import UUID
 
 router = APIRouter(prefix = "/users", tags = ["Users"])
-
-# region CREATE
 
 # Create a new user
 @router.post(
@@ -16,19 +16,21 @@ router = APIRouter(prefix = "/users", tags = ["Users"])
     response_model = UserRead,
     status_code = status.HTTP_201_CREATED,
     summary = "Create a new user",
-    description = "Create a new user with the provided details",
-    response_description = "The created user" 
+    description = "**Create a new user, the user created will have need to change the password after the first log in.**\n"
+    "- `Full Name`: Name and surname of the user.\n"
+    "- `Email`: Valid email address of the user.\n"
+    "- `Password`: Temporary password for the user account.\n"
+    "- `Is Active`: Boolean indicating if the user account is active.\n"
+    "- `Is Superuser`: Boolean indicating if the user has superuser privileges.",
+    response_description = "The created user",
 )
 async def create_user(
     payload: UserCreateByAdmin,
     user_service: UserService = Depends(get_user_service),
-    current_user: UserRead = Depends(get_current_user)
+    current_user: UserRead = requires_permission("users:create")
 ) -> UserRead:
     return await user_service.admin_register_user(payload)
 
-# endregion CREATE
-
-# region READ
 
 # Read users with filters
 @router.get(
@@ -36,18 +38,23 @@ async def create_user(
     response_model = List[UserRead],
     status_code = status.HTTP_200_OK,
     summary = "Get users with filtering and pagination",
-    description = "Retrieve users with optional filtering by name, email, status and pagination",
+    description = "**Retrieve users with optional filtering, don't fill anything to get all the users.**\n"
+    "- `Name`: Partial name search.\n"
+    "- `Email`: Exact email match (can provide multiple emails).\n"
+    "- `Active`: Filter by active status.\n"
+    "- `Is Superuser`: Filter by superuser status.\n"
+    "- `Pagination`: Use `skip` (offset) and `limit` (max records) for pagination.",
     response_description = "List of users matching criteria"
 )
 async def read_with_filters(
     name: Optional[str] = Query(None, min_length = 2, description = "Partial name search"),
-    email: Optional[str] = Query(None, description = "Exact email match"),
+    email: Optional[List[str]] = Query(None, description = "Exact email match"),
     active: Optional[bool] = Query(None, description = "Filter by active status"),
     is_superuser: Optional[bool] = Query(None, description = "Filter by superuser status"),
     skip: int = Query(0, ge = 0, description = "Number of records to skip (offset)"),
     limit: int = Query(100, ge = 1, le = 100, description = "Maximum records to return"),
     user_service: UserService = Depends(get_user_service),
-    current_user: UserRead = Depends(get_current_user)
+    current_user: UserRead = requires_permission("users:read")
 ) -> List[UserRead]:
     return await user_service.read_with_filters(
         name = name, email = email, active = active, 
@@ -61,7 +68,7 @@ async def read_with_filters(
     response_model = UserRead,
     status_code = status.HTTP_200_OK,
     summary = "Get current user profile",
-    description = "Get the complete profile of the currently authenticated user",
+    description = "**Get the profile of the currently authenticated user**",
     response_description = "The current user"
 )
 async def get_current_user_profile(
@@ -76,19 +83,17 @@ async def get_current_user_profile(
         response_model = UserRead,
         status_code = status.HTTP_200_OK,
         summary = "Get a user by unique identifier",
-        description = "Retrieve a user by their unique identifier",
+        description = "**Retrieve a user by their unique identifier**\n"
+        "- `user_id`: The unique identifier of the user to retrieve.",
         response_description = "The requested user"
 )
 async def read_user_by_id(
     user_id: UUID = Path(..., description = "Unique user identifier"),
     user_service: UserService = Depends(get_user_service),
-    current_user: UserRead = Depends(get_current_user)
+    current_user: UserRead = requires_permission("users:read")
 ) -> UserRead:
     return await user_service.read_by_id(user_id = user_id)
 
-# endregion READ
-
-# region UPDATE
 
 # Update a user by ID
 @router.patch(
@@ -96,88 +101,112 @@ async def read_user_by_id(
     response_model = UserRead,
     status_code = status.HTTP_200_OK,
     summary = "Update a user partially",
-    description = "Update user fields (name, active status, superuser status)",
+    description = "**Update user fields**\n"
+    "- `Full Name`: Update the user's full name.\n"
+    "- `Is Active`: Update the user's active status.\n"
+    "- `Is Superuser`: Update the user's superuser status.\n"
+    "- `Roles`: Update the user's roles. Empty roles will remove all roles from the user. A list of roles will replace existing roles.",
     response_description = "Updated user"
 )
 async def update_user(
     user_id: UUID = Path(..., description = "Unique user identifier"),
     payload: UserUpdate = None,
     user_service: UserService = Depends(get_user_service),
-    current_user: UserRead = Depends(get_current_user)
+    current_user: UserRead = requires_permission("users:update")
 ) -> UserRead: 
     return await user_service.update(user_id, payload)
 
-# Set user roles
+
+# Change email
 @router.put(
-    "/{user_id}/roles",
+    "/email",
     response_model = UserRead,
     status_code = status.HTTP_200_OK,
-    summary = "Update the user's roles",
-    description = "Update the user with the given list of roles",
-    response_description = "User with the updated roles"
-)
-async def set_user_roles(
-    user_id: int = Path(..., description = "Unique user identifier"),
-    # !Cambiar a recibir una lista de DTOs de Roles? Mirar para mantenerlo desacoplado, hacerlo al final.
-    roles: list[str] = Query(..., description = "List of roles to assign"),
-    user_service: UserService = Depends(get_user_service),
-    current_user: UserRead = Depends(get_current_user)
-) -> UserRead:
-    return await user_service.set_roles(user_id, roles)
-
- # !Eliminarlo como ruta y mover funcionalidad a servicio
-
- # ✅ Change email (UserService)
-@router.put(
-    "/{user_id}/email",
-    response_model=UserRead,
-    status_code=status.HTTP_200_OK,
-    summary="Change user email"
+    summary = "Change user email",
+    description = "**Change the email address of the current user.**\n"
+    "- `Current Email`: The current email address for verification.\n"
+    "- `New Email`: The new email address.\n"
+    "- `Current Password`: The current password for verification.",
+    response_description = "Updated user"
 )
 async def change_user_email(
-    user_id: UUID = Path(..., description="Unique user identifier"),
     payload: UserChangeEmail = None,
     current_user: UserRead = Depends(get_current_user),
     user_service: UserService = Depends(get_user_service)
 ) -> UserRead:
-    if current_user.id != user_id and not current_user.is_superuser:
-        raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Insufficient permissions")
-    return await user_service.change_email(user_id, payload)
+    return await user_service.change_email(current_user.id, payload)
 
 
-# ✅ Change password (UserService)
+# Change password
 @router.put(
-    "/{user_id}/password",
-    status_code=status.HTTP_204_NO_CONTENT,
-    summary="Change user password"
+    "/password",
+    status_code = status.HTTP_200_OK,
+    summary = "Change user password",
+    description = "**Change the password of the current user.**\n"
+    "- `Old Password`: The current password for verification.\n"
+    "- `New Password`: The new password to set.",
+    response_description = "Updated user"
 )
 async def change_user_password(
-    user_id: UUID = Path(..., description="Unique user identifier"),
     payload: PasswordChange = None,
     current_user: UserRead = Depends(get_current_user),
     user_service: UserService = Depends(get_user_service)
-) -> None:
-    if current_user.id != user_id and not current_user.is_superuser:
-        raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Insufficient permissions")
-    await user_service.change_password(user_id, payload)
+) -> UserRead:
+    return await user_service.change_password(current_user.id, payload)
 
 
-# endregion UPDATE
+# Add a role to a user
+@router.post(
+    "/{user_id}/roles/{role_id}",
+    response_model = UserRead,
+    status_code = status.HTTP_200_OK,
+    summary = "Add a role to a user",
+    description = "**Assign a role to a user**\n"
+    "- `user_id`: Unique identifier of the user.\n"
+    "- `role_id`: Unique identifier of the role to add.",
+    response_description = "User with the added role"
+)
+async def add_role_to_user(
+    user_id: UUID = Path(..., description = "Unique user identifier"),
+    role_id: UUID = Path(..., description = "Unique role identifier to add"),
+    user_service: UserService = Depends(get_user_service),
+    current_user: UserRead = requires_permission("users:update")
+) -> UserRead:
+    return await user_service.add_role_to_user(user_id, role_id)
 
-# region DELETE
+
+# Remove a role from a user
+@router.delete(
+    "/{user_id}/roles/{role_id}",
+    response_model = UserRead,
+    status_code = status.HTTP_200_OK,
+    summary = "Remove a role from a user",
+    description = "**Remove the specified role from a user.**\n" \
+    "- `user_id`: Unique identifier of the user.\n" \
+    "- `role_id`: Unique identifier of the role to remove.",
+    response_description = "User with the role removed"
+)
+async def remove_role_from_user(
+    user_id: UUID = Path(..., description = "Unique user identifier"),
+    role_id: UUID = Path(..., description = "Unique role identifier to remove"),
+    user_service: UserService = Depends(get_user_service),
+    current_user: UserRead = requires_permission("users:update")
+) -> UserRead:
+    return await user_service.remove_role_from_user(user_id, role_id)
+
 
 # Delete a user by ID
 @router.delete(
     "/{user_id}",
     status_code = status.HTTP_204_NO_CONTENT,
     summary = "Delete a user",
-    description = "Permanently delete a user account",
+    description = "**Permanently delete a user account**\n"
+    "- `user_id`: The unique identifier of the user to delete.",
 )
 async def delete_user(
         user_id: UUID = Path(..., description = "Unique user identifier"),
         user_service: UserService = Depends(get_user_service),
-        current_user: UserRead = Depends(get_current_user)
+        current_user: UserRead = requires_permission("users:delete")
 ) -> None:
     await user_service.delete(user_id)
 
-# endregion DELETE

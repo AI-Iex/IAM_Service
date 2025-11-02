@@ -4,7 +4,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import select, delete, update
 from app.repositories.interfaces.permission import IPermissionRepository
 from app.models.permission import Permission
-from app.schemas.permission import PermissionCreate, PermissionUpdate
+from app.schemas.permission import PermissionCreate, PermissionUpdateInDB
 from app.core.exceptions import RepositoryError, EntityAlreadyExists
 
 
@@ -29,7 +29,6 @@ class PermissionRepository(IPermissionRepository):
         except Exception as e:
             raise RepositoryError("Error creating permission") from e
 
-    
     async def read_by_id(self, db: AsyncSession, permission_id: UUID) -> Optional[Permission]:
 
         '''Get a permission by its ID.'''
@@ -45,10 +44,9 @@ class PermissionRepository(IPermissionRepository):
         except Exception as e:
             raise RepositoryError(f"Error reading permission by ID: {str(e)}") from e
     
-    
     async def read_with_filters(self,
                                 db: AsyncSession, 
-                                name: Optional[str] = None,
+                                name: Optional[List[str]] = None,
                                 description: Optional[str] = None,
                                 skip: int = 0, 
                                 limit: int = 100
@@ -60,8 +58,8 @@ class PermissionRepository(IPermissionRepository):
             query = select(Permission)
             
             if name is not None:
-                query = query.where(Permission.name.ilike(f"%{name}%"))
-            
+                query = query.where(Permission.name.in_(name))
+
             if description is not None:
                 query = query.where(Permission.description.ilike(f"%{description}%"))
             
@@ -74,20 +72,31 @@ class PermissionRepository(IPermissionRepository):
         except Exception as e:
            raise RepositoryError(f"Error reading permission with filters: {str(e)}") from e
 
+    async def read_by_names(self, db: AsyncSession, names: List[str]) -> List[Permission]:
 
-    async def update(self, db: AsyncSession, permission_id: UUID, payload: PermissionUpdate) -> Permission:
-        
-        """Update an existing Permission entity with provided data."""
+        '''Retrieve permissions matching provided names list'''
 
         try:
-            # 1. First get the Permission entity from database
-            db_permission = await self.read_by_id(db, permission_id)
-            
-            # 2. Transform the PermissionUpdate schema into a dict, excluding id
-            update_data = payload.model_dump(exclude_unset = True, exclude = {'id'})
+            query = select(Permission).where(Permission.name.in_(names))
 
-            # 3. Update fields of the model
-            for key, value in update_data.items():
+            result = await db.execute(query)
+
+            return result.scalars().all()
+        
+        except Exception as e:
+            raise RepositoryError(f"Error reading permissions by names: {str(e)}") from e
+
+    async def update(self, db: AsyncSession, permission_id: UUID, payload: PermissionUpdateInDB) -> Permission:
+
+        try:
+            db_permission = await self.read_by_id(db, permission_id)
+
+            if hasattr(payload, "model_dump"):
+                data = payload.model_dump(exclude_unset=True, exclude_none=True)
+            else:
+                data = dict(payload or {})
+
+            for key, value in data.items():
                 setattr(db_permission, key, value)
 
             await db.flush()
@@ -97,7 +106,6 @@ class PermissionRepository(IPermissionRepository):
 
         except Exception as e:
             raise RepositoryError(f"Error updating permission: {str(e)}") from e
-
 
     async def delete(self, db: AsyncSession, permission_id: UUID) -> None:
 
@@ -109,3 +117,5 @@ class PermissionRepository(IPermissionRepository):
             
         except Exception as e:
             raise RepositoryError(f"Error deleting permission: {str(e)}") from e
+
+

@@ -24,8 +24,8 @@ router = APIRouter(prefix="/auth", tags=["Auth"])
     status_code = status.HTTP_201_CREATED,
     summary = "Register a new user",
     description = 
-    "Register a new user, necessary fields:\n "
-    "- `Email`: The user's email address. **Valid domains**: gmail.com, yahoo.com, outlook.com, hotmail.com, mahle.com\n" \
+    "**Register a new user, necessary fields:**\n "
+    "- `Email`: The user's email address. **Valid domains**: gmail.com, yahoo.com, outlook.com, hotmail.com\n" \
     "- `Full name`: The user's name and surname. **Min length**: 2 characters\n"
     "- `Password`: The user's password. **Validation**: Min length 8 characters, 1 uppercase, 1 number and 1 special character are required.",
 )
@@ -43,9 +43,9 @@ async def create_user(
     status_code = status.HTTP_200_OK,
     summary = "Log in",
     description = 
-    "Log in the user and creates a access token, refresh token, and refresh cookie.\n"
-    "- `Username`: The **email** address.\n"
-    "- `Password`: The user's **password**.",
+    "**Log in the user and creates access token, refresh token, and refresh cookie.**\n"
+    "- `Username`: The email address.\n"
+    "- `Password`: The user's password.",
     response_description = "Returns access and refresh tokens for the authenticated user and user data"
 )
 async def login_user(
@@ -85,10 +85,9 @@ async def login_user(
     status_code = status.HTTP_204_NO_CONTENT,
     summary = "Log out",
     description =
-    "Log out the user revoking the refresh token.\n"
-    "\nSupports both cookie-based and Swagger/manual requests.\n"
+    "**Log out the user revoking the refresh token.**\n"
     "- For **cookie-based** requests, the `refresh` cookie will be used.\n"
-    "- For non-cookie **Swagger/manual** requests, provide the `refresh_token` in the request body or <raw>::<jti> format.",
+    "- For **non-cookie** requests, provide the `refresh_token` in the request body or raw::jti format.",
 )
 async def logout_user(
     request: Request,
@@ -156,7 +155,7 @@ async def logout_user(
     if response:
         response.delete_cookie("refresh")
 
-    return Response(status_code=status.HTTP_204_NO_CONTENT)
+    return Response(status_code = status.HTTP_204_NO_CONTENT)
 
 
 # Log out all devices
@@ -166,7 +165,7 @@ async def logout_user(
     status_code = status.HTTP_204_NO_CONTENT,
     summary = "Log out the user from all devices",
     description = 
-    "Logs out the user from all logged-in devices by revoking all refresh tokens",
+    "**Logs out the user from all logged-in devices by revoking all refresh tokens.**",
     response_description = None
 )
 async def logout_all_devices_handler(
@@ -177,7 +176,7 @@ async def logout_all_devices_handler(
     await auth_service.logout_all_devices(current_user.id)
     if response:
         response.delete_cookie("refresh")
-    return Response(status_code=status.HTTP_204_NO_CONTENT)
+    return Response(status_code = status.HTTP_204_NO_CONTENT)
 
 
 # Refresh
@@ -187,11 +186,11 @@ async def logout_all_devices_handler(
     status_code = status.HTTP_200_OK,
     summary = "Refresh access token",
     description =
-    "Refresh endpoint. Supports multiple input methods to make it easy to use from both browser and API clients:\n"
+    "**Creates a new access token and refresh token revoking the old one:**\n"
     "- Cookie: `refresh` sent as cookie by the client automatically.\n"
     "- Header: `Refresh-Token` (raw or raw::jti) and optional `Refresh-JTI`.\n"
     "- Body JSON: { \"refresh_token\": \"<raw>\" } or { \"refresh_token\": \"<raw>::<jti>\" }.\n"
-    "Cookie has priority over header, which has priority over body.",
+    "\n**Cookie has priority over header, which has priority over body.**",
     response_description = "Returns new access and refresh tokens for the user"
 )
 async def refresh_token(
@@ -269,19 +268,20 @@ async def refresh_token(
 # Token endpoint (for Swagger / dev tools)
 @router.post(
     "/token",
-    summary="Token endpoint for Swagger, OAuth2 password and client_credentials flows"
+    response_model = AuthResponse,
+    status_code = status.HTTP_200_OK,
+    summary="Token endpoint for Swagger, OAuth2 password and client_credentials flows",
+    description=
+    "**Token endpoint supporting both client_credentials and password grants.**\n\n"
+    "- `grant_type=client_credentials`: username=client_id, password=client_secret  \n"
+    "- `grant_type=password`: username=email, password=password",
+    response_description="Returns access and refresh tokens"
 )
 async def token_endpoint(
     form_data: OAuth2PasswordRequestForm = Depends(),
     auth_service: AuthService = Depends(get_auth_service),
     request: Request = None,
 ):
-    """
-    Token endpoint supporting both client_credentials and password grants.
-
-    - `grant_type=client_credentials`: username=client_id, password=client_secret  
-    - `grant_type=password`: username=email, password=password
-    """
     grant_type = getattr(form_data, "grant_type", None) or "client_credentials"
     ip = request.client.host if request and request.client else None
     ua = request.headers.get("user-agent") if request else None

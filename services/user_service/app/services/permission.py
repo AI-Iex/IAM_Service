@@ -3,7 +3,7 @@ from uuid import UUID
 import logging
 from app.services.interfaces.permission import IPermissionService
 from app.repositories.interfaces.permission import IPermissionRepository
-from app.schemas.permission import PermissionCreate, PermissionRead, PermissionUpdate
+from app.schemas.permission import PermissionCreate, PermissionRead, PermissionUpdate, PermissionUpdateInDB
 from app.db.unit_of_work import UnitOfWorkFactory, async_unit_of_work
 from app.core.exceptions import DomainError, NotFoundError, EntityAlreadyExists
 
@@ -17,6 +17,9 @@ class PermissionService(IPermissionService):
         self._uow_factory = uow_factory
 
 
+# region CREATE
+
+    # Create a new permission
     async def create(self, payload: PermissionCreate) -> PermissionRead:
                 
         """Create a new permission."""
@@ -31,7 +34,7 @@ class PermissionService(IPermissionService):
                 raise DomainError("Permission name cannot be empty")
             
             # 2. Check if the permission already exists
-            existing_permissions = await self._permission_repo.read_with_filters( db = db, name = payload.name, limit=1)
+            existing_permissions = await self._permission_repo.read_with_filters( db = db, name = [payload.name], limit=1)
             if existing_permissions:
                 raise EntityAlreadyExists("Permission with the same name already exists")
             
@@ -43,18 +46,17 @@ class PermissionService(IPermissionService):
 
             return PermissionRead.model_validate(permission)
 
+# endregion CREATE
 
+# region READ
+
+    # Get a permission by its ID
     async def read_by_id(self, permission_id: UUID) -> PermissionRead:
         
         """Get a permission by its ID."""
        
         # 0. Log the attempt
-        logger.info(
-            "Reading permission by ID",
-            extra = {
-                "extra": { "retrieve_permission_id": permission_id}
-            }
-        )
+        logger.info("Reading permission by ID", extra = {"extra": { "retrieve_permission_id": permission_id}})
 
         async with self._uow_factory() as db:
             
@@ -66,18 +68,13 @@ class PermissionService(IPermissionService):
                 raise NotFoundError("Permission not found")
 
             # 3. Log the success
-            logger.info(
-                "Permission read successfully",
-                extra = {
-                    "extra": { "permission_found": permission.id}
-                }
-            )
+            logger.info("Permission read successfully", extra = {"extra": { "permission_found": permission.id}})
 
             return PermissionRead.model_validate(permission)
 
-
+    # Get permissions with filters
     async def read_with_filters(self, 
-                                name: Optional[str] = None, 
+                                name: Optional[List[str]] = None, 
                                 description: Optional[str] = None, 
                                 skip: int = 0, 
                                 limit: int = 100
@@ -108,27 +105,21 @@ class PermissionService(IPermissionService):
             )
 
             # 2. Log the success
-            logger.info(
-                "Permissions retrieved successfully",
-                extra={
-                    "Permissions read count": len(permissions)
-                }
-            )
+            logger.info("Permissions retrieved successfully", extra = {"Permissions read count": len(permissions)})
 
             return [PermissionRead.model_validate(permission) for permission in permissions]
 
+# endregion READ
 
+# region UPDATE
+
+    # Update a permission by its ID
     async def update(self, permission_id: UUID, payload: PermissionUpdate) -> PermissionRead:
         
         """Update a permission by its ID."""
 
         # 0. Log the attempt
-        logger.info(
-            "Updating permission by ID",
-            extra = {
-                "permission_id": permission_id
-            }
-        )
+        logger.info("Updating permission by ID", extra = {"permission_id": permission_id})
 
         async with self._uow_factory() as db:
 
@@ -145,31 +136,26 @@ class PermissionService(IPermissionService):
                 if permission_with_name:
                     raise EntityAlreadyExists("Another permission with the same name already exists")
 
-            # 4. Update the permission
-            updated_permission = await self._permission_repo.update( db, permission_id, payload)
+            # 4. Build internal DTO and update the permission
+            update_payload = PermissionUpdateInDB(**payload.model_dump(exclude_unset=True)) if payload else PermissionUpdateInDB()
+            updated_permission = await self._permission_repo.update( db, permission_id, update_payload)
 
             # 5. Log the success
-            logger.info(
-                "Permission updated successfully",
-                extra = {
-                    "extra": { "updated_permission_id": updated_permission.id}
-                }
-            )
+            logger.info("Permission updated successfully", extra = {"extra": { "updated_permission_id": updated_permission.id}})
 
             return PermissionRead.model_validate(updated_permission)
 
+# endregion UPDATE
 
+# region DELETE
+
+    # Delete a permission by its ID
     async def delete(self, permission_id: UUID) -> None:
         
         """Delete a permission by its ID."""
 
         # 0. Log the attempt
-        logger.info(
-            "Deleting permission by ID",
-            extra = {
-                "permission_id": permission_id
-            }
-        )
+        logger.info("Deleting permission by ID", extra = {"permission_id": permission_id})
 
         async with self._uow_factory() as db:
 
@@ -184,9 +170,6 @@ class PermissionService(IPermissionService):
             await self._permission_repo.delete( db, permission_id)
 
             # 4. Log the success
-            logger.info(
-                "Permission deleted successfully",
-                extra = {
-                    "extra": { "deleted_permission_id": permission_id}
-                }
-            )
+            logger.info("Permission deleted successfully", extra = {"extra": { "deleted_permission_id": permission_id}})
+
+# endregion DELETE

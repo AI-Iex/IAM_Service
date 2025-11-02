@@ -4,15 +4,22 @@ from typing import Optional
 from uuid import UUID
 
 class PermissionBase(BaseModel):
-    name: str = Field(..., example = "view_users", description = "The unique permission name")
-    description: Optional[str] = Field(None, example = "Allows viewing user list", description = "Description of the permission")
+    name: str = Field(..., example = "users:create", description = "The unique permission name")
+    description: Optional[str] = Field(None, example = "Allows creating users", description = "Description of the permission")
 
 class PermissionCreate(PermissionBase):
     pass
 
 class PermissionUpdate(BaseModel):
-    name: Optional[str] = Field(None, example = "edit_roles", description = "The updated permission name")
-    description: Optional[str] = Field(None, example = "Allows editing roles", description = "Updated description")
+    name: Optional[str] = Field(None, example = "users:create", description = "The updated permission name")
+    description: Optional[str] = Field(None, example = "Allows creating users", description = "Updated description")
+
+class PermissionUpdateInDB(BaseModel):
+    """Internal DTO for repository updates of Permission."""
+    name: Optional[str] = Field(None, example = "users:create", description = "The updated permission name")
+    description: Optional[str] = Field(None, example = "Allows creating users", description = "Updated description")
+
+    model_config = {"from_attributes": True}
 
 class PermissionRead(PermissionBase):
     id: UUID = Field(..., example = "a32a0d4b-0a4f-4d98-xxxx-8f7c2c3e9a0a", description = "Unique permission identifier")

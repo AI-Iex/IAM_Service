@@ -56,7 +56,8 @@ class AuthService(IAuthService):
             await self.user_repo.update_last_login(db, user.id)
 
             # 4. Create access token
-            access_token_pair = create_access_token(subject = str(user.id), roles = user.roles, is_superuser = user.is_superuser)
+            role_names = [r.name for r in user.roles] if getattr(user, 'roles', None) else []
+            access_token_pair = create_access_token(subject = str(user.id), roles = role_names, is_superuser = user.is_superuser)
             access_token = access_token_pair.access_token
             expires_in = access_token_pair.expires_in
 
@@ -139,7 +140,8 @@ class AuthService(IAuthService):
 
             # crear nuevo access token
             user = await self.user_repo.get_by_id(db, token_row.user_id)
-            token_info = create_access_token(subject=str(user.id), roles=user.roles, is_superuser=user.is_superuser)
+            role_names = [r.name for r in user.roles] if getattr(user, 'roles', None) else []
+            token_info = create_access_token(subject=str(user.id), roles=role_names, is_superuser=user.is_superuser)
             access_token = token_info.access_token
             expires_in = token_info.expires_in
 

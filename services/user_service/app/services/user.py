@@ -1,24 +1,27 @@
 from typing import List, Optional
-from sqlalchemy import func
 from app.repositories.interfaces.user import IUserRepository
 from app.services.interfaces.user import IUserService
 from app.db.unit_of_work import UnitOfWorkFactory
-from app.schemas.user import UserCreateByAdmin, UserCreateInDB, UserRead, UserUpdate, UserChangeEmail, UserRegister
+from app.schemas.user import UserCreateByAdmin, UserCreateInDB, UserRead, UserUpdate, UserUpdateInDB, UserChangeEmail, UserRegister, UserReadDetailed, PasswordChange
 from app.db.unit_of_work import async_unit_of_work
 from app.core.security import hash_password, verify_password
 from app.core.exceptions import EntityAlreadyExists, DomainError, NotFoundError
 import logging, re
 from app.core.business_config import BusinessConfig
 from uuid import UUID
-from app.core.config import settings
+from app.repositories.interfaces.role import IRoleRepository
+from app.models.role import Role
+from app.schemas.user import UserReadDetailed
+
 
 logger = logging.getLogger(__name__)
 
 class UserService(IUserService):
-    def __init__(self, user_repo: IUserRepository, uow_factory: UnitOfWorkFactory = async_unit_of_work): 
-        self.user_repo = user_repo
-        self.uow_factory = uow_factory
-        self.policy = BusinessConfig.load()
+    def __init__(self, user_repo: IUserRepository, role_repo: IRoleRepository, uow_factory: UnitOfWorkFactory = async_unit_of_work): 
+        self._user_repo = user_repo
+        self._role_repo = role_repo
+        self._uow_factory = uow_factory
+        self._policy = BusinessConfig.load()
 
 # region Internal Methods (Validation)
 
@@ -26,7 +29,7 @@ class UserService(IUserService):
     def _validate_password(self, password: str):
 
         # Load password policy from business config
-        password_rules = self.policy["password_policy"]
+        password_rules = self._policy["password_policy"]
 
         # Check length
         if len(password) < password_rules["min_length"]:
@@ -58,7 +61,7 @@ class UserService(IUserService):
     def _validate_name(self, name: str):
 
         # Load name policy from business config
-        name_rules = self.policy["name_policy"]
+        name_rules = self._policy["name_policy"]
 
         # Check length
         if len(name.strip()) < name_rules["min_length"]:
@@ -101,7 +104,7 @@ class UserService(IUserService):
     def _validate_email(self, email: str) -> bool:
 
         # Load email policy from business config
-        email_policy = self.policy.get("email_policy", {})
+        email_policy = self._policy.get("email_policy", {})
         
         # Clean and normalize email
         email = email.strip().lower()
@@ -163,7 +166,7 @@ class UserService(IUserService):
 
 # region CREATE
 
-
+    # Register a new user account
     async def register_user(self, payload: UserRegister) -> UserRead :
 
         """
@@ -183,10 +186,10 @@ class UserService(IUserService):
         # 3. Validate name policy
         self._validate_name(payload.full_name)
 
-        async with self.uow_factory() as db:
+        async with self._uow_factory() as db:
 
             # 4. Check if email already exists
-            existing = await self.user_repo.get_by_email(db, payload.email)
+            existing = await self._user_repo.get_by_email(db, payload.email)
             if existing:
                 raise EntityAlreadyExists("Email is already in use")
 
@@ -202,7 +205,7 @@ class UserService(IUserService):
             )
 
             # 6. Create the user in the database
-            user = await self.user_repo.create(db, dto)
+            user = await self._user_repo.create(db, dto)
 
             # 7. Log the success
             logger.info(
@@ -217,16 +220,16 @@ class UserService(IUserService):
             
         return UserRead.model_validate(user)
     
-   
+    # Register a new user account by admin
     async def admin_register_user(self, payload: UserCreateByAdmin) -> UserRead :
-        
+
+        ''' 
+        Register a new user account setting the require_password_change flag to True.\n
+        Used by administrators to create user accounts.
+        '''
+
         # 0. Log the attempt
-        logger.info(
-            "Creating user",
-            extra={
-                "extra": {"email": payload.email}
-            }
-        )
+        logger.info("Creating user", extra={ "email": payload.email })
 
         # 1. Validate email format
         self._validate_email(payload.email)
@@ -237,10 +240,10 @@ class UserService(IUserService):
         # 3. Validate name policy
         self._validate_name(payload.full_name)
 
-        async with self.uow_factory() as db:
+        async with self._uow_factory() as db:
 
             # 4. Check if email already exists
-            existing = await self.user_repo.get_by_email(db, payload.email)
+            existing = await self._user_repo.get_by_email(db, payload.email)
             if existing:
                 raise EntityAlreadyExists("Email is already in use")
 
@@ -256,23 +259,20 @@ class UserService(IUserService):
             )
 
             # 6. Create the user in the database
-            user = await self.user_repo.create(db, dto)
+            user = await self._user_repo.create(db, dto)
 
-            # 7. Build a plain dict while session is still open to avoid DetachedInstanceError
-            user_schema = UserRead.model_validate(user)
-
-            # 8. Log the success
+            # 7. Log the success
             logger.info(
                 "User created successfully",
                 extra={
                     "extra": {
-                        "user_created": user_schema.id,
-                        "email": user_schema.email
+                        "user_created": user.id,
+                        "email": user.email
                     }
                 }
             ) 
             
-        return user_schema
+        return UserRead.model_validate(user)
     
 # endregion CREATE
 
@@ -282,12 +282,14 @@ class UserService(IUserService):
     async def read_with_filters(
         self,
         name: Optional[str] = None,
-        email: Optional[str] = None,
+        email: Optional[List[str]] = None,
         active: Optional[bool] = None,
         is_superuser: Optional[bool] = None,
         skip: int = 0,
         limit: int = 100
     ) -> List[UserRead]:
+        
+        ''' Retrieve users matching the provided filters. '''
     
         # 0. Log the attempt
         logger.info(
@@ -302,10 +304,10 @@ class UserService(IUserService):
             }
         )
 
-        async with self.uow_factory() as db:
+        async with self._uow_factory() as db:
 
             # 1. Query the users
-            users = await self.user_repo.get_with_filters(
+            users = await self._user_repo.get_with_filters(
                 db = db,
                 name = name,
                 email = email,
@@ -327,100 +329,125 @@ class UserService(IUserService):
 
     # Read a user by ID
     async def read_by_id(self, user_id: UUID) -> UserRead:
+
+        ''' Retrieve a user by its ID. '''
         
         # 0. Log the attempt
-        logger.info(
-            "Reading user by ID",
-            extra = {
-                "extra": { "retrieve_user_id": user_id}
-            }
-        )
+        logger.info("Reading user by ID", extra = {"extra": { "retrieve_user_id": user_id}})
 
-        async with self.uow_factory() as db:
+        async with self._uow_factory() as db:
 
             # 1. Query the user
-            user = await self.user_repo.get_by_id(db, user_id)
+            user = await self._user_repo.get_by_id(db, user_id)
 
             # 2. Check if user exists
             if not user:
                 raise NotFoundError("User not found")
            
             # 3. Log the success
-            logger.info(
-                "User read successfully",
-                extra = {
-                    "extra": { "user_found": user.id}
-                }
-            )
+            logger.info("User read successfully", extra = {"extra": { "user_found": user.id}})
 
         return UserRead.model_validate(user)
+    
+    # Read a user by ID including detailed info
+    async def read_by_id_detailed(self, user_id: UUID) -> UserReadDetailed:
+
+        ''' Retrieve a user by its ID including detailed info like the permissions in their roles. '''
+        
+        # 0. Log the attempt
+        logger.info("Reading user by ID (detailed)", extra={"extra": {"retrieve_user_id": user_id}})
+
+        async with self._uow_factory() as db:
+
+            # 1. Query the user
+            user = await self._user_repo.get_by_id(db, user_id)
+            if not user:
+                raise NotFoundError("User not found")
+
+            # 2. Fetch roles with permissions from the RoleRepository
+            roles = await self._role_repo.read_by_user_id_with_permissions(db, user_id)
+
+            # 3. Attach roles to user instance for schema serialization
+            user.roles = roles
+
+            # 4. Log and return the composed detailed schema
+            logger.info("User detailed read successful", extra={"user_id": user.id})
+
+            return UserReadDetailed.model_validate(user)
     
 # endregion READ
 
 # region UPDATE
 
- # Update some fields of the user
+    # Update some fields of the user
     async def update(self, user_id: UUID, payload: UserUpdate) -> UserRead:
+
+        ''' Update some fields of the user. '''
         
         # 0. Log the attempt
-        logger.info(
-            "Updating user",
-            extra = {
-                "extra": { "user_id_to_update": user_id}
-            }
-        )
+        logger.info("Updating user", extra = {"extra": { "user_id_to_update": user_id}})
 
-        async with self.uow_factory() as db:
+        async with self._uow_factory() as db:
 
             # 1. Verify that the user exists
-            existing_user = await self.user_repo.get_by_id(db, user_id)
+            existing_user = await self._user_repo.get_by_id(db, user_id)
             if not existing_user:
                 raise NotFoundError("User not found")
             
             # 2. Prepare data for updating
-            update_data = payload.model_dump(exclude_unset=True, exclude_none=True)
+            update_data = payload.model_dump(exclude_unset = True, exclude_none = True)
             
             # 3. Validate name policy
             if 'full_name' in update_data:
                 self._validate_name(update_data['full_name'])
-            
-            # 4. Update in repository
-            user = await self.user_repo.update(db, user_id, update_data)
 
-            # 5. Build a plain dict while session is still open to avoid DetachedInstanceError
-            user_schema = UserRead.model_validate(user)
+            # 4. If roles are provided, validate they exist
+            if payload.roles is not None:
+                if len(payload.roles) == 0:
+                    role_entities = [] # request to clear roles
+                else:
+                    # get role entities from role repository
+                    role_entities = await self._role_repo.read_by_names(db, payload.roles)
+                    if len(role_entities) != len(payload.roles):
+                        missing_roles = set(payload.roles) - {role.name for role in role_entities}
+                        raise NotFoundError(f"The following roles do not exist: {missing_roles}")
+
+                # Map role entities model to dict
+                update_data["roles"] = role_entities
+            
+            # 5. Build internal update DTO and update in repository
+            update_payload = UserUpdateInDB(**update_data) if update_data else UserUpdateInDB()
+            user = await self._user_repo.update(db, user_id, update_payload)
 
             # 6. Log the success
-            logger.info(
-                "User updated successfully",
-                extra={
-                    "extra": {"user_updated_id": user_id}
-                }
-            )
+            logger.info("User updated successfully", extra = { "extra": {"user_updated_id": user_id}})
         
-        return UserRead.model_validate(user_schema)
+        return UserRead.model_validate(user)
     
     # Update the email of the user
     async def change_email(self, user_id: UUID, payload: UserChangeEmail) -> UserRead:
+
+        """ Change the email of the user. """
 
         # 0. Log the attempt
         logger.info(
             "Requesting email change",
             extra = {
-                "extra": { "current_email": payload.current_email, "new_email": payload.new_email}
+                "extra": { "current_email": payload.current_email, 
+                            "new_email": payload.new_email}
             }
         )
 
-        async with self.uow_factory() as db:
+        async with self._uow_factory() as db:
 
             # 1. Verify that the user exists
-            user = await self.user_repo.get_by_id(db, user_id)
+            user = await self._user_repo.get_by_id(db, user_id)
             if not user:
                 raise NotFoundError("User not found")
             
             # 2. Verify that the current email matches
             if user.email.lower() != payload.current_email.lower():
-                raise DomainError("Current email does not match our records")
+                raise DomainError("Current email provided does not match")
             
             # 3. Verify current password
             if not verify_password(payload.current_password, user.hashed_password):
@@ -430,51 +457,173 @@ class UserService(IUserService):
             self._validate_email(payload.new_email)
             
             # 5. Verify that the new email address is not in use
-            existing_user = await self.user_repo.get_by_email(db, payload.new_email)
+            existing_user = await self._user_repo.get_by_email(db, payload.new_email)
             if existing_user and existing_user.id != user_id:
-                raise EntityAlreadyExists("Email already in use by another user")
+                raise EntityAlreadyExists("New email provided is already in use")
             
             # 6. Verify that it is not the same email address
             if payload.new_email.lower() == user.email.lower():
                 raise DomainError("New email cannot be the same as current email")
             
-            # 7. Update email
-            updated_user = await self.user_repo.update(db, user_id, {"email": payload.new_email.lower()})
+            # 7. Prepare internal update schema and update email
+            update_payload = UserUpdateInDB(email = payload.new_email.lower())
+            updated_user = await self._user_repo.update(db, user_id, update_payload)
             
             # 8. Log the success
-            logger.info(
-            "Email changed successfully",
+            logger.info("Email changed successfully", extra = {"extra": { "new_email": payload.new_email}})
+
+            return UserRead.model_validate(updated_user)
+
+    # Change the password of the user
+    async def change_password(self, user_id: UUID, payload: PasswordChange) -> UserRead:
+
+        """ Change the password of the user. """
+        
+        # 0. Log the attempt
+        logger.info("Requesting password change", extra = {"extra": { "user_id": user_id}})
+
+        async with self._uow_factory() as db:
+
+            # 1. Verify that the user exists
+            user = await self._user_repo.get_by_id(db, user_id)
+            if not user:
+                raise NotFoundError("User not found")
+            
+            # 2. Verify old password
+            if not verify_password(payload.old_password, user.hashed_password):
+                raise DomainError("Old password is incorrect")
+            
+            # 3. Validate new password policy
+            self._validate_password(payload.new_password)
+            
+            # 4. Verify that the new password is different
+            if verify_password(payload.new_password, user.hashed_password):
+                raise DomainError("New password must be different from the old password")
+            
+            # 5. Hash new password
+            hashed_new = hash_password(payload.new_password)
+            
+            # 6. Prepare internal update schema and update password
+            update_payload = UserUpdateInDB(hashed_password = hashed_new, require_password_change = False)
+            updated_user = await self._user_repo.update(db, user_id, update_payload)
+            
+            # 7. Log the success
+            logger.info("Password changed successfully", extra = {"extra": { "user_id": user_id}})
+
+            return UserRead.model_validate(updated_user)
+
+    # Add a role to a user
+    async def add_role_to_user(self, user_id: UUID, role_id: UUID) -> UserRead:
+
+        """ Add a role to a user. """
+
+        # 0. Log the attempt
+        logger.info(
+            "Adding role to user", 
             extra = {
-                "extra": { "new_email": payload.new_email}
+                "extra": {   "user_id": user_id, 
+                            "role_id": role_id}
             }
         )
 
+        async with self._uow_factory() as db:
+            
+            # 1. Verify user exists
+            user = await self._user_repo.get_by_id(db, user_id)
+            if not user:
+                raise NotFoundError("User not found")
+
+            # 2. Verify role exists
+            role = await self._role_repo.read_by_id(db, role_id)
+            if not role:
+                raise NotFoundError("Role not found")
+
+            # 3. If user already has the role, return current user
+            existing = await self._user_repo.has_role(db, user_id, role_id)
+            if existing:
+                raise EntityAlreadyExists("User already has this role")  
+
+            # 4. Add the role to the user 
+            updated_user = await self._user_repo.add_role(db, user_id, role_id)
+
+            # 5. Log the success
+            logger.info(
+                "Role added to user successfully", 
+                extra = {
+                    "extra": {  "user_id": user_id, 
+                                "role_id": role_id}
+                }
+            )
+
             return UserRead.model_validate(updated_user)
+
+    # Remove a role from a user
+    async def remove_role_from_user(self, user_id: UUID, role_id: UUID) -> UserRead:
+
+        """ Remove a role from a user. """
+
+        # 0. Log the attempt
+        logger.info(
+            "Removing role from user", 
+            extra = {
+                "extra": {  "user_id": user_id, 
+                            "role_id": role_id}
+                }
+        )
+
+        async with self._uow_factory() as db:
+
+            # 1. Verify user exists
+            user = await self._user_repo.get_by_id(db, user_id)
+            if not user:
+                raise NotFoundError("User not found")
+
+            # 2. Verify role exists
+            role = await self._role_repo.read_by_id(db, role_id)
+            if not role:
+                raise NotFoundError("Role not found")
+            
+            # 3. If user does not have the role, error out
+            existing = await self._user_repo.has_role(db, user_id, role_id)
+            if existing is False:
+                raise NotFoundError("User does not have this role")
+
+            # 4. Remove the role from the user
+            updated_user = await self._user_repo.remove_role(db, user_id, role_id)
+    
+            # 5. Log the success
+            logger.info(
+                "Role removed from user successfully", 
+                extra = {
+                    "extra": {  "user_id": user_id, 
+                                "role_id": role_id}
+                    }
+            )
+
+            return UserRead.model_validate(updated_user)
+
 
 # endregion UPDATE
 
 # region DELETE
 
-# Delete the user with that identifier
+    # Delete the user with that identifier
     async def delete(self, user_id: UUID) -> None:
+
+        ''' Delete the user with that identifier. '''
         
         # 0. Log the attempt
-        logger.info(
-            "Deleting user by ID",
-            extra = {
-                "extra": { "user_id_to_delete": user_id}
-            }
-        )
+        logger.info("Deleting user by ID", extra = {"extra": { "user_id_to_delete": user_id}})
 
-        async with self.uow_factory() as db:
+        async with self._uow_factory() as db:
 
             # 1. Verify that the user exists
-            existing_user = await self.user_repo.get_by_id(db, user_id)
+            existing_user = await self._user_repo.get_by_id(db, user_id)
             if not existing_user:
                 raise NotFoundError("User not found")
             
             # 2. Delete the user
-            await self.user_repo.delete(db, user_id)
+            await self._user_repo.delete(db, user_id)
 
             # 3. Log the success
             logger.info(
@@ -482,7 +631,7 @@ class UserService(IUserService):
                 extra={
                     "extra": {
                         "user_deleted": user_id,
-                        "email": existing_user.email
+                        "user_email_deleted": existing_user.email
                     }
                 }
             )
@@ -490,4 +639,4 @@ class UserService(IUserService):
 # endregion DELETE
 
 
-
+    

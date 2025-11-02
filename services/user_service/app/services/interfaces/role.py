@@ -18,7 +18,7 @@ class IRoleService(ABC):
 
     @abstractmethod
     async def read_with_filters(self, 
-                                name: Optional[str] = None, 
+                                name: Optional[List[str]] = None, 
                                 description: Optional[str] = None,
                                 skip: int = 0, 
                                 limit: int = 100
@@ -32,6 +32,18 @@ class IRoleService(ABC):
         pass
 
     @abstractmethod
+    async def add_permission(self, role_id: UUID, permission_id: UUID) -> RoleRead:
+        """Add a permission to a role."""
+        pass
+
+    @abstractmethod
+    async def remove_permission(self, role_id: UUID, permission_id: UUID) -> RoleRead:
+        """Remove a permission from a role."""
+        pass
+
+    @abstractmethod
     async def delete(self, role_id: UUID) -> None:
         """Delete a role by its ID."""
         pass
+
+

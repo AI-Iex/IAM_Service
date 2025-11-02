@@ -11,7 +11,7 @@ router = APIRouter(prefix="/health", tags=["Health"])
         status_code = status.HTTP_200_OK, 
         response_model = HealthCheckResponse,
         summary = "Health check",
-        description = "Check the health status of the service and its dependencies."
+        description = "**Check the health status of the service and its dependencies.**"
 )
 async def health_check(health_service: HealthService = Depends(get_health_service)) -> HealthCheckResponse:
     """Return service health summary."""
