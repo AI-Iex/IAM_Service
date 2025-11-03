@@ -24,7 +24,8 @@ class UserRepository(IUserRepository):
                 full_name=dto.full_name,
                 hashed_password=dto.hashed_password,
                 is_active=dto.is_active,
-                is_superuser=dto.is_superuser
+                is_superuser=dto.is_superuser,
+                require_password_change=dto.require_password_change
             )
 
             db.add(user)
