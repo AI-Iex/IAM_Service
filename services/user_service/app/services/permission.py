@@ -25,7 +25,8 @@ class PermissionService(IPermissionService):
         """Create a new permission."""
 
         # 0. Log the attempt
-        logger.info("Trying to create a new permission", extra={"extra": {"name": payload.name}})
+        # avoid using reserved LogRecord keys (like 'name') in extra
+        logger.info("Trying to create a new permission", extra={"permission_name": payload.name})
         
         async with self._uow_factory() as db:
             
@@ -33,16 +34,18 @@ class PermissionService(IPermissionService):
             if not payload.name or not payload.name.strip():
                 raise DomainError("Permission name cannot be empty")
             
-            # 2. Check if the permission already exists
-            existing_permissions = await self._permission_repo.read_with_filters( db = db, name = [payload.name], limit=1)
+            # 2. Check if the permission already exists for the same service
+            existing_permissions = await self._permission_repo.read_with_filters(
+                db=db, name=[payload.name], service_name=payload.service_name, limit=1
+            )
             if existing_permissions:
-                raise EntityAlreadyExists("Permission with the same name already exists")
+                raise EntityAlreadyExists("Permission with the same name already exists for this service")
             
             # 3. Create the permission
             permission = await self._permission_repo.create(db = db, payload = payload)
 
             # 4. Log the success
-            logger.info("Permission created successfully", extra={"extra": {"permission_id": str(permission.id)}})
+            logger.info("Permission created successfully", extra={"permission_id": str(permission.id)})
 
             return PermissionRead.model_validate(permission)
 
@@ -56,7 +59,7 @@ class PermissionService(IPermissionService):
         """Get a permission by its ID."""
        
         # 0. Log the attempt
-        logger.info("Reading permission by ID", extra = {"extra": { "retrieve_permission_id": permission_id}})
+        logger.info("Reading permission by ID", extra={ "retrieve_permission_id": permission_id})
 
         async with self._uow_factory() as db:
             
@@ -68,13 +71,14 @@ class PermissionService(IPermissionService):
                 raise NotFoundError("Permission not found")
 
             # 3. Log the success
-            logger.info("Permission read successfully", extra = {"extra": { "permission_found": permission.id}})
+            logger.info("Permission read successfully", extra={ "permission_found": permission.id})
 
             return PermissionRead.model_validate(permission)
 
     # Get permissions with filters
     async def read_with_filters(self, 
                                 name: Optional[List[str]] = None, 
+                                service_name: Optional[str] = None,
                                 description: Optional[str] = None, 
                                 skip: int = 0, 
                                 limit: int = 100
@@ -87,6 +91,7 @@ class PermissionService(IPermissionService):
             "Reading permissions by filters",
             extra = {
                 "name_filter": name, 
+                "service_name_filter": service_name,
                 "description_filter": description, 
                 "skip": skip, 
                 "limit": limit
@@ -99,6 +104,7 @@ class PermissionService(IPermissionService):
             permissions = await self._permission_repo.read_with_filters(
                 db,
                 name,
+                service_name,
                 description,
                 skip,
                 limit
@@ -130,18 +136,23 @@ class PermissionService(IPermissionService):
             if not existing_permission:
                 raise NotFoundError("Permission not found")
 
-            # 3 Check if the new name (if provided) is not already taken by another permission
-            if payload.name and payload.name != existing_permission.name:
-                permission_with_name = await self._permission_repo.read_with_filters( db = db, name = payload.name, limit=1)
+            # 3 Check uniqueness for the (name, service_name) pair if either changes
+            new_name = payload.name if payload.name is not None else existing_permission.name
+            new_service = payload.service_name if getattr(payload, 'service_name', None) is not None else existing_permission.service_name
+
+            if (new_name != existing_permission.name) or (new_service != existing_permission.service_name):
+                permission_with_name = await self._permission_repo.read_with_filters(
+                    db=db, name=[new_name], service_name=new_service, limit=1
+                )
                 if permission_with_name:
-                    raise EntityAlreadyExists("Another permission with the same name already exists")
+                    raise EntityAlreadyExists("Another permission with the same name already exists for this service")
 
             # 4. Build internal DTO and update the permission
             update_payload = PermissionUpdateInDB(**payload.model_dump(exclude_unset=True)) if payload else PermissionUpdateInDB()
             updated_permission = await self._permission_repo.update( db, permission_id, update_payload)
 
             # 5. Log the success
-            logger.info("Permission updated successfully", extra = {"extra": { "updated_permission_id": updated_permission.id}})
+            logger.info("Permission updated successfully", extra={ "updated_permission_id": updated_permission.id})
 
             return PermissionRead.model_validate(updated_permission)
 
@@ -170,6 +181,6 @@ class PermissionService(IPermissionService):
             await self._permission_repo.delete( db, permission_id)
 
             # 4. Log the success
-            logger.info("Permission deleted successfully", extra = {"extra": { "deleted_permission_id": permission_id}})
+            logger.info("Permission deleted successfully", extra={ "deleted_permission_id": permission_id})
 
 # endregion DELETE

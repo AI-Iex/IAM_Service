@@ -147,11 +147,11 @@ def setup_logging(service_name: str = settings.SERVICE_NAME, level: int = loggin
     
     class RequestIdFilter(logging.Filter):
 
-        ''' Class to add request_id and user_id from contextvars to log records '''
+        ''' Class to add request_id and request_by_user_id from contextvars to log records '''
 
         def filter(self, record: logging.LogRecord) -> bool:
 
-            ''' Add request_id and user_id to log record if available '''
+            ''' Add request_id and request_by_user_id to log record if available '''
 
             try:
                 rid = _request_id_ctx.get(None)
@@ -162,9 +162,10 @@ def setup_logging(service_name: str = settings.SERVICE_NAME, level: int = loggin
             try:
                 uid = _user_id_ctx.get(None)
                 if uid is not None:
-                    record.user_id = str(uid)
+                    # attach as request_by_user_id to avoid legacy 'user_id' key
+                    record.request_by_user_id = str(uid)
             except Exception:
-                record.user_id = None
+                record.request_by_user_id = None
 
             return True
     

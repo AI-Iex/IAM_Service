@@ -21,7 +21,8 @@ router = APIRouter(prefix="/roles", tags=["Roles"])
     summary = "Create a new role",
     description = "**Create a new role with the necessary fields:**\n"
                 "- `Name`: The name of the role.\n"
-                "- `Description`: A brief description of the role.\n",
+                "- `Description`: A brief description of the role.\n"
+                "- `Permissions`: List of permissions (permission name + service_name) assigned to this role.\n",
     response_description = "The created role"
 )
 async def create_role(
@@ -84,7 +85,9 @@ async def read_role(
     summary = "Update role by ID",
     description = "**Update a role by its unique identifier.**\n"
     "- `name`: The updated role name.\n"
-    "- `description`: The updated role description.",
+    "- `description`: The updated role description.\n"
+    "- `permissions`: List of permissions (permission name + service_name) assigned to this role. Setting this field will replace all existing permissions of the role with the provided list,"
+    " and setting an empty list will remove all permissions from the role.\n",
     response_description = "The updated role"
 )
 async def update_role(

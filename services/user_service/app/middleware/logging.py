@@ -80,7 +80,7 @@ async def access_log_middleware(request: Request, call_next):
             "status_code": response.status_code,
             "duration_ms": round(duration_ms, 2),
             "client_ip": request.client.host if request.client else None,
-            "user_id": getattr(request.state, "user_id", None),
+            "request_by_user_id": getattr(request.state, "user_id", None),
         },
     )
 

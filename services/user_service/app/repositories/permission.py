@@ -16,7 +16,8 @@ class PermissionRepository(IPermissionRepository):
 
         try:
             new_permission = Permission(
-                name = payload.name, 
+                name = payload.name,
+                service_name = payload.service_name,
                 description = payload.description
             )
 
@@ -47,6 +48,7 @@ class PermissionRepository(IPermissionRepository):
     async def read_with_filters(self,
                                 db: AsyncSession, 
                                 name: Optional[List[str]] = None,
+                                service_name: Optional[str] = None,
                                 description: Optional[str] = None,
                                 skip: int = 0, 
                                 limit: int = 100
@@ -60,6 +62,9 @@ class PermissionRepository(IPermissionRepository):
             if name is not None:
                 query = query.where(Permission.name.in_(name))
 
+            if service_name is not None:
+                query = query.where(Permission.service_name == service_name)
+
             if description is not None:
                 query = query.where(Permission.description.ilike(f"%{description}%"))
             
@@ -72,12 +77,15 @@ class PermissionRepository(IPermissionRepository):
         except Exception as e:
            raise RepositoryError(f"Error reading permission with filters: {str(e)}") from e
 
-    async def read_by_names(self, db: AsyncSession, names: List[str]) -> List[Permission]:
+    async def read_by_names(self, db: AsyncSession, names: List[str], service_name: Optional[str] = None) -> List[Permission]:
 
         '''Retrieve permissions matching provided names list'''
 
         try:
             query = select(Permission).where(Permission.name.in_(names))
+
+            if service_name is not None:
+                query = query.where(Permission.service_name == service_name)
 
             result = await db.execute(query)
 

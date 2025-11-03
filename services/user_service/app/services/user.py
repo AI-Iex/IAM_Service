@@ -175,7 +175,7 @@ class UserService(IUserService):
         """
         
         # 0. Log the attempt
-        logger.info("Trying to register a new user", extra={"extra": {"email": payload.email}})
+        logger.info("Trying to register a new user", extra={"email": payload.email})
 
         # 1. Validate email format
         self._validate_email(payload.email)
@@ -211,10 +211,8 @@ class UserService(IUserService):
             logger.info(
                 "User registered successfully",
                 extra={
-                    "extra": {
-                        "user_created": user.id,
-                        "email": user.email
-                    }
+                    "user_created": user.id,
+                    "email": user.email
                 }
             ) 
             
@@ -265,10 +263,8 @@ class UserService(IUserService):
             logger.info(
                 "User created successfully",
                 extra={
-                    "extra": {
-                        "user_created": user.id,
-                        "email": user.email
-                    }
+                    "user_created": user.id,
+                    "email": user.email
                 }
             ) 
             
@@ -333,7 +329,7 @@ class UserService(IUserService):
         ''' Retrieve a user by its ID. '''
         
         # 0. Log the attempt
-        logger.info("Reading user by ID", extra = {"extra": { "retrieve_user_id": user_id}})
+        logger.info("Reading user by ID", extra={ "retrieve_user_id": user_id})
 
         async with self._uow_factory() as db:
 
@@ -345,7 +341,7 @@ class UserService(IUserService):
                 raise NotFoundError("User not found")
            
             # 3. Log the success
-            logger.info("User read successfully", extra = {"extra": { "user_found": user.id}})
+            logger.info("User read successfully", extra={ "user_found": user.id})
 
         return UserRead.model_validate(user)
     
@@ -355,7 +351,7 @@ class UserService(IUserService):
         ''' Retrieve a user by its ID including detailed info like the permissions in their roles. '''
         
         # 0. Log the attempt
-        logger.info("Reading user by ID (detailed)", extra={"extra": {"retrieve_user_id": user_id}})
+        logger.info("Reading user by ID (detailed)", extra={"retrieve_user_id": user_id})
 
         async with self._uow_factory() as db:
 
@@ -371,7 +367,7 @@ class UserService(IUserService):
             user.roles = roles
 
             # 4. Log and return the composed detailed schema
-            logger.info("User detailed read successful", extra={"user_id": user.id})
+            logger.info("User detailed read successful", extra={"request_by_user_id": user.id})
 
             return UserReadDetailed.model_validate(user)
     
@@ -385,7 +381,7 @@ class UserService(IUserService):
         ''' Update some fields of the user. '''
         
         # 0. Log the attempt
-        logger.info("Updating user", extra = {"extra": { "user_id_to_update": user_id}})
+        logger.info("Updating user", extra={ "user_id_to_update": user_id})
 
         async with self._uow_factory() as db:
 
@@ -420,7 +416,7 @@ class UserService(IUserService):
             user = await self._user_repo.update(db, user_id, update_payload)
 
             # 6. Log the success
-            logger.info("User updated successfully", extra = { "extra": {"user_updated_id": user_id}})
+            logger.info("User updated successfully", extra={ "user_updated_id": user_id})
         
         return UserRead.model_validate(user)
     
@@ -432,9 +428,9 @@ class UserService(IUserService):
         # 0. Log the attempt
         logger.info(
             "Requesting email change",
-            extra = {
-                "extra": { "current_email": payload.current_email, 
-                            "new_email": payload.new_email}
+            extra={
+                "current_email": payload.current_email,
+                "new_email": payload.new_email
             }
         )
 
@@ -470,7 +466,7 @@ class UserService(IUserService):
             updated_user = await self._user_repo.update(db, user_id, update_payload)
             
             # 8. Log the success
-            logger.info("Email changed successfully", extra = {"extra": { "new_email": payload.new_email}})
+            logger.info("Email changed successfully", extra={ "new_email": payload.new_email})
 
             return UserRead.model_validate(updated_user)
 
@@ -480,7 +476,7 @@ class UserService(IUserService):
         """ Change the password of the user. """
         
         # 0. Log the attempt
-        logger.info("Requesting password change", extra = {"extra": { "user_id": user_id}})
+        logger.info("Requesting password change", extra={ "request_by_user_id": user_id})
 
         async with self._uow_factory() as db:
 
@@ -508,7 +504,7 @@ class UserService(IUserService):
             updated_user = await self._user_repo.update(db, user_id, update_payload)
             
             # 7. Log the success
-            logger.info("Password changed successfully", extra = {"extra": { "user_id": user_id}})
+            logger.info("Password changed successfully", extra={ "request_by_user_id": user_id})
 
             return UserRead.model_validate(updated_user)
 
@@ -520,9 +516,9 @@ class UserService(IUserService):
         # 0. Log the attempt
         logger.info(
             "Adding role to user", 
-            extra = {
-                "extra": {   "user_id": user_id, 
-                            "role_id": role_id}
+            extra={
+                "request_by_user_id": user_id, 
+                "role_id": role_id
             }
         )
 
@@ -549,9 +545,9 @@ class UserService(IUserService):
             # 5. Log the success
             logger.info(
                 "Role added to user successfully", 
-                extra = {
-                    "extra": {  "user_id": user_id, 
-                                "role_id": role_id}
+                extra={
+                    "request_by_user_id": user_id, 
+                    "role_id": role_id
                 }
             )
 
@@ -565,10 +561,10 @@ class UserService(IUserService):
         # 0. Log the attempt
         logger.info(
             "Removing role from user", 
-            extra = {
-                "extra": {  "user_id": user_id, 
-                            "role_id": role_id}
-                }
+            extra={
+                "request_by_user_id": user_id, 
+                "role_id": role_id
+            }
         )
 
         async with self._uow_factory() as db:
@@ -594,10 +590,10 @@ class UserService(IUserService):
             # 5. Log the success
             logger.info(
                 "Role removed from user successfully", 
-                extra = {
-                    "extra": {  "user_id": user_id, 
-                                "role_id": role_id}
-                    }
+                extra={
+                    "request_by_user_id": user_id, 
+                    "role_id": role_id
+                }
             )
 
             return UserRead.model_validate(updated_user)
@@ -613,7 +609,7 @@ class UserService(IUserService):
         ''' Delete the user with that identifier. '''
         
         # 0. Log the attempt
-        logger.info("Deleting user by ID", extra = {"extra": { "user_id_to_delete": user_id}})
+        logger.info("Deleting user by ID", extra={ "user_id_to_delete": user_id})
 
         async with self._uow_factory() as db:
 
@@ -629,10 +625,8 @@ class UserService(IUserService):
             logger.info(
                 "User deleted successfully",
                 extra={
-                    "extra": {
-                        "user_deleted": user_id,
-                        "user_email_deleted": existing_user.email
-                    }
+                    "user_deleted": user_id,
+                    "user_email_deleted": existing_user.email
                 }
             )
 

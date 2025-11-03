@@ -19,6 +19,7 @@ router = APIRouter(prefix="/permissions", tags=["Permissions"])
     summary = "Create a new permission",
     description = "**Create a new permission with the necessary fields:**\n"
                 "- `Name`: The name of the permission.\n"
+                "- `Service Name`: The name of the microservice that owns the permission.\n"
                 "- `Description`: A brief description of the permission.\n",
     response_description = "The created permission"
 )
@@ -37,19 +38,21 @@ async def create_permission(
     summary = "Get permissions with filtering and pagination",
     description = "**Retrieve permissions with optional filtering, don't fill anything to get all the permissions.**\n" 
     "- `Name`: Exact name match (can provide multiple names).\n"
+    "- `Service Name`: Filter by microservice name.\n"
     "- `Description`: Partial description search.\n"
     "- `Pagination`: Use `skip` (offset) and `limit` (max records) for pagination.",
     response_description = "List of permissions matching criteria"
 )
 async def read_permissions(
-    name: Optional[List[str]] = Query(None, description="Partial name search"),
+    name: Optional[List[str]] = Query(None, description="Name search"),
+    service_name: Optional[str] = Query(None, description="Filter by microservice name"),
     description: Optional[str] = Query(None, description="Partial description search"),
     skip: int = Query(0, ge=0, description="Offset"),
     limit: int = Query(100, ge=1, le=100, description="Limit"),
     permission_service: PermissionService = Depends(get_permission_service),
     current_user: UserRead = requires_permission("permissions:read"),
 ) -> List[PermissionRead]:
-    return await permission_service.read_with_filters(name = name, description = description, skip = skip, limit = limit)
+    return await permission_service.read_with_filters(name = name, service_name = service_name, description = description, skip = skip, limit = limit)
 
 # Read permission by ID
 @router.get(
@@ -76,6 +79,7 @@ async def read_permission(
     summary = "Update permission by ID",
     description = "**Update a permission by its unique identifier.**\n"
     "- `name`: The updated permission name.\n"
+    "- `service_name`: The updated permission service name.\n"
     "- `description`: The updated permission description.",
     response_description = "The updated permission"
 )

@@ -2,19 +2,20 @@ from fastapi import Depends, HTTPException, status
 from functools import wraps
 from app.schemas.user import UserRead, UserReadDetailed
 from app.dependencies.auth import get_current_user
+from app.core.config import settings
+
 
 def requires_permission(permission_name: str, return_user: bool = True):
 
     """Dependency to check if the current user has the required permission."""
 
     async def checker(current_user: UserReadDetailed = Depends(get_current_user)):
+        
         user_permissions = {
             perm.name
             for role in current_user.roles
             for perm in getattr(role, "permissions", [])
         }
-
-        print("User Permissions:", user_permissions)
 
         # 1. Check if user is superuser
         if current_user.is_superuser:
@@ -25,14 +26,18 @@ def requires_permission(permission_name: str, return_user: bool = True):
                 status_code=status.HTTP_403_FORBIDDEN,
                 detail="User account is inactive"
             )
+        
         # 3. Check if user is required to change password
         if current_user.require_password_change:
             raise HTTPException(
                 status_code=status.HTTP_403_FORBIDDEN,
                 detail="User must change password before proceeding"
             )
+        
+        required_permission = (settings.SERVICE_NAME, permission_name)
+        
         # 4. Check if user has the required permission
-        if permission_name not in user_permissions:
+        if required_permission not in user_permissions:
             raise HTTPException(
                 status_code=status.HTTP_403_FORBIDDEN,
                 detail = "Access denied"

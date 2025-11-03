@@ -62,7 +62,7 @@ class AuthService(IAuthService):
             expires_in = access_token_pair.expires_in
 
             # 4.1 Log the created access token
-            logger.info("Access token created", extra = {"user_id": user.id})
+            logger.info("Access token created", extra={"request_by_user_id": user.id})
 
             # 5. Generate refresh token (raw + jti) and save hash in DB
             raw_refresh_token, jti_refresh_token = generate_raw_refresh_token()
@@ -77,13 +77,13 @@ class AuthService(IAuthService):
             await self.auth_repo.create_refresh_token(db, jti = jti_refresh_token, user_id = user.id, hashed_token = hashed, expires_at = expires_at, client_ip = ip, user_agent = user_agent)
 
             # 9. Log the created refresh token
-            logger.info("Refresh token created and stored", extra={"user_id": user.id, "jti_refresh_token": jti_refresh_token})
+            logger.info("Refresh token created and stored", extra={"request_by_user_id": user.id, "jti_refresh_token": jti_refresh_token})
 
             # 10. Return schema
             tokens = TokenPair(access_token = access_token, refresh_token = raw_refresh_token, jti = jti_refresh_token, expires_in = expires_in)
 
             # 11. Log the successful login
-            logger.info("Login successful", extra={"user_id": user.id})
+            logger.info("Login successful", extra={"request_by_user_id": user.id})
 
             return UserAndToken(user = UserRead.model_validate(user), token = tokens)
 
@@ -159,7 +159,7 @@ class AuthService(IAuthService):
         logger.info(
             "Logout user",
             extra={
-                "user_id": user_id,
+                "request_by_user_id": user_id,
             }
         )
 
@@ -183,7 +183,7 @@ class AuthService(IAuthService):
             if token.revoked:
                 logger.warning(
                     "Attempted to revoke already revoked token",
-                    extra={"user_id": user.id, "jti": jti},
+                    extra={"request_by_user_id": user.id, "jti": jti},
                 )
 
             # 5. Revoke refresh token
@@ -192,7 +192,7 @@ class AuthService(IAuthService):
             # 6️. Log successful logout
             logger.info(
                 "User logged out: refresh token revoked",
-                extra={"user_id": user.id, "jti": jti},
+                extra={"request_by_user_id": user.id, "jti": jti},
             )
 
 
@@ -228,7 +228,7 @@ class AuthService(IAuthService):
 
             # 2. If revoked, dont do anything
             if token.revoked:
-                logger.info("Token given was already revoked", extra={"user_id": token.user_id, "jti": token.jti})
+                logger.info("Token given was already revoked", extra={"request_by_user_id": token.user_id, "jti": token.jti})
                 return
             
             # 3. Revoke refresh token
@@ -237,7 +237,7 @@ class AuthService(IAuthService):
             # 4. Log successful logout
             logger.info(
                 "Refresh token revoked by JTI",
-                extra={"user_id": token.user_id, "jti": jti},
+                extra={"request_by_user_id": token.user_id, "jti": jti},
             )
 
 
@@ -249,7 +249,7 @@ class AuthService(IAuthService):
         logger.info(
             "Log out from all devices",
             extra={
-                "user_id": user_id,
+                "request_by_user_id": user_id,
             }
         )
 
@@ -264,7 +264,7 @@ class AuthService(IAuthService):
             await self.auth_repo.revoke_all_refresh_tokens_for_user(db, user_id)
 
             # 3. Log successful logout
-            logger.info("Successful log out from all devices", extra = {"user_id":user_id})
+            logger.info("Successful log out from all devices", extra={"request_by_user_id": user_id})
 
 
     async def revoke_refresh_token_by_raw(self, raw_token: str):
@@ -288,7 +288,7 @@ class AuthService(IAuthService):
             
             # 2. If revoked, dont do anything
             if token.revoked:
-                logger.info("Token given was already revoked", extra={"user_id": token.user_id, "jti": token.jti})
+                logger.info("Token given was already revoked", extra={"request_by_user_id": token.user_id, "jti": token.jti})
                 return
             
             # 3. Revoke refresh token
@@ -297,7 +297,7 @@ class AuthService(IAuthService):
             # 4. Log successful revoke
             logger.info(
                 "Refresh token revoked by RAW",
-                extra={"user_id": token.user_id, "jti": token.jti},
+                extra={"request_by_user_id": token.user_id, "jti": token.jti},
             )
 
 

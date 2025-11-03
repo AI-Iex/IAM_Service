@@ -22,6 +22,7 @@ class IPermissionRepository(ABC):
     async def read_with_filters(self,
                                 db: AsyncSession, 
                                 name: Optional[List[str]] = None,
+                                service_name: Optional[str] = None,
                                 description: Optional[str] = None,
                                 skip: int = 0, 
                                 limit: int = 100
@@ -30,7 +31,7 @@ class IPermissionRepository(ABC):
         pass
 
     @abstractmethod
-    async def read_by_names(self, db: AsyncSession, names: List[str]) -> List[Permission]:
+    async def read_by_names(self, db: AsyncSession, names: List[str], service_name: Optional[str] = None) -> List[Permission]:
         '''Retrieve permissions matching provided names list.'''
         pass
 

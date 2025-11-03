@@ -105,7 +105,8 @@ async def read_user_by_id(
     "- `Full Name`: Update the user's full name.\n"
     "- `Is Active`: Update the user's active status.\n"
     "- `Is Superuser`: Update the user's superuser status.\n"
-    "- `Roles`: Update the user's roles. Empty roles will remove all roles from the user. A list of roles will replace existing roles.",
+    "- `Roles`: List of roles assigned to this user. Setting this field will replace all existing roles of the user with the provided list,"
+    " and setting an empty list will remove all roles from the user.",
     response_description = "Updated user"
 )
 async def update_user(

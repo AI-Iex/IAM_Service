@@ -35,7 +35,7 @@ async def get_current_user(
         raise HTTPException(status_code = status.HTTP_401_UNAUTHORIZED, detail = "Malformed token")
 
     try:
-        user = await user_service.read_by_id(UUID(sub))
+        user = await user_service.read_by_id_detailed(UUID(sub))
 
     except Exception as exc:
         raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="User not found or inactive")

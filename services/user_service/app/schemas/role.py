@@ -2,20 +2,19 @@ from pydantic import BaseModel, Field
 from datetime import datetime
 from typing import Optional, List
 from uuid import UUID
-from app.schemas.permission import PermissionRead
+from app.schemas.permission import PermissionRead, PermissionRef
 
 class RoleBase(BaseModel):
     name: str = Field(..., example = "admin", description = "The name of the role")
     description: Optional[str] = Field(None, example = "Administrator with full access", description = "Description of the role")
 
 class RoleCreate(RoleBase):
-    permissions: Optional[List[str]] = Field(default = [], example = ["view_users", "edit_users"], description = "List of permission names assigned to this role")
+    permissions: Optional[List[PermissionRef]] = Field(..., example = [{"name": "users:read", "service_name": "user_service"}], description = "List of permissions (name+service_name) assigned to this role")
 
 class RoleUpdate(BaseModel):
     name: Optional[str] = Field(None, example = "manager", description = "Updated role name")
     description: Optional[str] = Field(None, example = "Manager role", description = "Updated role description")
-    permissions: Optional[List[str]] = Field(default = None, example = ["users_create, users_delete"], description = "Updated list of permissions")
-
+    permissions: Optional[List[PermissionRef]] = Field(default = None, example = [{"name": "users:read", "service_name": "user_service"}], description = "Updated list of permissions (use name+service_name)")
 
 class RoleUpdateInDB(BaseModel):
     """Internal DTO for repository updates of Role."""

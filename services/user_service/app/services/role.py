@@ -26,7 +26,8 @@ class RoleService(IRoleService):
         """Create a new role."""
 
         # 0. Log the attempt
-        logger.info("Trying to create a new role", extra = {"extra": {"name": payload.name}})
+        # avoid using reserved LogRecord keys (like 'name') in extra
+        logger.info("Trying to create a new role", extra={"role_name": payload.name})
         
         async with self._uow_factory() as db:
             
@@ -38,12 +39,62 @@ class RoleService(IRoleService):
             existing_roles = await self._role_repo.read_with_filters( db = db, name = [payload.name], limit=1)
             if existing_roles:
                 raise EntityAlreadyExists("Role with the same name already exists")
-            
-            # 3. Create the role
+
+            # 3. If permissions were provided, validate they exist and deduplicate
+            permission_ids: list[UUID] | None = None
+            perms_refs = payload.permissions or []
+
+            if perms_refs:
+                # normalize to list of (service, name) tuples preserving order and dedup
+                requested_pairs: list[tuple[str, str]] = []
+                seen = set()
+                for ref in perms_refs:
+                    if isinstance(ref, dict):
+                        name = ref.get("name")
+                        service = ref.get("service_name")
+                    else:
+                        name = getattr(ref, "name", None)
+                        service = getattr(ref, "service_name", None)
+
+                    if not name or not service:
+                        raise DomainError("Permission references must include 'name' and 'service_name'")
+
+                    key = (service, name)
+                    if key not in seen:
+                        seen.add(key)
+                        requested_pairs.append(key)
+
+                # group names by service to query efficiently
+                by_service: dict[str, list[str]] = {}
+                for service, name in requested_pairs:
+                    by_service.setdefault(service, []).append(name)
+
+                # fetch permissions per service
+                permissions_found = []
+                for service, names in by_service.items():
+                    perms = await self._permission_repo.read_by_names(db, names, service_name=service)
+                    permissions_found.extend(perms)
+
+                # map found permissions for quick lookup
+                perm_map = {(perm.service_name, perm.name): perm for perm in permissions_found}
+
+                # detect missing pairs
+                missing = [f"{s}:{n}" for (s, n) in requested_pairs if (s, n) not in perm_map]
+                if missing:
+                    raise NotFoundError(f"The following permissions do not exist: {missing}")
+
+                # preserve requested order when building ids
+                permission_ids = [perm_map[(s, n)].id for (s, n) in requested_pairs]
+
+            # 4. Create the role
             role = await self._role_repo.create(db = db, role = payload)
 
-            # 4. Log the success
-            logger.info("Role created successfully", extra = {"extra": {"role_id": role.id}})
+            # 5. If permissions were provided, assign them
+            if permission_ids is not None:
+                role = await self._role_repo.set_permissions(db, role.id, permission_ids)
+
+            # 6. Log the success
+            logger.info("Role created successfully", extra={"role_id": role.id})
 
             return RoleRead.model_validate(role)
 
@@ -57,7 +108,7 @@ class RoleService(IRoleService):
         """Get a role by its ID."""
        
         # 0. Log the attempt
-        logger.info("Reading role by ID", extra = {"extra": { "retrieve_role_id": role_id}})
+        logger.info("Reading role by ID", extra={ "retrieve_role_id": role_id})
 
         async with self._uow_factory() as db:
             
@@ -69,7 +120,7 @@ class RoleService(IRoleService):
                 raise NotFoundError("Role not found")
 
             # 3. Log the success
-            logger.info("Role read successfully", extra = {"extra": { "role_found": role.id}})
+            logger.info("Role read successfully", extra={ "role_found": role.id})
 
             return RoleRead.model_validate(role)
 
@@ -146,12 +197,42 @@ class RoleService(IRoleService):
                 if len(perms_names) == 0:
                     permission_ids = []  # explicit request to clear permissions
                 else:
-                    # get permissions by names from permission repository
-                    permissions = await self._permission_repo.read_by_names(db, perms_names)
-                    if len(permissions) != len(perms_names):
-                        missing_perms = set(perms_names) - {perm.name for perm in permissions}
+                    # perms_names is expected to be a list of PermissionRef-like dicts
+                    requested_pairs: list[tuple[str, str]] = []
+                    seen = set()
+                    for ref in perms_names:
+                        if isinstance(ref, dict):
+                            name = ref.get("name")
+                            service = ref.get("service_name")
+                        else:
+                            # if it's a pydantic model
+                            name = getattr(ref, "name", None)
+                            service = getattr(ref, "service_name", None)
+
+                        if not name or not service:
+                            raise DomainError("Permission references must include 'name' and 'service_name'")
+
+                        key = (service, name)
+                        if key not in seen:
+                            seen.add(key)
+                            requested_pairs.append(key)
+
+                    # group and fetch
+                    by_service: dict[str, list[str]] = {}
+                    for service, name in requested_pairs:
+                        by_service.setdefault(service, []).append(name)
+
+                    permissions_found = []
+                    for service, names in by_service.items():
+                        perms = await self._permission_repo.read_by_names(db, names, service_name=service)
+                        permissions_found.extend(perms)
+
+                    perm_map = {(perm.service_name, perm.name): perm for perm in permissions_found}
+                    missing_perms = [f"{s}:{n}" for (s, n) in requested_pairs if (s, n) not in perm_map]
+                    if missing_perms:
                         raise NotFoundError(f"The following permissions do not exist: {missing_perms}")
-                    permission_ids = [p.id for p in permissions]
+
+                    permission_ids = [perm_map[(s, n)].id for (s, n) in requested_pairs]
 
             # 5. Create an internal DTO and update the role simple fields
             update_payload = RoleUpdateInDB(**update_data) if update_data else RoleUpdateInDB()
@@ -162,7 +243,7 @@ class RoleService(IRoleService):
                 updated_role = await self._role_repo.set_permissions(db, role_id, permission_ids)
 
             # 7. Log the success
-            logger.info("Role updated successfully", extra = {"extra": { "updated_role_id": updated_role.id}})
+            logger.info("Role updated successfully", extra={ "updated_role_id": updated_role.id})
 
             return RoleRead.model_validate(updated_role)
 
@@ -174,10 +255,9 @@ class RoleService(IRoleService):
         # 0. Log the attempt
         logger.info(
             "Adding permission to role", 
-            extra = {
-                "extra": {
-                    "role_id": role_id, 
-                    "permission_id": permission_id}
+            extra={
+                "role_id": role_id, 
+                "permission_id": permission_id
             }
         )
 
@@ -204,10 +284,9 @@ class RoleService(IRoleService):
             # 5. Log the success
             logger.info(
                 "Permission added to role successfully", 
-                extra = {
-                    "extra": {
-                        "role_id": role_id, 
-                        "permission_id": permission_id}
+                extra={
+                    "role_id": role_id, 
+                    "permission_id": permission_id
                 }
             )
 
@@ -221,10 +300,9 @@ class RoleService(IRoleService):
         # 0. Log the attempt
         logger.info(
             "Removing permission from role", 
-            extra = {
-                "extra": {
-                    "role_id": role_id, 
-                    "permission_id": permission_id}
+            extra={
+                "role_id": role_id, 
+                "permission_id": permission_id
             }
         )
 
@@ -251,10 +329,9 @@ class RoleService(IRoleService):
             # 5. Log the success
             logger.info(
                 "Permission removed from role", 
-                extra = {
-                    "extra": {
-                        "role_id": role_id, 
-                        "permission_id": permission_id}
+                extra={
+                    "role_id": role_id, 
+                    "permission_id": permission_id
                 }
             )
 
@@ -270,7 +347,7 @@ class RoleService(IRoleService):
         """Delete a role by its ID."""
 
         # 0. Log the attempt
-        logger.info("Deleting role by ID", extra = {"role_id": role_id})
+        logger.info("Deleting role by ID", extra={"role_id": role_id})
 
         async with self._uow_factory() as db:
 
@@ -285,6 +362,6 @@ class RoleService(IRoleService):
             await self._role_repo.delete( db, role_id)
 
             # 4. Log the success
-            logger.info("Role deleted successfully", extra = {"extra": { "deleted_role_id": role_id}})
+            logger.info("Role deleted successfully", extra={ "deleted_role_id": role_id})
 
 #endregion DELETE

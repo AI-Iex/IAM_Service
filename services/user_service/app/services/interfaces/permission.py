@@ -14,6 +14,7 @@ class IPermissionService(ABC):
     @abstractmethod
     async def read_with_filters(self, 
                                 name: Optional[List[str]] = None, 
+                                service_name: Optional[str] = None,
                                 description: Optional[str] = None, 
                                 skip: int = 0, 
                                 limit: int = 100
