@@ -10,6 +10,7 @@ class Settings(BaseSettings):
     SERVICE_VERSION: str = "1.0.0"
     SERVICE_DESCRIPTION: str
     SERVICE_LICENSE: str
+    SERVICE_PERMISSIONS_PATH: str
 
     # API config
     API_VERSION: float = 1.0

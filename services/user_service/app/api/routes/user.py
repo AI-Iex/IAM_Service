@@ -6,7 +6,7 @@ from app.services.user import UserService
 from app.dependencies.services import get_user_service
 from app.dependencies.auth import get_current_user
 from app.core.permissions import requires_permission
-from uuid import UUID
+from app.core.permissions_loader import Permissions
 
 router = APIRouter(prefix = "/users", tags = ["Users"])
 
@@ -27,7 +27,7 @@ router = APIRouter(prefix = "/users", tags = ["Users"])
 async def create_user(
     payload: UserCreateByAdmin,
     user_service: UserService = Depends(get_user_service),
-    current_user: UserRead = requires_permission("users:create")
+    current_user: UserRead = requires_permission(Permissions.USERS_CREATE)
 ) -> UserRead:
     return await user_service.admin_register_user(payload)
 
@@ -54,7 +54,7 @@ async def read_with_filters(
     skip: int = Query(0, ge = 0, description = "Number of records to skip (offset)"),
     limit: int = Query(100, ge = 1, le = 100, description = "Maximum records to return"),
     user_service: UserService = Depends(get_user_service),
-    current_user: UserRead = requires_permission("users:read")
+    current_user: UserRead = requires_permission(Permissions.USERS_READ)
 ) -> List[UserRead]:
     return await user_service.read_with_filters(
         name = name, email = email, active = active, 
@@ -90,7 +90,7 @@ async def get_current_user_profile(
 async def read_user_by_id(
     user_id: UUID = Path(..., description = "Unique user identifier"),
     user_service: UserService = Depends(get_user_service),
-    current_user: UserRead = requires_permission("users:read")
+    current_user: UserRead = requires_permission(Permissions.USERS_READ)
 ) -> UserRead:
     return await user_service.read_by_id(user_id = user_id)
 
@@ -113,7 +113,7 @@ async def update_user(
     user_id: UUID = Path(..., description = "Unique user identifier"),
     payload: UserUpdate = None,
     user_service: UserService = Depends(get_user_service),
-    current_user: UserRead = requires_permission("users:update")
+    current_user: UserRead = requires_permission(Permissions.USERS_UPDATE)
 ) -> UserRead: 
     return await user_service.update(user_id, payload)
 
@@ -171,7 +171,7 @@ async def add_role_to_user(
     user_id: UUID = Path(..., description = "Unique user identifier"),
     role_id: UUID = Path(..., description = "Unique role identifier to add"),
     user_service: UserService = Depends(get_user_service),
-    current_user: UserRead = requires_permission("users:update")
+    current_user: UserRead = requires_permission(Permissions.USERS_UPDATE)
 ) -> UserRead:
     return await user_service.add_role_to_user(user_id, role_id)
 
@@ -191,7 +191,7 @@ async def remove_role_from_user(
     user_id: UUID = Path(..., description = "Unique user identifier"),
     role_id: UUID = Path(..., description = "Unique role identifier to remove"),
     user_service: UserService = Depends(get_user_service),
-    current_user: UserRead = requires_permission("users:update")
+    current_user: UserRead = requires_permission(Permissions.USERS_UPDATE)
 ) -> UserRead:
     return await user_service.remove_role_from_user(user_id, role_id)
 
@@ -207,7 +207,7 @@ async def remove_role_from_user(
 async def delete_user(
         user_id: UUID = Path(..., description = "Unique user identifier"),
         user_service: UserService = Depends(get_user_service),
-        current_user: UserRead = requires_permission("users:delete")
+        current_user: UserRead = requires_permission(Permissions.USERS_DELETE)
 ) -> None:
     await user_service.delete(user_id)
 

@@ -1,0 +1,25 @@
+{
+  "service_name": "User Management Service",
+  "permissions": {
+
+    "users:create": "Allow creating new users accounts with temporary passwords.",
+    "users:read":   "Allow reading users filtering by specific criteria or unique identifiers.",
+    "users:update": "Allow updating user accounts adding or removing roles, activating or deactivating the account.",
+    "users:delete": "Allow deleting user accounts.",
+
+    "roles:create": "Allow creating new roles with specific permissions.",
+    "roles:read":   "Allow reading roles and their associated permissions, filtering by specific criteria.",
+    "roles:update": "Allow updating existing roles to modify their permissions, name or description.",
+    "roles:delete": "Allow deleting roles from the system.",
+
+    "permissions:create": "Allow creating new permissions to be assigned to roles.",
+    "permissions:read":   "Allow reading permissions filtering by specific criteria or unique identifiers.",
+    "permissions:update": "Allow updating existing permissions to modify their attributes.",
+    "permissions:delete": "Allow deleting permissions from the system.",
+
+    "clients:create": "Allow creating new client applications with specific access scopes.",
+    "clients:read":   "Allow reading client applications filtering by specific criteria or unique identifiers.",
+    "clients:update": "Allow updating existing client applications to modify their access scopes or other attributes.",
+    "clients:delete": "Allow deleting client applications from the system."
+  }
+}

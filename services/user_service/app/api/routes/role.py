@@ -10,6 +10,7 @@ from app.dependencies.services import get_role_service
 from app.dependencies.auth import get_current_user
 from uuid import UUID
 from app.core.permissions import requires_permission
+from app.core.permissions_loader import Permissions
 
 router = APIRouter(prefix="/roles", tags=["Roles"])
 
@@ -28,7 +29,7 @@ router = APIRouter(prefix="/roles", tags=["Roles"])
 async def create_role(
     payload: RoleCreate,
     role_service: RoleService = Depends(get_role_service),
-    current_user: UserRead = requires_permission("roles:create")
+    current_user: UserRead = requires_permission(Permissions.ROLES_CREATE)
 ) -> RoleRead:
     return await role_service.create(payload)
 
@@ -51,7 +52,7 @@ async def read_roles(
     skip: int = Query(0, ge = 0, description = "Number of records to skip (offset)"),
     limit: int = Query(100, ge = 1, le = 100, description = "Maximum records to return"),
     role_service: RoleService = Depends(get_role_service),
-    current_user: UserRead = requires_permission("roles:read")
+    current_user: UserRead = requires_permission(Permissions.ROLES_READ)
 ) -> List[RoleRead]:
     return await role_service.read_with_filters(
         name = name, description = description,
@@ -72,7 +73,7 @@ async def read_roles(
 async def read_role(
     role_id: UUID,
     role_service: RoleService = Depends(get_role_service),
-    current_user: UserRead = requires_permission("roles:read")
+    current_user: UserRead = requires_permission(Permissions.ROLES_READ)
 ) -> RoleRead:
     return await role_service.read_by_id(role_id)
 
@@ -94,25 +95,9 @@ async def update_role(
     role_id: UUID,
     payload: RoleUpdate,
     role_service: RoleService = Depends(get_role_service),
-    current_user: UserRead = requires_permission("roles:update")
+    current_user: UserRead = requires_permission(Permissions.ROLES_UPDATE)
 ) -> RoleRead:
     return await role_service.update(role_id, payload)
-
-
-# Delete role by ID
-@router.delete(
-    "/{role_id}",
-    status_code = status.HTTP_204_NO_CONTENT,
-    summary = "Delete role by ID",
-    description = "**Delete a role by its unique identifier.**\n" \
-    "- `role_id`: The unique identifier of the role."
-)
-async def delete_role(
-    role_id: UUID,
-    role_service: RoleService = Depends(get_role_service),
-    current_user: UserRead = requires_permission("roles:delete")
-) -> None:
-    await role_service.delete(role_id)
 
 
 # Add a permission to a role
@@ -130,7 +115,7 @@ async def add_permission_to_role(
     role_id: UUID,
     permission_id: UUID,
     role_service: RoleService = Depends(get_role_service),
-    current_user: UserRead = requires_permission("roles:update")
+    current_user: UserRead = requires_permission(Permissions.ROLES_UPDATE)
 ) -> RoleRead:
     return await role_service.add_permission(role_id, permission_id)
 
@@ -150,6 +135,22 @@ async def remove_permission_from_role(
     role_id: UUID,
     permission_id: UUID,
     role_service: RoleService = Depends(get_role_service),
-    current_user: UserRead = requires_permission("roles:update")
+    current_user: UserRead = requires_permission(Permissions.ROLES_UPDATE)
 ) -> RoleRead:
     return await role_service.remove_permission(role_id, permission_id)
+
+
+# Delete role by ID
+@router.delete(
+    "/{role_id}",
+    status_code = status.HTTP_204_NO_CONTENT,
+    summary = "Delete role by ID",
+    description = "**Delete a role by its unique identifier.**\n" \
+    "- `role_id`: The unique identifier of the role."
+)
+async def delete_role(
+    role_id: UUID,
+    role_service: RoleService = Depends(get_role_service),
+    current_user: UserRead = requires_permission(Permissions.ROLES_DELETE)
+) -> None:
+    await role_service.delete(role_id)

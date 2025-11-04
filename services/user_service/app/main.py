@@ -14,6 +14,7 @@ from app.db.base import init_db
 from app.db.session import get_engine
 from app.core.config import settings
 from app.core.logging_config import setup_logging, configure_third_party_loggers
+from app.core.permissions_loader import Permissions
 
 
 logger = setup_logging()
