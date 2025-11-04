@@ -12,7 +12,7 @@ def requires_permission(permission_name: str, return_user: bool = True):
     async def checker(current_user: UserReadDetailed = Depends(get_current_user)):
         
         user_permissions = {
-            perm.name
+            f"{perm.service_name}:{perm.name}"
             for role in current_user.roles
             for perm in getattr(role, "permissions", [])
         }
