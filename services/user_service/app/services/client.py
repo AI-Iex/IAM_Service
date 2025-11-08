@@ -189,14 +189,14 @@ class ClientService(IClientService):
 
             # 6. If permissions were provided, perform assignment through repository method using ids
             if permission_ids is not None:
-                updated_client = await self._client_repo.set_permissions(db, client_id, permission_ids)
+                updated_client = await self._client_repo.assign_list_permissions(db, client_id, permission_ids)
 
             # 7. Log the success
             logger.info("Client updated successfully", extra={ "updated_client_id": updated_client.id})
 
             return ClientRead.model_validate(updated_client)
         
-    async def add_permission(self, client_id: UUID, permission_id: UUID) -> ClientRead:
+    async def assign_permission(self, client_id: UUID, permission_id: UUID) -> ClientRead:
         
         """ Add permission to a client. """
 
@@ -227,7 +227,7 @@ class ClientService(IClientService):
                 raise EntityAlreadyExists("Client already has this permission")
 
             # 4. Assign the permission
-            updated = await self._client_repo.add_permission(db, client_id, permission_id)
+            updated = await self._client_repo.assign_permission(db, client_id, permission_id)
 
             # 5. Log the success
             logger.info(

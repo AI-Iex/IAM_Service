@@ -30,7 +30,7 @@ async def create_user(
     user_service: UserService = Depends(get_user_service),
     current_user: UserRead = requires_permission(Permissions.USERS_CREATE)
 ) -> UserRead:
-    return await user_service.admin_register_user(payload)
+    return await user_service.create(payload)
 
 
 # Read users with filters
@@ -185,7 +185,7 @@ async def add_role_to_user(
     user_service: UserService = Depends(get_user_service),
     current_user: UserRead = requires_permission(Permissions.USERS_UPDATE)
 ) -> UserRead:
-    return await user_service.add_role_to_user(user_id, role_id)
+    return await user_service.assign_role(user_id, role_id)
 
 
 # Remove a role from a user
@@ -205,7 +205,7 @@ async def remove_role_from_user(
     user_service: UserService = Depends(get_user_service),
     current_user: UserRead = requires_permission(Permissions.USERS_UPDATE)
 ) -> UserRead:
-    return await user_service.remove_role_from_user(user_id, role_id)
+    return await user_service.remove_role(user_id, role_id)
 
 
 # Delete a user by ID

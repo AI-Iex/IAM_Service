@@ -1,16 +1,14 @@
-from datetime import datetime, timedelta, timezone
+from datetime import datetime, timezone
 from typing import Optional, List
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy.ext.asyncio import AsyncSession
-from sqlalchemy.orm import selectinload
-from sqlalchemy import select, delete, update
+from sqlalchemy import select, delete
 from app.models.user import User
 from app.schemas.user import UserCreateInDB, UserUpdateInDB
 from app.core.exceptions import EntityAlreadyExists, RepositoryError
 from app.repositories.interfaces.user import IUserRepository
 from uuid import UUID
 from app.models.user_role import UserRole
-from sqlalchemy import select
 from app.core.exceptions import RepositoryError
 
 class UserRepository(IUserRepository):
@@ -20,12 +18,12 @@ class UserRepository(IUserRepository):
     async def create(self, db: AsyncSession, dto: UserCreateInDB) -> User:
         try:
             user = User(
-                email=dto.email,
-                full_name=dto.full_name,
-                hashed_password=dto.hashed_password,
-                is_active=dto.is_active,
-                is_superuser=dto.is_superuser,
-                require_password_change=dto.require_password_change
+                email = dto.email,
+                full_name = dto.full_name,
+                hashed_password = dto.hashed_password,
+                is_active = dto.is_active,
+                is_superuser = dto.is_superuser,
+                require_password_change = dto.require_password_change
             )
 
             db.add(user)
@@ -45,7 +43,7 @@ class UserRepository(IUserRepository):
 
     # region READ
 
-    async def get_with_filters(
+    async def read_with_filters(
         self,
         db: AsyncSession,
         name: Optional[str] = None,
@@ -80,7 +78,7 @@ class UserRepository(IUserRepository):
         except Exception as e:
             raise RepositoryError(f"Error retrieving users with filters: {str(e)}") from e
 
-    async def get_by_id(self, db: AsyncSession, user_id: UUID) -> Optional[User]:
+    async def read_by_id(self, db: AsyncSession, user_id: UUID) -> Optional[User]:
         
         try:
 
@@ -93,7 +91,7 @@ class UserRepository(IUserRepository):
         except Exception as e:
             raise RepositoryError(f"Error retrieving user by ID: {str(e)}") from e
 
-    async def get_by_email(self, db: AsyncSession, email: str) -> Optional[User]:
+    async def read_by_email(self, db: AsyncSession, email: str) -> Optional[User]:
         
         try:
 
@@ -114,10 +112,10 @@ class UserRepository(IUserRepository):
         
         try:
             
-            user = await self.get_by_id(db, user_id)
+            user = await self.read_by_id(db, user_id)
 
             if hasattr(update_data, "model_dump"):
-                data = update_data.model_dump(exclude_unset=True, exclude_none=True)
+                data = update_data.model_dump(exclude_unset = True, exclude_none = True)
             else:
                 data = dict(update_data or {})
 
@@ -135,7 +133,7 @@ class UserRepository(IUserRepository):
         
         try:
             
-            user = await self.get_by_id(db, user_id)
+            user = await self.read_by_id(db, user_id)
 
             user.last_login = datetime.now(timezone.utc)
             
@@ -146,14 +144,14 @@ class UserRepository(IUserRepository):
         except Exception as e:
             raise RepositoryError(f"Error updating last_login: {str(e)}") from e
         
-    async def add_role(self, db: AsyncSession, user_id: UUID, role_id: UUID) -> User:
+    async def assign_role(self, db: AsyncSession, user_id: UUID, role_id: UUID) -> User:
 
         try:
             
             await db.execute(UserRole.__table__.insert().values(user_id = user_id, role_id = role_id))
             await db.flush()
 
-            user = await self.get_by_id(db, user_id)
+            user = await self.read_by_id(db, user_id)
 
             await db.refresh(user)
             return user
@@ -165,7 +163,7 @@ class UserRepository(IUserRepository):
         
         try:
            
-            user = await self.get_by_id(db, user_id)
+            user = await self.read_by_id(db, user_id)
 
             # Delete association if exists
             await db.execute(

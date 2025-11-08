@@ -131,7 +131,7 @@ async def assign_client_permissions_by_ids(
     client_service: ClientService = Depends(get_client_service),
     principal: Principal = requires_permission(Permissions.CLIENTS_UPDATE),
 ) -> ClientRead:
-    return await client_service.add_permission(client_id, permission_id)
+    return await client_service.assign_permission(client_id, permission_id)
 
 
 # Remove permission from client by ID

@@ -1,18 +1,13 @@
-from typing import Optional
-from uuid import UUID
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import selectinload
 from sqlalchemy import select, delete, update
-from app.schemas.role import RoleCreate, RoleRead, RoleUpdate, RoleUpdateInDB
+from app.schemas.role import RoleCreate, RoleRead, RoleUpdateInDB
 from app.repositories.interfaces.role import IRoleRepository
 from app.models.role import Role
 from typing import Optional, List
 from uuid import UUID
 from app.models.role_permission import RolePermission
-from app.core.exceptions import EntityAlreadyExists, RepositoryError, NotFoundError
-from sqlalchemy.exc import IntegrityError
-from app.models.user_role import UserRole
-from sqlalchemy.exc import IntegrityError
+from app.core.exceptions import RepositoryError
 
 
 class RoleRepository(IRoleRepository):
@@ -55,7 +50,6 @@ class RoleRepository(IRoleRepository):
         except Exception as e:
             raise RepositoryError(f"Error reading role by ID: {str(e)}") from e
 
-
     async def read_with_filters(
             self, 
             db: AsyncSession,
@@ -83,7 +77,6 @@ class RoleRepository(IRoleRepository):
         except Exception as e:
             raise RepositoryError(f"Error reading role with filters: {str(e)}") from e
   
-
     async def read_by_names(self, db: AsyncSession, names: List[str]) -> List[Role]:
 
         try:
@@ -95,19 +88,6 @@ class RoleRepository(IRoleRepository):
         
         except Exception as e:
             raise RepositoryError(f"Error reading roles by names: {str(e)}") from e
-   
-
-    async def read_by_user_id_with_permissions(self, db: AsyncSession, user_id: UUID) -> List[Role]:
-       
-        try:
-            ur_table = UserRole.__table__
-            query = select(Role).join(ur_table, ur_table.c.role_id == Role.id).where(ur_table.c.user_id == user_id).options(selectinload(Role.permissions))
-            result = await db.execute(query)
-            
-            return result.scalars().all()
-        
-        except Exception as e:
-            raise RepositoryError(f"Error reading roles for user {user_id}: {str(e)}") from e
 
 # endregion READ
 
@@ -134,8 +114,7 @@ class RoleRepository(IRoleRepository):
         except Exception as e:
             raise RepositoryError(f"Error updating role: {str(e)}") from e
 
-
-    async def add_permission(self, db: AsyncSession, role_id: UUID, permission_id: UUID) -> Role:
+    async def assign_permission(self, db: AsyncSession, role_id: UUID, permission_id: UUID) -> Role:
        
         try:
             rp = RolePermission(role_id=role_id, permission_id=permission_id)
@@ -147,10 +126,11 @@ class RoleRepository(IRoleRepository):
             return role
         
         except Exception as e:
-            raise RepositoryError(f"Error adding permission to role: {str(e)}") from e
+            raise RepositoryError(f"Error assigning permission to role: {str(e)}") from e
 
+    async def assign_list_permissions(self, db: AsyncSession, role_id: UUID, permission_ids: List[UUID]) -> Role:
 
-    async def set_permissions(self, db: AsyncSession, role_id: UUID, permission_ids: List[UUID]) -> Role:
+        '''Assign a list of permissions to a role by replacing existing ones.'''
 
         try:
             
@@ -171,8 +151,7 @@ class RoleRepository(IRoleRepository):
             return db_role
         
         except Exception as e:
-            raise RepositoryError(f"Error setting permissions for role: {str(e)}") from e
-
+            raise RepositoryError(f"Error assigning a list of permissions to a role: {str(e)}") from e
 
     async def remove_permission(self, db: AsyncSession, role_id: UUID, permission_id: UUID) -> Role:
        

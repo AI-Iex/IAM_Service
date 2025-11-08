@@ -3,14 +3,14 @@ from typing import Optional, List
 from uuid import UUID
 from sqlalchemy.ext.asyncio import AsyncSession
 from app.models.permission import Permission
-from app.schemas.permission import PermissionCreate, PermissionUpdate, PermissionUpdateInDB
+from app.schemas.permission import PermissionCreate, PermissionUpdateInDB
 
 
 class IPermissionRepository(ABC):
 
     @abstractmethod
     async def create(self, db: AsyncSession, payload: PermissionCreate) -> Permission:
-        '''Create a Permission returning the created object.'''
+        '''Create a permission returning the created object.'''
         pass
 
     @abstractmethod
@@ -38,7 +38,7 @@ class IPermissionRepository(ABC):
 
     @abstractmethod
     async def update(self, db: AsyncSession, permission_id: UUID, payload: PermissionUpdateInDB) -> Permission:
-        '''Update a permission by id using internal DTO.'''
+        '''Update a permission by id.'''
         pass
 
     @abstractmethod

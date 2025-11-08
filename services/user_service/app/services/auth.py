@@ -49,7 +49,7 @@ class AuthService(IAuthService):
         async with self.uow_factory() as db:
 
             # 1. Get user by email
-            user = await self.user_repo.get_by_email(db, email)
+            user = await self.user_repo.read_by_email(db, email)
             if not user:
                 raise NotFoundError("Invalid credentials")
 
@@ -144,7 +144,7 @@ class AuthService(IAuthService):
             await self.refresh_repo.mark_refresh_token_replaced(db, old_jti=token_row.jti, new_jti=new_jti)
 
             # crear nuevo access token
-            user = await self.user_repo.get_by_id(db, token_row.user_id)
+            user = await self.user_repo.read_by_id(db, token_row.user_id)
             role_names = [r.name for r in user.roles] if getattr(user, 'roles', None) else []
             token_info = create_user_access_token(subject=str(user.id), roles=role_names, is_superuser=user.is_superuser)
             access_token = token_info.access_token
@@ -171,7 +171,7 @@ class AuthService(IAuthService):
         async with self.uow_factory() as db:
 
             # 1. Check user exists
-            user = await self.user_repo.get_by_id(db, user_id)
+            user = await self.user_repo.read_by_id(db, user_id)
             if not user:
                 raise NotFoundError(f"User {user_id} not found")
         
@@ -261,7 +261,7 @@ class AuthService(IAuthService):
         async with self.uow_factory() as db:
 
             # 1. Check user exists
-            user = await self.user_repo.get_by_id(db, user_id)
+            user = await self.user_repo.read_by_id(db, user_id)
             if not user:
                 raise NotFoundError(f"User {user_id} not found")
 

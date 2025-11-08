@@ -13,12 +13,18 @@ class IClientService(ABC):
 
     @abstractmethod
     async def read_by_id(self, client_id: UUID) -> ClientRead:
-        '''Get a client by its ID.'''
+        '''Retrieve a client by its ID.'''
         pass
 
     @abstractmethod
-    async def read_with_filters(self, name: Optional[str] = None, is_active: Optional[bool] = None, skip: int = 0, limit: int = 100) -> List[ClientRead]:
-        '''Get clients with filters.'''
+    async def read_with_filters(
+        self, 
+        name: Optional[str] = None, 
+        is_active: Optional[bool] = None, 
+        skip: int = 0, 
+        limit: int = 100
+    ) -> List[ClientRead]:
+        '''Retrieve clients matching the provided filters with pagination.'''
         pass
 
     @abstractmethod
@@ -27,7 +33,7 @@ class IClientService(ABC):
         pass
 
     @abstractmethod
-    async def add_permission(self, client_id: UUID, permission_id: UUID) -> ClientRead:
+    async def assign_permission(self, client_id: UUID, permission_id: UUID) -> ClientRead:
         '''Assign a permission to a client by ID.'''
         pass
 

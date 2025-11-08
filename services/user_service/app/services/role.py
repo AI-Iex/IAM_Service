@@ -84,7 +84,7 @@ class RoleService(IRoleService):
 
             # 5. If permissions were provided, assign them
             if permission_ids is not None:
-                role = await self._role_repo.set_permissions(db, role.id, permission_ids)
+                role = await self._role_repo.assign_list_permissions(db, role.id, permission_ids)
 
             # 6. Log the success
             logger.info("Role created successfully", extra={"role_id": role.id})
@@ -223,7 +223,7 @@ class RoleService(IRoleService):
 
             # 6. If permissions were provided, perform assignment through repository method using ids
             if permission_ids is not None:
-                updated_role = await self._role_repo.set_permissions(db, role_id, permission_ids)
+                updated_role = await self._role_repo.assign_list_permissions(db, role_id, permission_ids)
 
             # 7. Log the success
             logger.info("Role updated successfully", extra={ "updated_role_id": updated_role.id})
@@ -231,7 +231,7 @@ class RoleService(IRoleService):
             return RoleRead.model_validate(updated_role)
 
     # Add a permission to a role
-    async def add_permission(self, role_id: UUID, permission_id: UUID) -> RoleRead:
+    async def assign_permission(self, role_id: UUID, permission_id: UUID) -> RoleRead:
 
         """ Add a permission to a role. """
 
@@ -262,7 +262,7 @@ class RoleService(IRoleService):
                 raise EntityAlreadyExists("Role already has this permission")  
 
             # 4. Add the permission
-            updated = await self._role_repo.add_permission(db, role_id, permission_id)
+            updated = await self._role_repo.assign_permission(db, role_id, permission_id)
 
             # 5. Log the success
             logger.info(

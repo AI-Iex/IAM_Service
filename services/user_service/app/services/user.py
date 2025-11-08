@@ -2,16 +2,13 @@ from typing import List, Optional
 from app.repositories.interfaces.user import IUserRepository
 from app.services.interfaces.user import IUserService
 from app.db.unit_of_work import UnitOfWorkFactory
-from app.schemas.user import UserCreateByAdmin, UserCreateInDB, UserRead, UserUpdate, UserUpdateInDB, UserChangeEmail, UserRegister, UserReadDetailed, PasswordChange
+from app.schemas.user import UserCreateByAdmin, UserCreateInDB, UserRead, UserUpdate, UserUpdateInDB, UserChangeEmail, UserRegister, PasswordChange
 from app.core.security import hash_password, verify_password
 from app.core.exceptions import EntityAlreadyExists, DomainError, NotFoundError
 import logging, re
 from app.core.business_config import BusinessConfig
 from uuid import UUID
 from app.repositories.interfaces.role import IRoleRepository
-from app.models.role import Role
-from app.schemas.user import UserReadDetailed
-
 
 logger = logging.getLogger(__name__)
 
@@ -192,7 +189,7 @@ class UserService(IUserService):
         async with self._uow_factory() as db:
 
             # 4. Check if email already exists
-            existing = await self._user_repo.get_by_email(db, payload.email)
+            existing = await self._user_repo.read_by_email(db, payload.email)
             if existing:
                 raise EntityAlreadyExists("Email is already in use")
 
@@ -222,7 +219,7 @@ class UserService(IUserService):
         return UserRead.model_validate(user)
     
     # Register a new user account by admin
-    async def admin_register_user(self, payload: UserCreateByAdmin) -> UserRead :
+    async def create(self, payload: UserCreateByAdmin) -> UserRead :
 
         ''' 
         Register a new user account setting the require_password_change flag to True.\n
@@ -244,7 +241,7 @@ class UserService(IUserService):
         async with self._uow_factory() as db:
 
             # 4. Check if email already exists
-            existing = await self._user_repo.get_by_email(db, payload.email)
+            existing = await self._user_repo.read_by_email(db, payload.email)
             if existing:
                 raise EntityAlreadyExists("Email is already in use")
 
@@ -306,7 +303,7 @@ class UserService(IUserService):
         async with self._uow_factory() as db:
 
             # 1. Query the users
-            users = await self._user_repo.get_with_filters(
+            users = await self._user_repo.read_with_filters(
                 db = db,
                 name = name,
                 email = email,
@@ -337,7 +334,7 @@ class UserService(IUserService):
         async with self._uow_factory() as db:
 
             # 1. Query the user
-            user = await self._user_repo.get_by_id(db, user_id)
+            user = await self._user_repo.read_by_id(db, user_id)
 
             # 2. Check if user exists
             if not user:
@@ -347,32 +344,6 @@ class UserService(IUserService):
             logger.info("User read successfully", extra={ "user_found": user.id})
 
         return UserRead.model_validate(user)
-    
-    # Read a user by ID including detailed info
-    async def read_by_id_detailed(self, user_id: UUID) -> UserReadDetailed:
-
-        ''' Retrieve a user by its ID including detailed info like the permissions in their roles. '''
-        
-        # 0. Log the attempt
-        logger.info("Reading user by ID (detailed)", extra={"retrieve_user_id": user_id})
-
-        async with self._uow_factory() as db:
-
-            # 1. Query the user
-            user = await self._user_repo.get_by_id(db, user_id)
-            if not user:
-                raise NotFoundError("User not found")
-
-            # 2. Fetch roles with permissions from the RoleRepository
-            roles = await self._role_repo.read_by_user_id_with_permissions(db, user_id)
-
-            # 3. Attach roles to user instance for schema serialization
-            user.roles = roles
-
-            # 4. Log and return the composed detailed schema
-            logger.info("User detailed read successful", extra={"request_by_user_id": user.id})
-
-            return UserReadDetailed.model_validate(user)
     
 # endregion READ
 
@@ -389,7 +360,7 @@ class UserService(IUserService):
         async with self._uow_factory() as db:
 
             # 1. Verify that the user exists
-            existing_user = await self._user_repo.get_by_id(db, user_id)
+            existing_user = await self._user_repo.read_by_id(db, user_id)
             if not existing_user:
                 raise NotFoundError("User not found")
             
@@ -440,7 +411,7 @@ class UserService(IUserService):
         async with self._uow_factory() as db:
 
             # 1. Verify that the user exists
-            user = await self._user_repo.get_by_id(db, user_id)
+            user = await self._user_repo.read_by_id(db, user_id)
             if not user:
                 raise NotFoundError("User not found")
             
@@ -456,7 +427,7 @@ class UserService(IUserService):
             self._validate_email(payload.new_email)
             
             # 5. Verify that the new email address is not in use
-            existing_user = await self._user_repo.get_by_email(db, payload.new_email)
+            existing_user = await self._user_repo.read_by_email(db, payload.new_email)
             if existing_user and existing_user.id != user_id:
                 raise EntityAlreadyExists("New email provided is already in use")
             
@@ -484,7 +455,7 @@ class UserService(IUserService):
         async with self._uow_factory() as db:
 
             # 1. Verify that the user exists
-            user = await self._user_repo.get_by_id(db, user_id)
+            user = await self._user_repo.read_by_id(db, user_id)
             if not user:
                 raise NotFoundError("User not found")
             
@@ -512,7 +483,7 @@ class UserService(IUserService):
             return UserRead.model_validate(updated_user)
 
     # Add a role to a user
-    async def add_role_to_user(self, user_id: UUID, role_id: UUID) -> UserRead:
+    async def assign_role(self, user_id: UUID, role_id: UUID) -> UserRead:
 
         """ Add a role to a user. """
 
@@ -528,7 +499,7 @@ class UserService(IUserService):
         async with self._uow_factory() as db:
             
             # 1. Verify user exists
-            user = await self._user_repo.get_by_id(db, user_id)
+            user = await self._user_repo.read_by_id(db, user_id)
             if not user:
                 raise NotFoundError("User not found")
 
@@ -543,7 +514,7 @@ class UserService(IUserService):
                 raise EntityAlreadyExists("User already has this role")  
 
             # 4. Add the role to the user 
-            updated_user = await self._user_repo.add_role(db, user_id, role_id)
+            updated_user = await self._user_repo.assign_role(db, user_id, role_id)
 
             # 5. Log the success
             logger.info(
@@ -557,7 +528,7 @@ class UserService(IUserService):
             return UserRead.model_validate(updated_user)
 
     # Remove a role from a user
-    async def remove_role_from_user(self, user_id: UUID, role_id: UUID) -> UserRead:
+    async def remove_role(self, user_id: UUID, role_id: UUID) -> UserRead:
 
         """ Remove a role from a user. """
 
@@ -573,7 +544,7 @@ class UserService(IUserService):
         async with self._uow_factory() as db:
 
             # 1. Verify user exists
-            user = await self._user_repo.get_by_id(db, user_id)
+            user = await self._user_repo.read_by_id(db, user_id)
             if not user:
                 raise NotFoundError("User not found")
 
@@ -617,7 +588,7 @@ class UserService(IUserService):
         async with self._uow_factory() as db:
 
             # 1. Verify that the user exists
-            existing_user = await self._user_repo.get_by_id(db, user_id)
+            existing_user = await self._user_repo.read_by_id(db, user_id)
             if not existing_user:
                 raise NotFoundError("User not found")
             

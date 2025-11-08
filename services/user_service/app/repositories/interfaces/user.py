@@ -2,7 +2,7 @@ from abc import ABC, abstractmethod
 from typing import Optional, List
 from sqlalchemy.ext.asyncio import AsyncSession
 from app.models.user import User
-from app.schemas.user import UserCreateInDB, UserUpdate, UserUpdateInDB
+from app.schemas.user import UserCreateInDB, UserUpdateInDB
 from uuid import UUID
 
 class IUserRepository(ABC):
@@ -13,7 +13,7 @@ class IUserRepository(ABC):
         pass
 
     @abstractmethod
-    async def get_with_filters(
+    async def read_with_filters(
         self,
         db: AsyncSession,
         name: Optional[str] = None,
@@ -28,12 +28,12 @@ class IUserRepository(ABC):
         pass
 
     @abstractmethod
-    async def get_by_id(self, db: AsyncSession, user_id: UUID) -> Optional[User]:
+    async def read_by_id(self, db: AsyncSession, user_id: UUID) -> Optional[User]:
         ''' Retrieve a user by its ID. '''
         pass
 
     @abstractmethod
-    async def get_by_email(self, db: AsyncSession, email: str) -> Optional[User]:
+    async def read_by_email(self, db: AsyncSession, email: str) -> Optional[User]:
         ''' Retrieve a user by its email. '''
         pass
 
@@ -48,7 +48,7 @@ class IUserRepository(ABC):
         pass
 
     @abstractmethod
-    async def add_role(self, db: AsyncSession, user_id: UUID, role_id: UUID) -> User:
+    async def assign_role(self, db: AsyncSession, user_id: UUID, role_id: UUID) -> User:
         ''' Add a role to a user. '''
         pass
 

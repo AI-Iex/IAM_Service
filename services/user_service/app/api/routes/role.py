@@ -117,7 +117,7 @@ async def add_permission_to_role(
     role_service: RoleService = Depends(get_role_service),
     principal: Principal = requires_permission(Permissions.ROLES_UPDATE)
 ) -> RoleRead:
-    return await role_service.add_permission(role_id, permission_id)
+    return await role_service.assign_permission(role_id, permission_id)
 
 
 # Remove a permission from a role
