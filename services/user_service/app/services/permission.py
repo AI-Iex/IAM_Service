@@ -79,12 +79,13 @@ class PermissionService(IPermissionService):
             return PermissionRead.model_validate(permission)
 
     # Get permissions with filters
-    async def read_with_filters(self, 
-                                name: Optional[List[str]] = None, 
-                                description: Optional[str] = None, 
-                                skip: int = 0, 
-                                limit: int = 100
-                                ) -> List[PermissionRead]:
+    async def read_with_filters(
+        self, 
+        name: Optional[str] = None, 
+        description: Optional[str] = None, 
+        skip: int = 0, 
+        limit: int = 100
+    ) -> List[PermissionRead]:
         
         """Get permissions with filters."""
 

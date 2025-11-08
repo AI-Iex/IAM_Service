@@ -41,13 +41,13 @@ async def create_role(
     status_code = status.HTTP_200_OK,
     summary = "Get roles with filtering and pagination",
     description = "**Retrieve roles with optional filtering, don't fill anything to get all the roles.**\n" 
-    "- `Name`: Exact name match (can provide multiple names).\n"
+    "- `Name`: Partial name search.\n"
     "- `Description`: Partial description search.\n"
     "- `Pagination`: Use `skip` (offset) and `limit` (max records) for pagination.",
     response_description = "List of roles matching criteria"
 )
 async def read_roles(
-    name: Optional[List[str]] = Query(None, description = "Exact name match (can provide multiple names)"),
+    name: Optional[str] = Query(None, description = "Partial name search"),
     description: Optional[str] = Query(None, description = "Partial description search"),
     skip: int = Query(0, ge = 0, description = "Number of records to skip (offset)"),
     limit: int = Query(100, ge = 1, le = 100, description = "Maximum records to return"),

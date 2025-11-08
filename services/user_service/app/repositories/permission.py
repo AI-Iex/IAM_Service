@@ -44,13 +44,14 @@ class PermissionRepository(IPermissionRepository):
         except Exception as e:
             raise RepositoryError(f"Error reading permission by ID: {str(e)}") from e
     
-    async def read_with_filters(self,
-                                db: AsyncSession, 
-                                name: Optional[List[str]] = None,
-                                description: Optional[str] = None,
-                                skip: int = 0, 
-                                limit: int = 100
-                                ) -> List[Permission]:
+    async def read_with_filters(
+        self,
+        db: AsyncSession,
+        name: Optional[str] = None,
+        description: Optional[str] = None,
+        skip: int = 0,
+        limit: int = 100
+    ) -> List[Permission]:
         
         """Get permissions with filters."""
         
@@ -58,7 +59,7 @@ class PermissionRepository(IPermissionRepository):
             query = select(Permission)
             
             if name is not None:
-                query = query.where(Permission.name.in_(name))
+                query = query.where(Permission.name.ilike(f"%{name}%"))
 
             if description is not None:
                 query = query.where(Permission.description.ilike(f"%{description}%"))

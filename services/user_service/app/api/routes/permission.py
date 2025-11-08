@@ -38,13 +38,13 @@ async def create_permission(
     status_code = status.HTTP_200_OK,
     summary = "Get permissions with filtering and pagination",
     description = "**Retrieve permissions with optional filtering, don't fill anything to get all the permissions.**\n" 
-    "- `Name`: Exact name match (can provide multiple names).\n"
+    "- `Name`: Partial name search.\n"
     "- `Description`: Partial description search.\n"
     "- `Pagination`: Use `skip` (offset) and `limit` (max records) for pagination.",
     response_description = "List of permissions matching criteria"
 )
 async def read_permissions(
-    name: Optional[List[str]] = Query(None, description="Name search"),
+    name: Optional[str] = Query(None, description="Partial name search"),
     description: Optional[str] = Query(None, description="Partial description search"),
     skip: int = Query(0, ge=0, description="Offset"),
     limit: int = Query(100, ge=1, le=100, description="Limit"),

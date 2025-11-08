@@ -56,19 +56,20 @@ class RoleRepository(IRoleRepository):
             raise RepositoryError(f"Error reading role by ID: {str(e)}") from e
 
 
-    async def read_with_filters(self, 
-                                db: AsyncSession,
-                                name: Optional[List[str]] = None, 
-                                description: Optional[str] = None,
-                                skip: int = 0, 
-                                limit: int = 100
-                            ) -> List[Role]:
+    async def read_with_filters(
+            self, 
+            db: AsyncSession,
+            name: Optional[str] = None, 
+            description: Optional[str] = None,
+            skip: int = 0, 
+            limit: int = 100
+    ) -> List[Role]:
 
         try:
             query = select(Role).options(selectinload(Role.permissions))
             
             if name is not None:
-                query = query.where(Role.name.in_(name))
+                query = query.where(Role.name.ilike(f"%{name}%"))
             
             if description is not None:
                 query = query.where(Role.description.ilike(f"%{description}%"))

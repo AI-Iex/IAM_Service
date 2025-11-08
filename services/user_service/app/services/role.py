@@ -120,7 +120,7 @@ class RoleService(IRoleService):
     # Get roles with filters
     async def read_with_filters(
         self, 
-        name: Optional[List[str]] = None, 
+        name: Optional[str] = None, 
         description: Optional[str] = None,
         skip: int = 0, 
         limit: int = 100

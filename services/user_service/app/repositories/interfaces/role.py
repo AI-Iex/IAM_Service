@@ -21,13 +21,14 @@ class IRoleRepository(ABC):
         pass
 
     @abstractmethod
-    async def read_with_filters(self, 
-                                db: AsyncSession,
-                                name: Optional[List[str]] = None, 
-                                description: Optional[str] = None,
-                                skip: int = 0, 
-                                limit: int = 100
-                            ) -> List[Role]:
+    async def read_with_filters(
+        self, 
+        db: AsyncSession,
+        name: Optional[str] = None, 
+        description: Optional[str] = None,
+        skip: int = 0, 
+        limit: int = 100
+    ) -> List[Role]:
         """Get roles with filters."""
         pass
 
