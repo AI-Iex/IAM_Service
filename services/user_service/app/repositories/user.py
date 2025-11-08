@@ -9,7 +9,7 @@ from app.schemas.user import UserCreateInDB, UserUpdateInDB
 from app.core.exceptions import EntityAlreadyExists, RepositoryError
 from app.repositories.interfaces.user import IUserRepository
 from uuid import UUID
-from app.models.user_role import user_roles
+from app.models.user_role import UserRole
 from sqlalchemy import select
 from app.core.exceptions import RepositoryError
 
@@ -150,7 +150,7 @@ class UserRepository(IUserRepository):
 
         try:
             
-            await db.execute(user_roles.insert().values(user_id = user_id, role_id = role_id))
+            await db.execute(UserRole.__table__.insert().values(user_id = user_id, role_id = role_id))
             await db.flush()
 
             user = await self.get_by_id(db, user_id)
@@ -169,9 +169,9 @@ class UserRepository(IUserRepository):
 
             # Delete association if exists
             await db.execute(
-                delete(user_roles).where(
-                    user_roles.c.user_id == user_id,
-                    user_roles.c.role_id == role_id
+                delete(UserRole.__table__).where(
+                    UserRole.__table__.c.user_id == user_id,
+                    UserRole.__table__.c.role_id == role_id
                 )
             )
 
@@ -190,9 +190,9 @@ class UserRepository(IUserRepository):
 
         try:
             result = await db.execute(
-                select(user_roles).where(
-                    user_roles.c.user_id == user_id,
-                    user_roles.c.role_id == role_id
+                select(UserRole.__table__).where(
+                    UserRole.__table__.c.user_id == user_id,
+                    UserRole.__table__.c.role_id == role_id
                 )
             )
             

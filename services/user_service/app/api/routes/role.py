@@ -7,7 +7,7 @@ from app.schemas.user import UserRead
 from app.schemas.role import RoleCreate, RoleRead, RoleUpdate
 from app.services.role import RoleService
 from app.dependencies.services import get_role_service
-from app.dependencies.auth import get_current_user
+from app.schemas.auth import Principal
 from uuid import UUID
 from app.core.permissions import requires_permission
 from app.core.permissions_loader import Permissions
@@ -29,7 +29,7 @@ router = APIRouter(prefix="/roles", tags=["Roles"])
 async def create_role(
     payload: RoleCreate,
     role_service: RoleService = Depends(get_role_service),
-    current_user: UserRead = requires_permission(Permissions.ROLES_CREATE)
+    principal: Principal = requires_permission(Permissions.ROLES_CREATE)
 ) -> RoleRead:
     return await role_service.create(payload)
 
@@ -52,7 +52,7 @@ async def read_roles(
     skip: int = Query(0, ge = 0, description = "Number of records to skip (offset)"),
     limit: int = Query(100, ge = 1, le = 100, description = "Maximum records to return"),
     role_service: RoleService = Depends(get_role_service),
-    current_user: UserRead = requires_permission(Permissions.ROLES_READ)
+    principal: Principal = requires_permission(Permissions.ROLES_READ)
 ) -> List[RoleRead]:
     return await role_service.read_with_filters(
         name = name, description = description,
@@ -73,7 +73,7 @@ async def read_roles(
 async def read_role(
     role_id: UUID,
     role_service: RoleService = Depends(get_role_service),
-    current_user: UserRead = requires_permission(Permissions.ROLES_READ)
+    principal: Principal = requires_permission(Permissions.ROLES_READ)
 ) -> RoleRead:
     return await role_service.read_by_id(role_id)
 
@@ -87,7 +87,7 @@ async def read_role(
     description = "**Update a role by its unique identifier.**\n"
     "- `name`: The updated role name.\n"
     "- `description`: The updated role description.\n"
-    "- `permissions`: List of permissions (permission name + service_name) assigned to this role. Setting this field will replace all existing permissions of the role with the provided list,"
+    "- `permissions`: List of permissions assigned to this role. Setting this field will replace all existing permissions of the role with the provided list,"
     " and setting an empty list will remove all permissions from the role.\n",
     response_description = "The updated role"
 )
@@ -95,7 +95,7 @@ async def update_role(
     role_id: UUID,
     payload: RoleUpdate,
     role_service: RoleService = Depends(get_role_service),
-    current_user: UserRead = requires_permission(Permissions.ROLES_UPDATE)
+    principal: Principal = requires_permission(Permissions.ROLES_UPDATE)
 ) -> RoleRead:
     return await role_service.update(role_id, payload)
 
@@ -115,7 +115,7 @@ async def add_permission_to_role(
     role_id: UUID,
     permission_id: UUID,
     role_service: RoleService = Depends(get_role_service),
-    current_user: UserRead = requires_permission(Permissions.ROLES_UPDATE)
+    principal: Principal = requires_permission(Permissions.ROLES_UPDATE)
 ) -> RoleRead:
     return await role_service.add_permission(role_id, permission_id)
 
@@ -135,7 +135,7 @@ async def remove_permission_from_role(
     role_id: UUID,
     permission_id: UUID,
     role_service: RoleService = Depends(get_role_service),
-    current_user: UserRead = requires_permission(Permissions.ROLES_UPDATE)
+    principal: Principal = requires_permission(Permissions.ROLES_UPDATE)
 ) -> RoleRead:
     return await role_service.remove_permission(role_id, permission_id)
 
@@ -151,6 +151,6 @@ async def remove_permission_from_role(
 async def delete_role(
     role_id: UUID,
     role_service: RoleService = Depends(get_role_service),
-    current_user: UserRead = requires_permission(Permissions.ROLES_DELETE)
+    principal: Principal = requires_permission(Permissions.ROLES_DELETE)
 ) -> None:
     await role_service.delete(role_id)

@@ -6,6 +6,7 @@ from app.api.routes.auth import router as auth_router
 from app.api.routes.role import router as role_router
 from app.api.routes.health import router as health_router
 from app.api.routes.permission import router as permission_router
+from app.api.routes.client import router as client_router
 from app.middleware.logging import access_log_middleware
 from app.middleware.context import context_middleware
 from app.middleware.auth_context import auth_context_middleware
@@ -52,8 +53,9 @@ async def startup_event():
     logger.info("Service started successfully")
 
 # Include routers
+app.include_router(health_router, prefix = settings.route_prefix)
 app.include_router(auth_router, prefix = settings.route_prefix)
+app.include_router(client_router, prefix = settings.route_prefix)
 app.include_router(users_router, prefix = settings.route_prefix)
 app.include_router(role_router, prefix = settings.route_prefix)
 app.include_router(permission_router, prefix = settings.route_prefix)
-app.include_router(health_router, prefix = settings.route_prefix)

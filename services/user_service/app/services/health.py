@@ -1,6 +1,6 @@
 from app.services.interfaces.health import IHealthService
 from app.repositories.interfaces.health import IHealthRepository
-from app.db.unit_of_work import UnitOfWorkFactory, async_unit_of_work
+from app.db.unit_of_work import UnitOfWorkFactory
 from app.core.exceptions import NotFoundError
 import logging
 from datetime import datetime
@@ -10,11 +10,15 @@ logger = logging.getLogger(__name__)
 
 
 class HealthService(IHealthService):
-    def __init__(self, health_repo: IHealthRepository, uow_factory: UnitOfWorkFactory = async_unit_of_work):
+    def __init__(self, 
+                 health_repo: IHealthRepository, 
+                 uow_factory: UnitOfWorkFactory):
+        
         self._health_repo = health_repo
         self._uow_factory = uow_factory
 
     async def check_health(self) -> HealthCheckResponse:
+        
         """Perform comprehensive health checks."""
         
         async with self._uow_factory() as db:

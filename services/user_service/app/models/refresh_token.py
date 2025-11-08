@@ -18,3 +18,6 @@ class RefreshToken(Base):
     last_used_at = Column(DateTime(timezone = True), nullable = True)
     ip = Column(String(45), nullable = True)
     user_agent = Column(Text, nullable = True)
+
+    def __repr__(self):
+        return f"<RefreshToken(id='{self.id}', user_id='{self.user_id}', revoked={self.revoked})>"

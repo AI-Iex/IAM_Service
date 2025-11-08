@@ -8,10 +8,10 @@ from app.repositories.interfaces.role import IRoleRepository
 from app.models.role import Role
 from typing import Optional, List
 from uuid import UUID
-from app.models.role_permission import role_permissions
+from app.models.role_permission import RolePermission
 from app.core.exceptions import EntityAlreadyExists, RepositoryError, NotFoundError
 from sqlalchemy.exc import IntegrityError
-from app.models.user_role import user_roles
+from app.models.user_role import UserRole
 from sqlalchemy.exc import IntegrityError
 
 
@@ -35,7 +35,7 @@ class RoleRepository(IRoleRepository):
             return new_role
         
         except Exception as e:
-            raise RepositoryError("Error creating role") from e
+            raise RepositoryError("Error creating role: " + str(e)) from e
 
 # endregion CREATE
 
@@ -99,7 +99,8 @@ class RoleRepository(IRoleRepository):
     async def read_by_user_id_with_permissions(self, db: AsyncSession, user_id: UUID) -> List[Role]:
        
         try:
-            query = select(Role).join(user_roles, user_roles.c.role_id == Role.id).where(user_roles.c.user_id == user_id).options(selectinload(Role.permissions))
+            ur_table = UserRole.__table__
+            query = select(Role).join(ur_table, ur_table.c.role_id == Role.id).where(ur_table.c.user_id == user_id).options(selectinload(Role.permissions))
             result = await db.execute(query)
             
             return result.scalars().all()
@@ -136,11 +137,11 @@ class RoleRepository(IRoleRepository):
     async def add_permission(self, db: AsyncSession, role_id: UUID, permission_id: UUID) -> Role:
        
         try:
-            await db.execute(role_permissions.insert().values(role_id=role_id, permission_id=permission_id))
+            rp = RolePermission(role_id=role_id, permission_id=permission_id)
+            db.add(rp)
             await db.flush()
 
             role = await self.read_by_id(db, role_id)
-
             await db.refresh(role)
             return role
         
@@ -154,11 +155,14 @@ class RoleRepository(IRoleRepository):
             
             db_role = await self.read_by_id(db, role_id)
 
-            await db.execute(delete(role_permissions).where(role_permissions.c.role_id == role_id))
+            # remove existing role permissions
+            await db.execute(delete(RolePermission).where(RolePermission.role_id == role_id))
 
+            # add new ones
             if permission_ids:
                 for pid in permission_ids:
-                    await db.execute(role_permissions.insert().values(role_id = role_id, permission_id = pid))
+                    rp = RolePermission(role_id=role_id, permission_id=pid)
+                    db.add(rp)
 
             await db.flush()
             await db.refresh(db_role)
@@ -174,9 +178,9 @@ class RoleRepository(IRoleRepository):
         try:
             role = await self.read_by_id(db, role_id)
 
-            await db.execute(delete(role_permissions).where(
-                role_permissions.c.role_id == role_id,
-                role_permissions.c.permission_id == permission_id
+            await db.execute(delete(RolePermission).where(
+                RolePermission.role_id == role_id,
+                RolePermission.permission_id == permission_id
             ))
 
             await db.flush()
@@ -195,9 +199,9 @@ class RoleRepository(IRoleRepository):
         
         try:
             result = await db.execute(
-                select(role_permissions).where(
-                    role_permissions.c.role_id == role_id,
-                    role_permissions.c.permission_id == permission_id
+                select(RolePermission).where(
+                    RolePermission.role_id == role_id,
+                    RolePermission.permission_id == permission_id
                 )
             )
 

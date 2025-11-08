@@ -1,5 +1,4 @@
 {
-  "service_name": "User Management Service",
   "permissions": {
 
     "users:create": "Allow creating new users accounts with temporary passwords.",
@@ -17,7 +16,7 @@
     "permissions:update": "Allow updating existing permissions to modify their attributes.",
     "permissions:delete": "Allow deleting permissions from the system.",
 
-    "clients:create": "Allow creating new client applications with specific access scopes.",
+    "clients:create": "Allow creating new client applications.",
     "clients:read":   "Allow reading client applications filtering by specific criteria or unique identifiers.",
     "clients:update": "Allow updating existing client applications to modify their access scopes or other attributes.",
     "clients:delete": "Allow deleting client applications from the system."

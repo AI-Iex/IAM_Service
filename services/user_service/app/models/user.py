@@ -5,7 +5,7 @@ from sqlalchemy.sql import func
 from sqlalchemy.orm import relationship
 
 from app.db.base import Base
-from app.models.user_role import user_roles   
+from app.models.user_role import UserRole   
 
 class User(Base):
    __tablename__ = "users"
@@ -21,7 +21,7 @@ class User(Base):
    updated_at = Column(DateTime(timezone = True), onupdate = func.now())
    last_login = Column(DateTime(timezone = True), nullable = True)
 
-   roles = relationship("Role", secondary = user_roles, back_populates = "users", lazy = "selectin")
+   roles = relationship("Role", secondary = UserRole.__table__, back_populates = "users", lazy = "selectin")
 
    def __repr__(self):
       return f"<User id={self.id} email={self.email}>"

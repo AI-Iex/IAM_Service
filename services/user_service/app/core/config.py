@@ -3,7 +3,7 @@ from functools import lru_cache
 
 class Settings(BaseSettings):
 
-    """Application configuration settings."""
+    """Application configuration settings. Loads from environment variables or .env file."""
 
     # SERVICE config
     SERVICE_NAME: str

@@ -4,7 +4,7 @@ import logging
 from app.services.interfaces.permission import IPermissionService
 from app.repositories.interfaces.permission import IPermissionRepository
 from app.schemas.permission import PermissionCreate, PermissionRead, PermissionUpdate, PermissionUpdateInDB
-from app.db.unit_of_work import UnitOfWorkFactory, async_unit_of_work
+from app.db.unit_of_work import UnitOfWorkFactory
 from app.core.exceptions import DomainError, NotFoundError, EntityAlreadyExists
 
 logger = logging.getLogger(__name__)
@@ -12,7 +12,10 @@ logger = logging.getLogger(__name__)
 
 class PermissionService(IPermissionService):
 
-    def __init__(self, permission_repo: IPermissionRepository, uow_factory: UnitOfWorkFactory = async_unit_of_work):
+    def __init__(self, 
+                 permission_repo: IPermissionRepository,
+                 uow_factory: UnitOfWorkFactory):
+    
         self._permission_repo = permission_repo
         self._uow_factory = uow_factory
 
@@ -36,10 +39,10 @@ class PermissionService(IPermissionService):
             
             # 2. Check if the permission already exists for the same service
             existing_permissions = await self._permission_repo.read_with_filters(
-                db=db, name=[payload.name], service_name=payload.service_name, limit=1
+                db=db, name=[payload.name], limit=1
             )
             if existing_permissions:
-                raise EntityAlreadyExists("Permission with the same name already exists for this service")
+                raise EntityAlreadyExists("Permission with the same name already exists")
             
             # 3. Create the permission
             permission = await self._permission_repo.create(db = db, payload = payload)
@@ -78,7 +81,6 @@ class PermissionService(IPermissionService):
     # Get permissions with filters
     async def read_with_filters(self, 
                                 name: Optional[List[str]] = None, 
-                                service_name: Optional[str] = None,
                                 description: Optional[str] = None, 
                                 skip: int = 0, 
                                 limit: int = 100
@@ -91,7 +93,6 @@ class PermissionService(IPermissionService):
             "Reading permissions by filters",
             extra = {
                 "name_filter": name, 
-                "service_name_filter": service_name,
                 "description_filter": description, 
                 "skip": skip, 
                 "limit": limit
@@ -104,7 +105,6 @@ class PermissionService(IPermissionService):
             permissions = await self._permission_repo.read_with_filters(
                 db,
                 name,
-                service_name,
                 description,
                 skip,
                 limit
@@ -136,16 +136,15 @@ class PermissionService(IPermissionService):
             if not existing_permission:
                 raise NotFoundError("Permission not found")
 
-            # 3 Check uniqueness for the (name, service_name) pair if either changes
+            # 3 Check uniqueness for the name if it changes
             new_name = payload.name if payload.name is not None else existing_permission.name
-            new_service = payload.service_name if getattr(payload, 'service_name', None) is not None else existing_permission.service_name
 
-            if (new_name != existing_permission.name) or (new_service != existing_permission.service_name):
+            if new_name != existing_permission.name:
                 permission_with_name = await self._permission_repo.read_with_filters(
-                    db=db, name=[new_name], service_name=new_service, limit=1
+                    db=db, name=[new_name], limit=1
                 )
                 if permission_with_name:
-                    raise EntityAlreadyExists("Another permission with the same name already exists for this service")
+                    raise EntityAlreadyExists("Another permission with the same name already exists")
 
             # 4. Build internal DTO and update the permission
             update_payload = PermissionUpdateInDB(**payload.model_dump(exclude_unset=True)) if payload else PermissionUpdateInDB()

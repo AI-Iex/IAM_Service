@@ -1,11 +1,14 @@
 from typing import Optional
 from fastapi import Depends, HTTPException, status
 from fastapi.security import OAuth2PasswordBearer
-from app.core.security import decode_token
-from app.services.interfaces.user import IUserService
-from app.dependencies.services import get_user_service
+from app.core.security import decode_token, AccessTokenType
+from app.repositories.interfaces.auth import IAuthRepository
+from app.dependencies.services import get_auth_repository, get_uow_factory
+from app.db.unit_of_work import UnitOfWorkFactory
 from uuid import UUID
 from app.schemas.user import UserRead, UserReadDetailed
+from app.schemas.client import ClientRead
+from app.schemas.auth import Principal
 from app.core.config import settings
 
 # OAuth2 scheme for token extraction
@@ -13,55 +16,78 @@ oauth2_scheme = OAuth2PasswordBearer(tokenUrl=f"/api/v{settings.API_VERSION}/aut
 f"/api/v{settings.API_VERSION}"
 
     
-async def get_current_user(
+async def get_current_principal_optional(
     token: str = Depends(oauth2_scheme),
-    user_service: IUserService = Depends(get_user_service)
-) -> UserReadDetailed:
+    auth_repository: IAuthRepository = Depends(get_auth_repository),
+    uow_factory: UnitOfWorkFactory = Depends(get_uow_factory),
+) -> Optional[Principal]:
+    
+    """
+    Returns None if token is missing/invalid/expired.\n 
+    Used for endpoints that allow both authenticated and unauthenticated access like log out.
+    """
 
-    """ Obtain the current authenticated user based on the provided JWT token """
-
+    # Decode token to check validity, if not provided/invalid/expired return None
     try:
         payload = decode_token(token)
-        
+    except Exception:
+        return None
+
+    # Get full Principal or return None if invalid
+    try:
+        return await get_current_principal(token=token, auth_repository=auth_repository, uow_factory=uow_factory)
+    except HTTPException:
+        return None
+
+
+async def get_current_principal(
+    token: str = Depends(oauth2_scheme),
+    auth_repository: IAuthRepository = Depends(get_auth_repository),
+    uow_factory: UnitOfWorkFactory = Depends(get_uow_factory),
+) -> Principal:
+    
+    """Resolve the authenticated principal (user or client) from the token. """
+
+    # 0. Decode token
+    try:
+        payload = decode_token(token)
     except Exception as exc:
         msg = str(exc) or "Invalid token"
         if "expired" in msg.lower():
-            raise HTTPException(status_code = status.HTTP_401_UNAUTHORIZED, detail = "Token expired" )
+            raise HTTPException(status_code = status.HTTP_401_UNAUTHORIZED, detail = "Token expired")
         raise HTTPException(status_code = status.HTTP_401_UNAUTHORIZED, detail = msg)
 
-    sub = payload.sub
+    # 1. Get principal type
+    token_type = getattr(payload, "type", None)
+    if not token_type:
+        raise HTTPException(status_code = status.HTTP_401_UNAUTHORIZED, detail = "Malformed token")
 
+    # 2. Get the identifier
+    sub = payload.sub
     if not sub:
         raise HTTPException(status_code = status.HTTP_401_UNAUTHORIZED, detail = "Malformed token")
 
-    try:
-        user = await user_service.read_by_id_detailed(UUID(sub))
+    # 3. Resolve principal based on type using a unit-of-work (single DB session)
+    async with uow_factory() as db:
+        
+        # User principal handling
+        if token_type == AccessTokenType.USER.value:
+            try:
+                user = await auth_repository.get_user_for_auth(db, UUID(sub))
+            except Exception:
+                raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="User not found or inactive")
 
-    except Exception as exc:
-        raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="User not found or inactive")
-    
-    return user
+            return Principal(kind=AccessTokenType.USER.value, token=payload, user=user)
 
+        # Client principal handling
+        elif token_type == AccessTokenType.CLIENT.value:
+            try:
+                client = await auth_repository.get_client_for_auth(db, UUID(sub))
+            except Exception:
+                raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Client not found or inactive")
 
-async def get_current_user_optional(
-    token: str = Depends(oauth2_scheme),
-    user_service: IUserService = Depends(get_user_service)
-) -> Optional[UserReadDetailed]:
-    
-    """
-    Optional version of get_current_user.
-    Returns None if token is invalid, expired, or missing
-    """
+            return Principal(kind=AccessTokenType.CLIENT.value, token=payload, client=client)
 
-    if not token:
-        return None
-    
-    try:
-        return await get_current_user(token, user_service)
-    
-    except HTTPException as e:
-        if e.status_code == status.HTTP_401_UNAUTHORIZED:
-            return None
-        raise
-    except Exception:
-        return None
+    # Unknown token type (not user or client)
+    raise HTTPException(status_code = status.HTTP_401_UNAUTHORIZED, detail = "Unknown token type")
+

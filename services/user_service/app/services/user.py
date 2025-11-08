@@ -3,7 +3,6 @@ from app.repositories.interfaces.user import IUserRepository
 from app.services.interfaces.user import IUserService
 from app.db.unit_of_work import UnitOfWorkFactory
 from app.schemas.user import UserCreateByAdmin, UserCreateInDB, UserRead, UserUpdate, UserUpdateInDB, UserChangeEmail, UserRegister, UserReadDetailed, PasswordChange
-from app.db.unit_of_work import async_unit_of_work
 from app.core.security import hash_password, verify_password
 from app.core.exceptions import EntityAlreadyExists, DomainError, NotFoundError
 import logging, re
@@ -17,7 +16,11 @@ from app.schemas.user import UserReadDetailed
 logger = logging.getLogger(__name__)
 
 class UserService(IUserService):
-    def __init__(self, user_repo: IUserRepository, role_repo: IRoleRepository, uow_factory: UnitOfWorkFactory = async_unit_of_work): 
+    def __init__(self, 
+                 user_repo: IUserRepository, 
+                 role_repo: IRoleRepository, 
+                 uow_factory: UnitOfWorkFactory): 
+        
         self._user_repo = user_repo
         self._role_repo = role_repo
         self._uow_factory = uow_factory

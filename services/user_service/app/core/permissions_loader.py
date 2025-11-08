@@ -7,7 +7,6 @@ from app.core.config import settings
 with open(settings.SERVICE_PERMISSIONS_PATH, "r", encoding="utf-8") as f:
     data = json.load(f)
 
-SERVICE_NAME: str = data["service_name"]
 PERMISSIONS: dict[str, str] = data["permissions"]
 
 # Build a dynamic namespace with constants

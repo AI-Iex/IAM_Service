@@ -8,11 +8,12 @@ from fastapi.encoders import jsonable_encoder
 from fastapi.security import OAuth2PasswordRequestForm
 from app.core.config import settings
 from app.schemas.user import UserRead, UserRegister
-from app.schemas.auth import AuthResponse, TokenPair, TokenPayload, LogoutRequest, UserAndToken
+from app.schemas.auth import AuthResponse, TokenPair, TokenPayload, LogoutRequest, UserAndToken, ClientAuthRequest, ClientAuthResponse
 from app.services.user import UserService
 from app.services.auth import AuthService
 from app.dependencies.services import get_user_service, get_auth_service
-from app.dependencies.auth import get_current_user, get_current_user_optional
+from app.dependencies.auth import get_current_principal, get_current_principal_optional
+from app.schemas.auth import Principal
 from app.core.security import decode_token
 
 router = APIRouter(prefix="/auth", tags=["Auth"])
@@ -92,7 +93,7 @@ async def login_user(
 async def logout_user(
     request: Request,
     body: Optional[LogoutRequest] = None,
-    current_user: Optional[UserRead] = Depends(get_current_user_optional),
+    principal: Optional[Principal] = Depends(get_current_principal_optional),
     auth_service: AuthService = Depends(get_auth_service),
     response: Response = None,
 ):
@@ -132,16 +133,11 @@ async def logout_user(
         else:
             raw = body.refresh_token
 
-    # 5️. If we have a jti we can revoke directly; prefer logout check if current_user available
+    # 5️. If we have a jti we can revoke directly; prefer logout check if principal.user available
     if jti:
-        
         # This will be the normal case logouts
-        if current_user:
-            await auth_service.logout(current_user.id, jti)
-        
-        # Fallback if no current_user (e.g. Swagger with jti)  
-        else:
-            await auth_service.revoke_refresh_token_by_jti(jti)
+        if principal and principal.user:
+            await auth_service.logout(principal.user.id, jti)
     
     # Otherwise, revoke by raw token (e.g. Swagger without jti)
     else:
@@ -169,11 +165,14 @@ async def logout_user(
     response_description = None
 )
 async def logout_all_devices_handler(
-    current_user: UserRead = Depends(get_current_user),
+    principal: Principal = Depends(get_current_principal),
     auth_service: AuthService = Depends(get_auth_service),
     response: Response = None
 ):
-    await auth_service.logout_all_devices(current_user.id)
+    if principal.kind != "user" or not principal.user:
+        return Response(status_code = status.HTTP_204_NO_CONTENT)
+
+    await auth_service.logout_all_devices(principal.user.id)
     if response:
         response.delete_cookie("refresh")
     return Response(status_code = status.HTTP_204_NO_CONTENT)
@@ -326,4 +325,36 @@ async def token_endpoint(
         )
 
     return response
+
+
+# Client authentication (OAuth2 Client Credentials)
+@router.post(
+    "/client",
+    response_model=ClientAuthResponse,
+    status_code=status.HTTP_200_OK,
+    summary="Authenticate client",
+    description="**Authenticate a client using client_id and client_secret.**\n"
+    "- `client_id`: The client identifier.\n"
+    "- `client_secret`: The client secret.\n"
+    "- `grant_type`: Must be 'client_credentials'.\n"
+    "Returns an access token for the authenticated client.",
+    response_description="Access token for the authenticated client"
+)
+async def authenticate_client(
+    payload: ClientAuthRequest,
+    auth_service: AuthService = Depends(get_auth_service)
+) -> ClientAuthResponse:
+    
+    # Validate grant_type
+    if payload.grant_type != "client_credentials":
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Unsupported grant_type")
+
+    # Authenticate client
+    try:
+        client_id_uuid = UUID(payload.client_id)
+        token = await auth_service.client_credentials(client_id_uuid, payload.client_secret)
+        
+        return ClientAuthResponse(client_id = payload.client_id, token = token)
+    except Exception as e:
+        raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Invalid client credentials")
 

@@ -4,7 +4,8 @@ from uuid import UUID
 from app.schemas.user import UserCreateByAdmin, UserRead, UserUpdate, UserChangeEmail, PasswordChange
 from app.services.user import UserService
 from app.dependencies.services import get_user_service
-from app.dependencies.auth import get_current_user
+from app.dependencies.auth import get_current_principal
+from app.schemas.auth import Principal
 from app.core.permissions import requires_permission
 from app.core.permissions_loader import Permissions
 
@@ -72,9 +73,14 @@ async def read_with_filters(
     response_description = "The current user"
 )
 async def get_current_user_profile(
-    current_user: UserRead = Depends(get_current_user)
+    principal: Principal = Depends(get_current_principal)
 ) -> UserRead:
-    return current_user
+    
+    # Ensure the principal is a user
+    if principal.kind != "user" or not principal.user:
+        raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail = "Token is not a user token")
+
+    return principal.user
 
 
 # Read a user by ID
@@ -124,7 +130,7 @@ async def update_user(
     response_model = UserRead,
     status_code = status.HTTP_200_OK,
     summary = "Change user email",
-    description = "**Change the email address of the current user.**\n"
+    description = "**Change the email address of the current user. This will log out the user from all devices.**\n"
     "- `Current Email`: The current email address for verification.\n"
     "- `New Email`: The new email address.\n"
     "- `Current Password`: The current password for verification.",
@@ -132,10 +138,13 @@ async def update_user(
 )
 async def change_user_email(
     payload: UserChangeEmail = None,
-    current_user: UserRead = Depends(get_current_user),
+    principal: Principal = Depends(get_current_principal),
     user_service: UserService = Depends(get_user_service)
 ) -> UserRead:
-    return await user_service.change_email(current_user.id, payload)
+    if principal.kind != "user" or not principal.user:
+        raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Token is not a user token")
+
+    return await user_service.change_email(principal.user.id, payload)
 
 
 # Change password
@@ -143,17 +152,20 @@ async def change_user_email(
     "/password",
     status_code = status.HTTP_200_OK,
     summary = "Change user password",
-    description = "**Change the password of the current user.**\n"
+    description = "**Change the password of the current user. This will log out the user from all devices.**\n"
     "- `Old Password`: The current password for verification.\n"
     "- `New Password`: The new password to set.",
     response_description = "Updated user"
 )
 async def change_user_password(
     payload: PasswordChange = None,
-    current_user: UserRead = Depends(get_current_user),
+    principal: Principal = Depends(get_current_principal),
     user_service: UserService = Depends(get_user_service)
 ) -> UserRead:
-    return await user_service.change_password(current_user.id, payload)
+    if principal.kind != "user" or not principal.user:
+        raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Token is not a user token")
+
+    return await user_service.change_password(principal.user.id, payload)
 
 
 # Add a role to a user

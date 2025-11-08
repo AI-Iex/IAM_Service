@@ -1,6 +1,6 @@
 from typing import Optional, List
 from uuid import UUID
-from app.db.unit_of_work import UnitOfWorkFactory, async_unit_of_work
+from app.db.unit_of_work import UnitOfWorkFactory
 from app.repositories.interfaces.role import IRoleRepository
 from app.schemas.role import RoleCreate, RoleRead, RoleUpdate, RoleUpdateInDB
 from app.services.interfaces.role import IRoleService
@@ -13,7 +13,11 @@ logger = logging.getLogger(__name__)
 
 class RoleService(IRoleService):
 
-    def __init__(self, role_repo: IRoleRepository, permission_repo: IPermissionRepository, uow_factory: UnitOfWorkFactory = async_unit_of_work): 
+    def __init__(self, 
+                 role_repo: IRoleRepository, 
+                 permission_repo: IPermissionRepository, 
+                 uow_factory: UnitOfWorkFactory): 
+        
         self._role_repo = role_repo
         self._permission_repo = permission_repo
         self._uow_factory = uow_factory
@@ -45,46 +49,35 @@ class RoleService(IRoleService):
             perms_refs = payload.permissions or []
 
             if perms_refs:
-                # normalize to list of (service, name) tuples preserving order and dedup
-                requested_pairs: list[tuple[str, str]] = []
+                # normalize to list of names preserving order and dedup
+                requested_names: list[str] = []
                 seen = set()
                 for ref in perms_refs:
                     if isinstance(ref, dict):
                         name = ref.get("name")
-                        service = ref.get("service_name")
                     else:
                         name = getattr(ref, "name", None)
-                        service = getattr(ref, "service_name", None)
 
-                    if not name or not service:
-                        raise DomainError("Permission references must include 'name' and 'service_name'")
+                    if not name:
+                        raise DomainError("Permission references must include 'name'")
 
-                    key = (service, name)
-                    if key not in seen:
-                        seen.add(key)
-                        requested_pairs.append(key)
+                    if name not in seen:
+                        seen.add(name)
+                        requested_names.append(name)
 
-                # group names by service to query efficiently
-                by_service: dict[str, list[str]] = {}
-                for service, name in requested_pairs:
-                    by_service.setdefault(service, []).append(name)
-
-                # fetch permissions per service
-                permissions_found = []
-                for service, names in by_service.items():
-                    perms = await self._permission_repo.read_by_names(db, names, service_name=service)
-                    permissions_found.extend(perms)
+                # fetch permissions
+                permissions_found = await self._permission_repo.read_by_names(db, requested_names)
 
                 # map found permissions for quick lookup
-                perm_map = {(perm.service_name, perm.name): perm for perm in permissions_found}
+                perm_map = {perm.name: perm for perm in permissions_found}
 
-                # detect missing pairs
-                missing = [f"{s}:{n}" for (s, n) in requested_pairs if (s, n) not in perm_map]
+                # detect missing
+                missing = [n for n in requested_names if n not in perm_map]
                 if missing:
                     raise NotFoundError(f"The following permissions do not exist: {missing}")
 
                 # preserve requested order when building ids
-                permission_ids = [perm_map[(s, n)].id for (s, n) in requested_pairs]
+                permission_ids = [perm_map[n].id for n in requested_names]
 
             # 4. Create the role
             role = await self._role_repo.create(db = db, role = payload)
@@ -198,41 +191,31 @@ class RoleService(IRoleService):
                     permission_ids = []  # explicit request to clear permissions
                 else:
                     # perms_names is expected to be a list of PermissionRef-like dicts
-                    requested_pairs: list[tuple[str, str]] = []
+                    requested_names: list[str] = []
                     seen = set()
                     for ref in perms_names:
                         if isinstance(ref, dict):
                             name = ref.get("name")
-                            service = ref.get("service_name")
                         else:
                             # if it's a pydantic model
                             name = getattr(ref, "name", None)
-                            service = getattr(ref, "service_name", None)
 
-                        if not name or not service:
-                            raise DomainError("Permission references must include 'name' and 'service_name'")
+                        if not name:
+                            raise DomainError("Permission references must include 'name'")
 
-                        key = (service, name)
-                        if key not in seen:
-                            seen.add(key)
-                            requested_pairs.append(key)
+                        if name not in seen:
+                            seen.add(name)
+                            requested_names.append(name)
 
-                    # group and fetch
-                    by_service: dict[str, list[str]] = {}
-                    for service, name in requested_pairs:
-                        by_service.setdefault(service, []).append(name)
+                    # fetch
+                    permissions_found = await self._permission_repo.read_by_names(db, requested_names)
 
-                    permissions_found = []
-                    for service, names in by_service.items():
-                        perms = await self._permission_repo.read_by_names(db, names, service_name=service)
-                        permissions_found.extend(perms)
-
-                    perm_map = {(perm.service_name, perm.name): perm for perm in permissions_found}
-                    missing_perms = [f"{s}:{n}" for (s, n) in requested_pairs if (s, n) not in perm_map]
+                    perm_map = {perm.name: perm for perm in permissions_found}
+                    missing_perms = [n for n in requested_names if n not in perm_map]
                     if missing_perms:
                         raise NotFoundError(f"The following permissions do not exist: {missing_perms}")
 
-                    permission_ids = [perm_map[(s, n)].id for (s, n) in requested_pairs]
+                    permission_ids = [perm_map[n].id for n in requested_names]
 
             # 5. Create an internal DTO and update the role simple fields
             update_payload = RoleUpdateInDB(**update_data) if update_data else RoleUpdateInDB()

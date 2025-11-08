@@ -2,13 +2,24 @@ from passlib.context import CryptContext
 from jose import jwt, JWTError
 from app.core.config import settings
 from datetime import datetime, timedelta, timezone
-from typing import Dict, Any, Tuple
+from typing import Tuple
 from uuid import uuid4, UUID
 import uuid
 import secrets
 import hashlib
 import hmac
 from app.schemas.auth import TokenPair, TokenPayload
+from enum import Enum
+from app.core.exceptions import DomainError
+
+
+class AccessTokenType(str, Enum):
+
+    """Enum for access token types."""
+
+    USER = "user"
+    CLIENT = "client"
+
 
 # Password hashing context
 pwd_context = CryptContext(
@@ -20,7 +31,7 @@ pwd_context = CryptContext(
 
 def hash_password(password: str) -> str:
     
-    ''' Hash a plain password '''
+    ''' Hash a plain password. '''
 
     if not password:
         raise ValueError("Password cannot be empty.")
@@ -36,52 +47,79 @@ def verify_password(plain_password: str, hashed_password: str) -> bool:
     return pwd_context.verify(plain_password, hashed_password)
 
 
-def create_access_token(
-    subject: str,
-    roles: list | None = None,
-    is_superuser: bool = False,
-    expires_minutes: int | None = None
-) -> TokenPair:
-    
-    """ Create a new JWT access token """
 
-    # Get the current time and the expiration time value for the token
+def _create_access_token(payload_extra: dict, expires_minutes: int | None = None) -> TokenPair:
+
+    """Internal helper to create the JWT given payload extras. """
+
     now = datetime.now(timezone.utc)
     expire_minutes = expires_minutes or settings.JWT_ACCESS_TOKEN_EXPIRE_MINUTES
 
-    # Validate expiration time value
     if expire_minutes <= 0:
         raise ValueError(f"Invalid token expiration time: {expire_minutes} minutes")
 
-    # Calculate expiration datetime
-    expire = now + timedelta(minutes=expire_minutes)
+    expire = now + timedelta(minutes = expire_minutes)
 
-    # Genereate unique identifier for the token
     jti = str(uuid.uuid4())
 
-    # Create the JWT payload
+    # Base payload
     payload = {
-        "sub": str(subject),                 # Subject (user ID)
-        "iat": int(now.timestamp()),         # Issued at 
-        "exp": int(expire.timestamp()),      # Expiration time
-        "jti": jti,                          # Unique identifier for the token
-        "roles": roles or [],                # User roles
-        "is_superuser": is_superuser,        # Superuser flag
+        "iat": int(now.timestamp()),
+        "exp": int(expire.timestamp()),
+        "jti": jti,
     }
 
-    # Generate the JWT token
+    payload.update(payload_extra)
+
     token = jwt.encode(payload, settings.JWT_SECRET_KEY, algorithm = settings.JWT_ALGORITHM)
 
     return TokenPair(
-        access_token=token,
-        jti=jti,
-        expires_in=int((expire - now).total_seconds())
+        access_token = token,
+        jti = jti,
+        expires_in = int((expire - now).total_seconds()),
     )
+
+
+def create_user_access_token(
+    subject: str,
+    roles: list | None = None,
+    is_superuser: bool = False,
+    expires_minutes: int | None = None,
+) -> TokenPair:
+    
+    """Create an access token for a user. """
+
+    payload_extra = {
+        "sub": str(subject),
+        "type": AccessTokenType.USER.value,
+        "roles": roles or [],
+        "is_superuser": is_superuser,
+    }
+
+    return _create_access_token(payload_extra, expires_minutes = expires_minutes)
+
+
+def create_client_access_token(
+    subject: str,
+    permissions: list | None = None,
+    expires_minutes: int | None = None,
+) -> TokenPair:
+    
+    """Create an access token for a client. """
+
+    payload_extra = {
+        "sub": str(subject),
+        "type": AccessTokenType.CLIENT.value,
+        "permissions": permissions or [],
+        "is_superuser": False,
+    }
+
+    return _create_access_token(payload_extra, expires_minutes = expires_minutes)
 
 
 def decode_token(token: str) -> TokenPayload:
 
-    """ Decode and verify a JWT token """
+    """ Decode and verify a JWT token. """
 
     payload_dict = jwt.decode(
             token,
@@ -97,21 +135,21 @@ def decode_token(token: str) -> TokenPayload:
 
 def _hmac_sha256_hexdigest(key: str, msg: str) -> str:
 
-    """ Generate HMAC-SHA256 hexdigest """
+    """ Generate HMAC-SHA256 hexdigest. """
 
     return hmac.new(key.encode(), msg.encode(), hashlib.sha256).hexdigest()
 
 
 def hash_refresh_token(raw_token: str) -> str:
 
-    """ Hash a raw refresh token """
+    """ Hash a raw refresh token. """
 
     return _hmac_sha256_hexdigest(settings.REFRESH_TOKEN_SECRET, raw_token)
 
 
 def generate_raw_refresh_token() -> Tuple[str, str]:
 
-    """ Generate a new raw refresh token and its unique identifier (JTI) """
+    """ Generate a new raw refresh token and its unique identifier (JTI). """
 
     raw = secrets.token_urlsafe(64)
     jti = str(uuid.uuid4())
@@ -120,6 +158,6 @@ def generate_raw_refresh_token() -> Tuple[str, str]:
 
 def refresh_token_expiry_datetime(expires_days: int | None = None) -> datetime:
 
-    """ Calculate refresh token expiry datetime """
+    """ Calculate refresh token expiry datetime. """
 
     return datetime.now(timezone.utc) + timedelta(days = expires_days or settings.REFRESH_TOKEN_EXPIRE_DAYS)
