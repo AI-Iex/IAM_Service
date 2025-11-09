@@ -112,11 +112,11 @@ def get_auth_service(
     repo: IRefreshTokenRepository = Depends(get_refresh_token_repository),
     user_repo: IUserRepository = Depends(get_user_repository),
     client_repo: IClientRepository = Depends(get_client_repository),
+    auth_repo: IAuthRepository = Depends(get_auth_repository), 
     uow_factory: UnitOfWorkFactory = Depends(get_uow_factory)
 ) -> IAuthService:
     ''' Get auth service instance. '''
-    return AuthService(user_repo = user_repo, refresh_token_repo = repo, client_repo = client_repo, uow_factory = uow_factory)
-
+    return AuthService(user_repo = user_repo, refresh_token_repo = repo, client_repo = client_repo, auth_repo = auth_repo, uow_factory = uow_factory)
 # Health service
 def get_health_service(
     repo: IHealthRepository = Depends(get_health_repository),

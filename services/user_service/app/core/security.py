@@ -4,6 +4,7 @@ from app.core.config import settings
 from datetime import datetime, timedelta, timezone
 from typing import Tuple
 from uuid import uuid4, UUID
+from typing import List
 import uuid
 import secrets
 import hashlib
@@ -82,7 +83,7 @@ def _create_access_token(payload_extra: dict, expires_minutes: int | None = None
 
 def create_user_access_token(
     subject: str,
-    roles: list | None = None,
+    permissions: List | None = None,
     is_superuser: bool = False,
     expires_minutes: int | None = None,
 ) -> TokenPair:
@@ -92,7 +93,7 @@ def create_user_access_token(
     payload_extra = {
         "sub": str(subject),
         "type": AccessTokenType.USER.value,
-        "roles": roles or [],
+        "permissions": permissions or [],
         "is_superuser": is_superuser,
     }
 
@@ -101,7 +102,7 @@ def create_user_access_token(
 
 def create_client_access_token(
     subject: str,
-    permissions: list | None = None,
+    permissions: List | None = None,
     expires_minutes: int | None = None,
 ) -> TokenPair:
     
