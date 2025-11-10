@@ -12,6 +12,7 @@ from app.middleware.context import context_middleware
 from app.middleware.auth_context import auth_context_middleware
 from app.middleware.exception_handler import exception_handling_middleware
 from app.db.base import init_db
+from app.db.bootstrap import create_default_superuser, seed_permissions_and_roles
 from app.db.session import get_engine
 from app.core.config import settings
 from app.core.logging_config import setup_logging, configure_third_party_loggers
@@ -31,12 +32,13 @@ app = FastAPI(
     redoc_url="/redoc"
 )
 
+
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["http://127.0.0.1:8000", "http://localhost:8000"],
-    allow_credentials = True,
-    allow_methods=["*"],
-    allow_headers=["*"],
+    allow_origins=settings.CORS_ORIGINS,
+    allow_credentials=True,
+    allow_methods=["GET", "POST", "PUT", "DELETE", "PATCH", "OPTIONS"],
+    allow_headers=["Authorization", "Content-Type", "X-Requested-With"],
 )
 
 # Register middlewares so that the access-log middleware is the outermost wrapper.
@@ -47,10 +49,26 @@ app.middleware("http")(context_middleware)
 
 @app.on_event("startup")
 async def startup_event():
-    # Ensure engine exists and run DB initialization (creates tables if needed)
     engine = get_engine()
-    await init_db(engine)
-    logger.info("Service started successfully")
+    try:
+        await init_db(engine)
+        logger.info("Database initialized successfully")
+        # Seed base permissions and roles first (idempotent)
+        await seed_permissions_and_roles(engine)
+        logger.info("Permissions and default roles seeded")
+
+        if settings.CREATE_SUPERUSER_ON_STARTUP:
+            await create_default_superuser(engine)
+            logger.info("Default superuser created on startup")
+    except Exception as e:
+        logger.error(f"Database initialization failed: {e}")
+        raise
+
+@app.on_event("shutdown")
+async def shutdown_event():
+    engine = get_engine()
+    await engine.dispose()
+    logger.info("Database connections closed")
 
 # Include routers
 app.include_router(health_router, prefix = settings.route_prefix)

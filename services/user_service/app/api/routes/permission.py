@@ -1,9 +1,7 @@
 from fastapi import APIRouter, Depends, Query, status
 from uuid import UUID
 from typing import List, Optional
-
 from app.schemas.permission import PermissionCreate, PermissionRead, PermissionUpdate
-from app.schemas.user import UserRead
 from app.services.permission import PermissionService
 from app.dependencies.services import get_permission_service
 from app.schemas.auth import Principal

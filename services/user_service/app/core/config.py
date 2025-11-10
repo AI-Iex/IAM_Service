@@ -11,6 +11,13 @@ class Settings(BaseSettings):
     SERVICE_DESCRIPTION: str
     SERVICE_LICENSE: str
     SERVICE_PERMISSIONS_PATH: str
+    CORS_ORIGINS: list[str] = ["http://127.0.0.1:8000", "http://localhost:8000"]
+
+    # Superuser creation on startup
+    CREATE_SUPERUSER_ON_STARTUP: bool = False
+    SUPERUSER_EMAIL: str 
+    SUPERUSER_PASSWORD: str
+    SUPERUSER_NAME: str
 
     # API config
     API_VERSION: float = 1.0

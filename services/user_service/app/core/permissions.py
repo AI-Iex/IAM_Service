@@ -23,23 +23,23 @@ def requires_permission(permission_name: str, return_user: bool = True):
         if principal.kind == "user" and principal.user:
             current_user: UserReadDetailed = principal.user
 
-            # 1. Check if user is superuser
-            if getattr(current_user, "is_superuser", False):
-                return current_user if return_user else None
-
-            # 2. Check if user is active
+            # 1. Check if user is active
             if current_user.is_active is False:
                 raise HTTPException(
                     status_code=status.HTTP_403_FORBIDDEN,
                     detail = "User account is inactive"
                 )
 
-            # 3. Check if user is required to change password
+            # 2. Check if user is required to change password
             if current_user.require_password_change:
                 raise HTTPException(
                     status_code = status.HTTP_403_FORBIDDEN,
                     detail = "User must change password before proceeding"
                 )
+           
+            # 3. Check if user is superuser
+            if getattr(current_user, "is_superuser", False):
+                return current_user if return_user else None
 
             user_permissions = {
                 perm.name
