@@ -71,6 +71,11 @@ class JSONFormatter(logging.Formatter):
 
     """ Build JSON log records with structured data and context info """
 
+    def __init__(self, privacy_level: Optional[str] = None):
+        super().__init__()
+        # Use provided privacy level or fallback to configured setting
+        self.privacy_level = privacy_level or settings.LOG_PRIVACY_LEVEL
+
     def format(self, record: logging.LogRecord) -> str:
 
         ''''Format log record as JSON string with context info and privacy masking'''
@@ -116,8 +121,10 @@ class JSONFormatter(logging.Formatter):
         if extras:
             payload["extra"] = extras
 
-        # Apply privacy masking to sensitive data in payload
-        def _mask_sensitive_data(obj, level: str = settings.LOG_PRIVACY_LEVEL):
+        # Apply privacy masking to sensitive data in payload using the formatter's
+        # configured privacy level. This allows tests to instantiate the
+        # formatter with different privacy levels for verification.
+        def _mask_sensitive_data(obj, level: str):
             if level == "none":
                 return obj
             if isinstance(obj, dict):
@@ -128,12 +135,12 @@ class JSONFormatter(logging.Formatter):
                 return _mask_value(obj, level)
             return obj
 
-        payload = _mask_sensitive_data(payload)
+        payload = _mask_sensitive_data(payload, self.privacy_level)
 
         return json.dumps(payload, default=str)
 
 
-def setup_logging(service_name: str = settings.SERVICE_NAME, level: int = logging.INFO) -> logging.Logger:
+def setup_logging(service_name: str = settings.SERVICE_NAME, level: int = logging.INFO, privacy_level: Optional[str] = None) -> logging.Logger:
 
     """ Setup root logger with JSON formatter and context filters """
 
@@ -142,7 +149,7 @@ def setup_logging(service_name: str = settings.SERVICE_NAME, level: int = loggin
     # Set handler level
     handler.setLevel(level)
     # Set JSON formatter
-    handler.setFormatter(JSONFormatter())
+    handler.setFormatter(JSONFormatter(privacy_level=privacy_level))
 
     
     class RequestIdFilter(logging.Filter):

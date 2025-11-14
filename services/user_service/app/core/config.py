@@ -7,7 +7,7 @@ class Settings(BaseSettings):
 
     # SERVICE config
     SERVICE_NAME: str
-    SERVICE_VERSION: str = "1.0.0"
+    SERVICE_VERSION: str
     SERVICE_DESCRIPTION: str
     SERVICE_LICENSE: str
     SERVICE_PERMISSIONS_PATH: str
@@ -24,11 +24,23 @@ class Settings(BaseSettings):
 
     @property
     def route_prefix(self) -> str:
+
         """Returns API route prefix using the configured API version."""
-        return f"/api/v{self.API_VERSION}"
+       
+        try:
+            
+            v = float(self.API_VERSION)
+            if v.is_integer():
+                v = int(v)
+                
+        except Exception:
+            v = self.API_VERSION
+
+        return f"/api/v{v}"
 
     # DDBB config
     DATABASE_URL: str
+    TEST_DATABASE_URL: str 
 
     # Business rules config
     BUSINESS_RULES_PATH: str
@@ -39,7 +51,7 @@ class Settings(BaseSettings):
 
     # JWT config
     JWT_SECRET_KEY: str
-    JWT_ALGORITHM: str = "HS256"
+    JWT_ALGORITHM: str
     JWT_ACCESS_TOKEN_EXPIRE_MINUTES: int = 30
     REFRESH_TOKEN_SECRET: str
     REFRESH_TOKEN_EXPIRE_DAYS: int = 30
@@ -47,6 +59,9 @@ class Settings(BaseSettings):
 
     # Environment config
     ENVIRONMENT: str = "development"
+
+    # Backwards-compatible debug flag (used in tests and to include sanitized tracebacks)
+    DEBUG: bool = False
 
     @property
     def is_development(self):

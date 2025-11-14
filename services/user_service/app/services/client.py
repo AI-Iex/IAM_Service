@@ -268,7 +268,7 @@ class ClientService(IClientService):
             # 3. If not assigned, raise error
             exists = await self._client_repo.has_permission(db, client_id, permission_id)
             if not exists:
-                raise EntityAlreadyExists("Client does not have this permission")
+                raise NotFoundError("Client does not have this permission")
 
             # 4. Remove the permission
             updated = await self._client_repo.remove_permission(db, client_id, permission_id)

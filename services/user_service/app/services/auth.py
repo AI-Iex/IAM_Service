@@ -1,6 +1,6 @@
 from app.services.interfaces.auth import IAuthService
 from app.db.unit_of_work import UnitOfWorkFactory
-from app.core.exceptions import DomainError, NotFoundError
+from app.core.exceptions import DomainError, NotFoundError, UnauthorizedError
 from app.schemas.user import UserRead
 from app.core.security import (
     verify_password, create_user_access_token, create_client_access_token,
@@ -53,11 +53,12 @@ class AuthService(IAuthService):
             # 1. Get user by email
             user = await self.user_repo.read_by_email(db, email)
             if not user:
-                raise NotFoundError("Invalid credentials")
+                # unify invalid credentials as 401
+                raise UnauthorizedError("Invalid credentials")
 
             # 2. Verify password
             if not verify_password(password, user.hashed_password):
-                raise DomainError("Invalid credentials")
+                raise UnauthorizedError("Invalid credentials")
 
             # 3. Update last_login
             await self.user_repo.update_last_login(db, user.id)
@@ -98,7 +99,6 @@ class AuthService(IAuthService):
             logger.info("Login successful", extra={"request_by_user_id": user.id})
 
             return UserAndToken(user = UserRead.model_validate(user), token = tokens)
-
 
     async def refresh_with_refresh_token(self, presented_raw: str, presented_jti: UUID | None,
                                          ip: str = None, user_agent: str = None) -> UserAndToken:
@@ -144,7 +144,7 @@ class AuthService(IAuthService):
             await self.refresh_repo.mark_refresh_token_replaced(db, old_jti=token_row.jti, new_jti=new_jti)
 
             # Get updated user data to have permissions/roles
-            user = await self.auth_repo.get_user_for_auth(db, user.id)
+            user = await self.auth_repo.get_user_for_auth(db, token_row.user_id)
 
             user_permissions = {
                 perm.name
@@ -159,7 +159,6 @@ class AuthService(IAuthService):
             await self.refresh_repo.update_refresh_token_last_used(db, jti=new_jti, used_at = datetime.now(timezone.utc))
 
             return UserAndToken(user = UserRead.model_validate(user), token = TokenPair(access_token = access_token, refresh_token = new_raw, jti = new_jti, expires_in = expires_in))
-
 
     async def logout(self, user_id: UUID, jti: UUID):
 
@@ -205,7 +204,6 @@ class AuthService(IAuthService):
                 extra={"request_by_user_id": user.id, "jti": jti},
             )
 
-
     async def revoke_refresh_token_by_jti(self, jti: UUID) -> None:
        
         """
@@ -250,7 +248,6 @@ class AuthService(IAuthService):
                 extra={"request_by_user_id": token.user_id, "jti": jti},
             )
 
-
     async def logout_all_devices(self, user_id: UUID):
 
         '''Revoke all the refresh tokens for a given user (log out from all devices)'''
@@ -275,7 +272,6 @@ class AuthService(IAuthService):
 
             # 3. Log successful logout
             logger.info("Successful log out from all devices", extra={"request_by_user_id": user_id})
-
 
     async def revoke_refresh_token_by_raw(self, raw_token: str):
 
@@ -310,7 +306,6 @@ class AuthService(IAuthService):
                 extra={"request_by_user_id": token.user_id, "jti": token.jti},
             )
 
-
     async def client_credentials(self, client_id: UUID, client_secret: str) -> TokenPair:
 
         """Validate client_id/secret and issue an access token."""
@@ -325,16 +320,16 @@ class AuthService(IAuthService):
             
             # 2. Validate client existence and active status
             if not client:
-                raise DomainError("Invalid client credentials")
+                raise UnauthorizedError("Invalid client credentials")
             if not client.is_active:
                 logger.info("Client not active", extra={"client_id": str(client_id)})
-                raise DomainError("Invalid client credentials")
+                raise UnauthorizedError("Invalid client credentials")
 
             # 3. Verify secret
             secret_valid = verify_password(client_secret, client.hashed_secret)
             if not secret_valid:
                 logger.info("Invalid secret", extra={"client_id": str(client_id)})
-                raise DomainError("Invalid client credentials")
+                raise UnauthorizedError("Invalid client credentials")
 
             # 4. Get permissions 
             permissions = [p.name for p in client.permissions] if client.permissions else []

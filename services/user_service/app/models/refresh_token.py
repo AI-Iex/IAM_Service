@@ -14,7 +14,7 @@ class RefreshToken(Base):
     issued_at = Column(DateTime(timezone = True), server_default = func.now())
     expires_at = Column(DateTime(timezone = True), nullable = False)
     revoked = Column(Boolean, default = False)
-    replaced_by = Column(String(64), nullable = True)
+    replaced_by = Column(UUID(as_uuid=True), nullable = True)
     last_used_at = Column(DateTime(timezone = True), nullable = True)
     ip = Column(String(45), nullable = True)
     user_agent = Column(Text, nullable = True)

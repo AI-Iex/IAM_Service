@@ -1,8 +1,10 @@
 import logging
 from typing import Optional
 from sqlalchemy.ext.asyncio import AsyncSession
-from sqlalchemy import select
+from sqlalchemy.ext.asyncio import async_sessionmaker
+from sqlalchemy import select, insert
 from sqlalchemy.exc import SQLAlchemyError
+from sqlalchemy.dialects.postgresql import insert as pg_insert
 from uuid import uuid4
 
 from app.core.config import settings
@@ -10,6 +12,7 @@ from app.core.security import hash_password
 from app.models.user import User
 from app.models.permission import Permission
 from app.models.role import Role
+from app.models.role_permission import RolePermission
 import json
 from pathlib import Path
 
@@ -43,8 +46,10 @@ async def create_default_superuser(engine) -> None:
         return
 
     try:
-        async with AsyncSession(engine) as session:
+        # create an async session factory bound to the provided engine
+        AsyncSessionFactory = async_sessionmaker(bind=engine, expire_on_commit=False)
 
+        async with AsyncSessionFactory() as session:
             async with session.begin():
                 # 1. If any superuser exists, skip creation.
                 res = await session.execute(select(User).filter_by(is_superuser=True).limit(1))
@@ -107,31 +112,53 @@ async def seed_permissions_and_roles(engine) -> None:
         return
 
     try:
-        async with AsyncSession(engine) as session:
-            # create missing permissions
-            for name, desc in permissions_dict.items():
-                res = await session.execute(select(Permission).filter_by(name=name).limit(1))
-                existing = res.scalars().first()
-                if not existing:
-                    p = Permission(name=name, description=desc)
-                    session.add(p)
-            await session.commit()
+        # Use async_sessionmaker and perform core-level upserts to avoid
+        # ORM relationship lazy-loads that may trigger unexpected sync IO.
+        AsyncSessionFactory = async_sessionmaker(bind=engine, expire_on_commit=False)
 
-            # ensure admin role exists and has all permissions
-            res = await session.execute(select(Role).filter_by(name="admin").limit(1))
-            admin_role = res.scalars().first()
-            if not admin_role:
-                admin_role = Role(name="admin", description="Administrator role with all permissions")
-                session.add(admin_role)
-                await session.flush()
+        async with AsyncSessionFactory() as session:
+            async with session.begin():
+                # Insert permissions using ON CONFLICT DO NOTHING so this is idempotent
+                permission_table = Permission.__table__
+                to_insert = []
+                for name, desc in permissions_dict.items():
+                    to_insert.append({"name": name, "description": desc})
 
-            # refresh permissions from DB and attach to admin role
-            res_all = await session.execute(select(Permission))
-            all_perms = res_all.scalars().all()
-            admin_role.permissions = all_perms
-            session.add(admin_role)
-            await session.commit()
-            logger.info("Seeded %d permissions and ensured admin role", len(all_perms))
+                if to_insert:
+                    stmt = pg_insert(permission_table).values(to_insert)
+                    stmt = stmt.on_conflict_do_nothing(index_elements=[permission_table.c.name])
+                    await session.execute(stmt)
+
+                # Ensure admin role exists (insert if missing)
+                role_table = Role.__table__
+                stmt_role = pg_insert(role_table).values({"name": "admin", "description": "Administrator role with all permissions"})
+                stmt_role = stmt_role.on_conflict_do_nothing(index_elements=[role_table.c.name])
+                await session.execute(stmt_role)
+
+                # Fetch role id and all permission ids
+                res_role = await session.execute(select(role_table.c.id).where(role_table.c.name == "admin").limit(1))
+                role_row = res_role.first()
+                if not role_row:
+                    # unexpected, but abort gracefully
+                    logger.error("Failed to obtain admin role id after upsert")
+                    return
+                role_id = role_row[0]
+
+                res_perms = await session.execute(select(permission_table.c.id))
+                perm_rows = res_perms.scalars().all()
+
+                # Upsert role_permissions entries (idempotent)
+                if perm_rows:
+                    rp_table = RolePermission.__table__
+                    rp_inserts = []
+                    for pid in perm_rows:
+                        rp_inserts.append({"role_id": role_id, "permission_id": pid})
+
+                    stmt_rp = pg_insert(rp_table).values(rp_inserts)
+                    stmt_rp = stmt_rp.on_conflict_do_nothing(index_elements=[rp_table.c.role_id, rp_table.c.permission_id])
+                    await session.execute(stmt_rp)
+
+                logger.info("Seeded %d permissions and ensured admin role", len(perm_rows))
 
     except SQLAlchemyError as exc:
         logger.exception("Database error while seeding permissions: %s", exc)
@@ -141,24 +168,17 @@ async def seed_permissions_and_roles(engine) -> None:
         raise
 
 
-async def _ensure_admin_role(session: AsyncSession) -> Role | None:
+async def _ensure_admin_role(session: AsyncSession) -> Optional[Role]:
 
-    """Helper: ensure an 'admin' role exists in the provided session and return it."""
+    """Helper (legacy): ensure an 'admin' role exists in the provided session and return it.
+
+    NOTE: This helper is kept for compatibility but is no longer used by the primary
+    seeding function which uses core upserts to avoid lazy-loads during startup.
+    """
 
     try:
         res = await session.execute(select(Role).filter_by(name="admin").limit(1))
         admin_role = res.scalars().first()
-        if not admin_role:
-            admin_role = Role(name="admin", description="Administrator role with all permissions")
-            session.add(admin_role)
-            await session.flush()
-
-        # attach all permissions
-        res_all = await session.execute(select(Permission))
-        all_perms = res_all.scalars().all()
-        admin_role.permissions = all_perms
-        session.add(admin_role)
-        await session.commit()
         return admin_role
     except Exception:
         logger.exception("Error ensuring admin role")

@@ -5,12 +5,17 @@ from app.core.config import settings
 
 @pytest.fixture(scope="module")
 def db_engine():
+
+    """Fixture to provide a SQLAlchemy engine connected to the test database."""
+
     engine = create_engine(settings.DATABASE_URL)
     yield engine
     engine.dispose()
 
-# Test to check database connection
 def test_db_connection(db_engine):
+
+    """Test that a connection to the database can be established."""
+
     try:
         with db_engine.connect() as conn:
             result = conn.execute(text("SELECT 1"))

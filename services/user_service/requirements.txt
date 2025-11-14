@@ -11,6 +11,7 @@ pydantic[email]
 pydantic-settings
 python-dotenv
 pytest
+pytest-anyio
 asyncpg
 jsonschema
 python-multipart

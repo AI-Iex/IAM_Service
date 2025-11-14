@@ -1,7 +1,7 @@
 from fastapi import Request, status
 from fastapi.responses import JSONResponse
 from fastapi.exceptions import RequestValidationError
-from app.core.exceptions import EntityAlreadyExists, DomainError, RepositoryError, NotFoundError
+from app.core.exceptions import EntityAlreadyExists, DomainError, RepositoryError, NotFoundError, UnauthorizedError
 import logging
 import traceback
 import re
@@ -44,6 +44,7 @@ ERROR_MAP = {
     "invalid_uuid": {"code": "APP.VAL.002", "http": status.HTTP_422_UNPROCESSABLE_ENTITY},
     "user_exists": {"code": "APP.USR.001", "http": status.HTTP_409_CONFLICT},
     "domain_error": {"code": "APP.BIZ.001", "http": status.HTTP_400_BAD_REQUEST},
+    "unauthorized": {"code": "APP.AUTH.401", "http": status.HTTP_401_UNAUTHORIZED},
     "not_found": {"code": "APP.ERR.404", "http": status.HTTP_404_NOT_FOUND},
     "db_error": {"code": "APP.DB.001", "http": status.HTTP_500_INTERNAL_SERVER_ERROR},
     "internal": {"code": "APP.ERR.500", "http": status.HTTP_500_INTERNAL_SERVER_ERROR},
@@ -159,6 +160,28 @@ async def exception_handling_middleware(request: Request, call_next):
             )
         )
 
+    except UnauthorizedError as exc:
+        em = ERROR_MAP["unauthorized"]
+        logger.warning(
+            "Unauthorized access",
+            extra={
+                "request_id": request_id,
+                "error_code": em["code"],
+                "detail": str(exc),
+                "path": request.url.path,
+                "method": request.method,
+            },
+        )
+        return JSONResponse(
+            status_code=em["http"],
+            content=_make_error_response(
+                request_id=request_id,
+                error_code=em["code"],
+                error_type="UNAUTHORIZED",
+                message=str(exc),
+            ),
+        )
+
     except NotFoundError as exc:
         em = ERROR_MAP["not_found"]
         logger.info(
@@ -230,3 +253,35 @@ async def exception_handling_middleware(request: Request, call_next):
                 message="Internal server error"
             )
         )
+
+
+async def request_validation_exception_handler(request: Request, exc: RequestValidationError):
+    """FastAPI exception handler for RequestValidationError so that validation
+    errors raised before the request reaches our middleware (path param parsing,
+    dependency injection, etc.) are normalized to our error payload.
+    """
+    request_id = getattr(request.state, "request_id", None)
+    first_error = exc.errors()[0] if exc.errors() else {}
+    if first_error.get("type") == "uuid_parsing":
+        em = ERROR_MAP["invalid_uuid"]
+        return JSONResponse(
+            status_code=em["http"],
+            content=_make_error_response(
+                request_id=request_id,
+                error_code=em["code"],
+                error_type="INVALID_UUID_FORMAT",
+                message="The provided ID is not a valid UUID format",
+                details={"expected": "xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx"}
+            ),
+        )
+    em = ERROR_MAP["validation"]
+    return JSONResponse(
+        status_code=em["http"],
+        content=_make_error_response(
+            request_id=request_id,
+            error_code=em["code"],
+            error_type="VALIDATION_ERROR",
+            message="Request validation failed",
+            details=exc.errors(),
+        ),
+    )

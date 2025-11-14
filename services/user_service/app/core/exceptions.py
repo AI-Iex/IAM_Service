@@ -38,3 +38,13 @@ class DomainError(Exception):
 
     def __init__(self, message: str = "Domain error"):
         super().__init__(message)
+
+
+class UnauthorizedError(Exception):
+
+    """Authentication/authorization failures (HTTP 401)."""
+
+    status_code = 401
+
+    def __init__(self, message: str = "Unauthorized"):
+        super().__init__(message)

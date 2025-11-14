@@ -26,7 +26,7 @@ def requires_permission(permission_name: str, return_user: bool = True):
             # 1. Check if user is active
             if current_user.is_active is False:
                 raise HTTPException(
-                    status_code=status.HTTP_403_FORBIDDEN,
+                    status_code = status.HTTP_403_FORBIDDEN,
                     detail = "User account is inactive"
                 )
 
