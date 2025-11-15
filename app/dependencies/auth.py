@@ -12,8 +12,7 @@ from app.schemas.auth import Principal
 from app.core.config import settings
 
 # OAuth2 scheme for token extraction
-oauth2_scheme = OAuth2PasswordBearer(tokenUrl=f"/api/v{settings.API_VERSION}/auth/token")
-f"/api/v{settings.API_VERSION}"
+oauth2_scheme = OAuth2PasswordBearer(tokenUrl=f"{settings.route_prefix}/auth/token")
 
     
 async def get_current_principal_optional(

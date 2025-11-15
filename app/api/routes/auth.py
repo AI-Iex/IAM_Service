@@ -269,12 +269,12 @@ async def refresh_token(
     "/token",
     response_model = AuthResponse,
     status_code = status.HTTP_200_OK,
-    summary="Token endpoint for Swagger, OAuth2 password and client_credentials flows",
-    description=
+    summary = "Token endpoint for Swagger, OAuth2 password and client_credentials flows",
+    description =
     "**Token endpoint supporting both client_credentials and password grants.**\n\n"
     "- `grant_type=client_credentials`: username=client_id, password=client_secret  \n"
     "- `grant_type=password`: username=email, password=password",
-    response_description="Returns access and refresh tokens"
+    response_description = "Returns access and refresh tokens"
 )
 async def token_endpoint(
     form_data: OAuth2PasswordRequestForm = Depends(),
@@ -305,7 +305,6 @@ async def token_endpoint(
         token_type = "bearer",
         expires_in = tokens.expires_in
     )
-
 
     content = jsonable_encoder(token_data)
 
