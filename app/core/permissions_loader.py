@@ -11,6 +11,7 @@ PERMISSIONS: dict[str, str] = data["permissions"]
 
 # Build a dynamic namespace with constants
 class PermissionNamespace(SimpleNamespace):
+    
     """
     Allows access like:
         Permissions.USERS_CREATE -> "users:create"
