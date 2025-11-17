@@ -1,4 +1,5 @@
 import pytest
+from app.core.exceptions import EntityAlreadyExists
 from app.repositories.user import UserRepository
 from app.repositories.role import RoleRepository
 from app.schemas.user import UserCreateInDB, UserUpdateInDB
@@ -40,11 +41,9 @@ async def test_duplicate_create_raises(db_session):
 
     user_repo = UserRepository()
 	
-    dto = _make_user_dto("dup@example.com", "Duplicate User", True, False)
+    dto = _make_user_dto("dupli@example.com", "Duplicate User", True, False)
 	
     await user_repo.create(db_session, dto)
-	
-    from app.core.exceptions import EntityAlreadyExists
 	
     with pytest.raises(EntityAlreadyExists):
         await user_repo.create(db_session, dto)

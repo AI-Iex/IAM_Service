@@ -8,7 +8,7 @@ def db_engine():
 
     """Fixture to provide a SQLAlchemy engine connected to the test database."""
 
-    engine = create_engine(settings.DATABASE_URL)
+    engine = create_engine(settings.TEST_DATABASE_URL)
     yield engine
     engine.dispose()
 
