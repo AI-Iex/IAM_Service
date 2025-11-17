@@ -30,13 +30,16 @@ async def lifespan(app: FastAPI):
     NOTE: Database schema creation and seeding are expected to be performed by an external migration step.
     """
 
+    # Startup: verify database engine is ready
     engine = get_engine()
+    logger.info("Application startup - database engine initialized")
+    
     try:
         yield
     finally:
-        engine = get_engine()
+        # Shutdown: cleanup database connections
         await engine.dispose()
-        logger.info("Database connections closed")
+        logger.info("Application shutdown - database connections closed")
 
 app = FastAPI(
     title = settings.SERVICE_NAME,
@@ -70,7 +73,7 @@ app.add_exception_handler(RequestValidationError, request_validation_exception_h
 async def root():
 
     """Redirect root to API documentation"""
-    
+
     return RedirectResponse(url="/docs")
 
 # Include routers

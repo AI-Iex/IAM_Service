@@ -4,8 +4,7 @@ services:
     container_name: iam_db
     restart: unless-stopped
     profiles:
-      - with-db  # Development with internal DB
-      - test     # Always available for tests
+      - with-db  # Development with internal DB only
     environment:
       POSTGRES_USER: ${POSTGRES_USER}
       POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
@@ -34,8 +33,44 @@ services:
           cpus: '0.25'
           memory: 256M
     labels:
-      com.iam-service.description: "PostgreSQL database"
+      com.iam-service.description: "PostgreSQL database (development)"
       com.iam-service.service: "database"
+    networks:
+      - backend
+
+  db_test:
+    image: postgres:15-alpine
+    container_name: iam_db_test
+    restart: "no"
+    profiles:
+      - test  # Only for tests
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+      POSTGRES_DB: ${POSTGRES_DB}
+      POSTGRES_INITDB_ARGS: "--encoding=UTF8 --lc-collate=C --lc-ctype=C"
+    command: 
+      - "postgres"
+      - "-c"
+      - "log_min_messages=WARNING"
+      - "-c"
+      - "log_error_verbosity=terse"
+    volumes:
+      - db_test_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER} -d ${POSTGRES_DB}"]
+      interval: 5s
+      timeout: 3s
+      retries: 3
+      start_period: 5s
+    deploy:
+      resources:
+        limits:
+          cpus: '0.5'
+          memory: 256M
+    labels:
+      com.iam-service.description: "PostgreSQL database (tests only)"
+      com.iam-service.service: "testing"
     networks:
       - backend
 
@@ -138,8 +173,8 @@ services:
     profiles:
       - test  # Explicit profile for testing
     depends_on:
-      db:
-        condition: service_healthy  # Tests create their own isolated DB
+      db_test:
+        condition: service_healthy  # Uses dedicated test DB
     env_file:
       - .env
     environment:
@@ -171,7 +206,12 @@ volumes:
   db_data:
     driver: local
     labels:
-      com.iam-service.description: "PostgreSQL data volume"
+      com.iam-service.description: "PostgreSQL data volume (development)"
+  
+  db_test_data:
+    driver: local
+    labels:
+      com.iam-service.description: "PostgreSQL data volume (tests only)"
 
 networks:
   backend:
