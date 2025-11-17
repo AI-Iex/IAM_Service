@@ -1,96 +1,15 @@
-# 🔐 IAM Service (Identity and Access Management)
-
-Sistema de gestión de identidades, autenticación y autorización construido con FastAPI, PostgreSQL y Docker.
-
----
-
-## 📖 Documentación
-
-**¿Primera vez usando este proyecto?** Lee estas guías en orden:
-
-1. **[README-DOCKER.md](./docs/README-DOCKER.md)** - 🚀 Guía completa para principiantes
-   - Qué es el proyecto y cómo funciona
-   - Estructura de archivos (cuáles usar, cuáles ignorar)
-   - Configuración paso a paso
-   - Desarrollo vs Producción
-   - Solución de problemas
-
-2. **[docker-commands.md](./docs/docker-commands.md)** - 🐋 Comandos Docker esenciales
-   - Comandos de limpieza y build
-   - Arrancar y recargar servicios
-   - Correr tests
-   - Migraciones y DB
-   - Workflows comunes
-
-3. **[.env.example](./.env.example)** - ⚙️ Plantilla de configuración
-   - Variables de entorno necesarias
-   - Valores de ejemplo
-   - Notas de seguridad
-
----
-
-## ⚡ Inicio Rápido
-
-```bash
-# 1. Copiar variables de entorno
-cp .env.example .env
-
-# 2. Editar .env con tus configuraciones
-# (al menos cambiar SECRET_KEY y passwords)
-
-# 3. Iniciar todo con Docker
-make up
-# O sin Makefile:
-docker compose up --build
-
-# 4. Esperar a que termine (verás logs)
-# Cuando veas "Listening at: http://0.0.0.0:8000" está listo
-
-# 5. Abrir en el navegador
-# http://localhost:8000/docs
-```
-
-**¡Listo!** La API está corriendo con:
-- ✅ Base de datos PostgreSQL
-- ✅ 16 permisos sembrados
-- ✅ Rol admin creado
-- ✅ Usuario admin (admin@gmail.com)
-- ✅ 173 tests ejecutados
-- ✅ API en http://localhost:8000
-
----
-
-## 🏗️ Arquitectura
-
-### Stack Tecnológico
-
-- **Backend**: FastAPI (Python 3.12)
-- **Base de Datos**: PostgreSQL 15 (Alpine)
-- **Autenticación**: JWT (JSON Web Tokens)
-- **Testing**: Pytest (173 tests)
-- **Containerización**: Docker + Docker Compose
-- **ASGI Server**: Gunicorn + Uvicorn
-
-### Flujo de Servicios
-
-```
-db → migrate → create_superuser → tests → web
-```
-
-Todos los pasos son secuenciales y orquestados con Docker Compose.
-
----
 
 ## 📂 Estructura del Proyecto
 
 ```
 IAM_Service
-├─ .pytest_cache
-│  ├─ CACHEDIR.TAG
-│  └─ v
-│     └─ cache
-│        ├─ lastfailed
-│        └─ nodeids
+├─ .dockerignore
+├─ alembic
+│  ├─ env.py
+│  └─ versions
+│     ├─ 0001_initial.py
+│     └─ README.md
+├─ alembic.ini
 ├─ app
 │  ├─ api
 │  │  ├─ routes
@@ -119,7 +38,6 @@ IAM_Service
 │  │  └─ __init__.py
 │  ├─ db
 │  │  ├─ base.py
-│  │  ├─ bootstrap.py
 │  │  ├─ interfaces
 │  │  │  └─ unit_of_work.py
 │  │  ├─ session.py
@@ -189,11 +107,22 @@ IAM_Service
 │  │  ├─ user.py
 │  │  └─ __init__.py
 │  └─ __init__.py
+├─ docker-compose.override.yml
+├─ docker-compose.prod.yml
+├─ docker-compose.yml
 ├─ Dockerfile
-├─ docker_compose.yml
-├─ permissions_map.json
+├─ docs
+│  ├─ english
+│  │  └─ docker-commands.md
+│  └─ spanish
+│     └─ docker-commands.md
 ├─ pytest.ini
+├─ README.md
 ├─ requirements.txt
+├─ scripts
+│  ├─ create_superuser.py
+│  ├─ migrate_and_seed.py
+│  └─ setup_test_db.py
 └─ tests
    ├─ conftest.py
    ├─ connection
@@ -240,5 +169,4 @@ IAM_Service
    │     ├─ test_role_service.py
    │     └─ test_user_service.py
    └─ __init__.py
-
 ```
