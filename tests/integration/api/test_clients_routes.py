@@ -171,14 +171,14 @@ async def test_update_client(async_client: AsyncClient, db_session, token_header
     created = create_resp.json()
 
     # Update client
-    update_payload = {"name": "Updated Client Name", "is_active": False}
+    update_payload = {"name": f"updated_client_{uuid4().hex[:6]}", "is_active": False}
     resp = await async_client.patch(
         f"{settings.route_prefix}/clients/{created['id']}", json=update_payload, headers=admin_headers
     )
     assert resp.status_code == 200
     data = resp.json()
     # Verify that the client was updated
-    assert data["name"] == "Updated Client Name"
+    assert data["name"] == update_payload["name"]
     assert data["is_active"] is False
 
 
