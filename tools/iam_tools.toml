@@ -1,0 +1,3201 @@
+[[tools]]
+name = "create_user_api_v1_auth_post"
+description = "Register a new user"
+method = "POST"
+path = "/api/v1/auth"
+parameters = []
+security = []
+tags = [ "Auth",]
+
+[tools.request_body]
+required = true
+content_type = "application/json"
+description = ""
+[tools.request_body.schema]
+type = "object"
+title = "UserRegister"
+required = [ "email", "full_name", "password",]
+[tools.responses.201]
+description = "Successful Response"
+[tools.responses.422]
+description = "Validation Error"
+[tools.responses.201.schema]
+type = "object"
+title = "UserRead"
+required = [ "email", "full_name", "id",]
+[tools.responses.422.schema]
+type = "object"
+title = "HTTPValidationError"
+[tools.request_body.schema.properties.email]
+type = "string"
+description = "The user's email address"
+example = "user@gmail.com"
+title = "Email"
+[tools.request_body.schema.properties.full_name]
+type = "string"
+description = "The user's name and surname"
+example = "Name Surname"
+title = "Full Name"
+[tools.request_body.schema.properties.password]
+type = "string"
+description = "The user's password"
+example = "strongpassword123"
+title = "Password"
+[tools.responses.201.schema.properties.email]
+type = "string"
+description = "The user's email address"
+example = "user@gmail.com"
+title = "Email"
+[tools.responses.201.schema.properties.full_name]
+type = "string"
+description = "The user's name and surname"
+example = "Name Surname"
+title = "Full Name"
+[tools.responses.201.schema.properties.is_active]
+type = "boolean"
+description = "Is the user active?"
+example = true
+default = true
+title = "Is Active"
+[tools.responses.201.schema.properties.is_superuser]
+type = "boolean"
+description = "Is the user a superuser for get all permissions?"
+example = false
+default = false
+title = "Is Superuser"
+[tools.responses.201.schema.properties.id]
+type = "string"
+format = "uuid"
+description = "Unique user identifier"
+example = "c55df1d2-216a-4359-81xx-1d805801vg0g"
+title = "Id"
+[tools.responses.201.schema.properties.created_at]
+description = "The date and time when the user was created"
+example = "2023-01-01T00:00:00Z"
+title = "Created At"
+[[tools.responses.201.schema.properties.created_at.anyOf]]
+type = "string"
+format = "date-time"
+
+[[tools.responses.201.schema.properties.created_at.anyOf]]
+type = "null"
+
+[tools.responses.201.schema.properties.updated_at]
+description = "The date and time when the user was last updated"
+example = "2023-01-05T15:30:00Z"
+title = "Updated At"
+[[tools.responses.201.schema.properties.updated_at.anyOf]]
+type = "string"
+format = "date-time"
+
+[[tools.responses.201.schema.properties.updated_at.anyOf]]
+type = "null"
+
+[tools.responses.201.schema.properties.last_login]
+description = "The date and time of the user's last login"
+example = "2023-01-10T12:34:56Z"
+title = "Last Login"
+[[tools.responses.201.schema.properties.last_login.anyOf]]
+type = "string"
+format = "date-time"
+
+[[tools.responses.201.schema.properties.last_login.anyOf]]
+type = "null"
+
+[tools.responses.201.schema.properties.roles]
+type = "array"
+description = "List of roles assigned to the user"
+example = [ "admin", "user",]
+default = []
+title = "Roles"
+[tools.responses.201.schema.properties.require_password_change]
+type = "boolean"
+description = "Flag to force the user change the password"
+example = false
+default = false
+title = "Require Password Change"
+[tools.responses.422.schema.properties.detail]
+type = "array"
+title = "Detail"
+[[tools]]
+name = "login_user_api_v1_auth_login_post"
+description = "Log in"
+method = "POST"
+path = "/api/v1/auth/login"
+parameters = []
+security = []
+tags = [ "Auth",]
+
+[tools.request_body]
+required = true
+content_type = "application/json"
+description = ""
+[tools.responses.200]
+description = "Returns access and refresh tokens for the authenticated user and user data"
+[tools.responses.422]
+description = "Validation Error"
+[tools.responses.200.schema]
+type = "object"
+title = "UserAndToken"
+required = [ "user", "token",]
+[tools.responses.422.schema]
+type = "object"
+title = "HTTPValidationError"
+[tools.responses.200.schema.properties.user]
+type = "object"
+title = "UserRead"
+required = [ "email", "full_name", "id",]
+[tools.responses.200.schema.properties.token]
+type = "object"
+title = "TokenPair"
+required = [ "access_token", "expires_in",]
+[tools.responses.422.schema.properties.detail]
+type = "array"
+title = "Detail"
+[[tools]]
+name = "logout_user_api_v1_auth_logout_post"
+description = "Log out"
+method = "POST"
+path = "/api/v1/auth/logout"
+parameters = []
+tags = [ "Auth",]
+[[tools.security]]
+OAuth2PasswordBearer = []
+
+
+[tools.request_body]
+required = false
+content_type = "application/json"
+description = ""
+[tools.request_body.schema]
+title = "Body"
+[[tools.request_body.schema.anyOf]]
+type = "object"
+title = "LogoutRequest"
+
+[tools.request_body.schema.anyOf.properties.refresh_token]
+title = "Refresh Token"
+[[tools.request_body.schema.anyOf.properties.refresh_token.anyOf]]
+
+[[tools.request_body.schema.anyOf.properties.refresh_token.anyOf]]
+
+[[tools.request_body.schema.anyOf]]
+type = "null"
+
+[tools.responses.204]
+description = "Successful Response"
+[tools.responses.422]
+description = "Validation Error"
+[tools.responses.422.schema]
+type = "object"
+title = "HTTPValidationError"
+[tools.responses.422.schema.properties.detail]
+type = "array"
+title = "Detail"
+[[tools]]
+name = "logout_all_devices_handler_api_v1_auth_logout_all_devices_post"
+description = "Log out the user from all devices"
+method = "POST"
+path = "/api/v1/auth/logout_all_devices"
+parameters = []
+tags = [ "Auth",]
+[[tools.security]]
+OAuth2PasswordBearer = []
+
+
+[tools.responses.204]
+description = ""
+[[tools]]
+name = "refresh_token_api_v1_auth_refresh_post"
+description = "Refresh access token"
+method = "POST"
+path = "/api/v1/auth/refresh"
+security = []
+tags = [ "Auth",]
+[[tools.parameters]]
+name = "refresh"
+location = "header"
+type = "string"
+required = false
+description = ""
+
+[[tools.parameters]]
+name = "refresh-jti"
+location = "header"
+type = "string"
+required = false
+description = ""
+
+
+[tools.request_body]
+required = false
+content_type = "application/json"
+description = ""
+[tools.request_body.schema]
+title = "Body"
+[[tools.request_body.schema.anyOf]]
+type = "object"
+title = "LogoutRequest"
+
+[tools.request_body.schema.anyOf.properties.refresh_token]
+title = "Refresh Token"
+[[tools.request_body.schema.anyOf.properties.refresh_token.anyOf]]
+
+[[tools.request_body.schema.anyOf.properties.refresh_token.anyOf]]
+
+[[tools.request_body.schema.anyOf]]
+type = "null"
+
+[tools.responses.200]
+description = "Returns new access and refresh tokens for the user"
+[tools.responses.422]
+description = "Validation Error"
+[tools.responses.200.schema]
+type = "object"
+title = "UserAndToken"
+required = [ "user", "token",]
+[tools.responses.422.schema]
+type = "object"
+title = "HTTPValidationError"
+[tools.responses.200.schema.properties.user]
+type = "object"
+title = "UserRead"
+required = [ "email", "full_name", "id",]
+[tools.responses.200.schema.properties.token]
+type = "object"
+title = "TokenPair"
+required = [ "access_token", "expires_in",]
+[tools.responses.422.schema.properties.detail]
+type = "array"
+title = "Detail"
+[[tools]]
+name = "token_endpoint_api_v1_auth_token_post"
+description = "Token endpoint for Swagger, OAuth2 password and client_credentials flows"
+method = "POST"
+path = "/api/v1/auth/token"
+parameters = []
+security = []
+tags = [ "Auth",]
+
+[tools.request_body]
+required = true
+content_type = "application/json"
+description = ""
+[tools.responses.200]
+description = "Returns access and refresh tokens"
+[tools.responses.422]
+description = "Validation Error"
+[tools.responses.200.schema]
+type = "object"
+title = "AuthResponse"
+required = [ "user_id", "email", "token",]
+[tools.responses.422.schema]
+type = "object"
+title = "HTTPValidationError"
+[tools.responses.200.schema.properties.user_id]
+type = "string"
+format = "uuid"
+title = "User Id"
+[tools.responses.200.schema.properties.email]
+type = "string"
+format = "email"
+title = "Email"
+[tools.responses.200.schema.properties.token]
+type = "object"
+title = "TokenPair"
+required = [ "access_token", "expires_in",]
+[tools.responses.422.schema.properties.detail]
+type = "array"
+title = "Detail"
+[[tools]]
+name = "authenticate_client_api_v1_auth_client_post"
+description = "Authenticate client"
+method = "POST"
+path = "/api/v1/auth/client"
+parameters = []
+security = []
+tags = [ "Auth",]
+
+[tools.request_body]
+required = true
+content_type = "application/json"
+description = ""
+[tools.request_body.schema]
+type = "object"
+title = "ClientAuthRequest"
+required = [ "client_id", "client_secret",]
+[tools.responses.200]
+description = "Access token for the authenticated client"
+[tools.responses.422]
+description = "Validation Error"
+[tools.responses.200.schema]
+type = "object"
+title = "ClientAuthResponse"
+required = [ "client_id", "token",]
+[tools.responses.422.schema]
+type = "object"
+title = "HTTPValidationError"
+[tools.request_body.schema.properties.client_id]
+type = "string"
+description = "The client identifier"
+title = "Client Id"
+[tools.request_body.schema.properties.client_secret]
+type = "string"
+description = "The client secret"
+title = "Client Secret"
+[tools.request_body.schema.properties.grant_type]
+type = "string"
+description = "OAuth2 grant type"
+default = "client_credentials"
+title = "Grant Type"
+[tools.responses.200.schema.properties.client_id]
+type = "string"
+title = "Client Id"
+[tools.responses.200.schema.properties.token]
+type = "object"
+title = "TokenPair"
+required = [ "access_token", "expires_in",]
+[tools.responses.422.schema.properties.detail]
+type = "array"
+title = "Detail"
+[[tools]]
+name = "create_client_api_v1_clients_post"
+description = "Create a new client"
+method = "POST"
+path = "/api/v1/clients"
+parameters = []
+tags = [ "Clients",]
+[[tools.security]]
+OAuth2PasswordBearer = []
+
+
+[tools.request_body]
+required = true
+content_type = "application/json"
+description = ""
+[tools.request_body.schema]
+type = "object"
+title = "ClientCreate"
+required = [ "name",]
+[tools.responses.201]
+description = "The created client with generated credentials"
+[tools.responses.422]
+description = "Validation Error"
+[tools.responses.201.schema]
+type = "object"
+title = "ClientCreateResponse"
+required = [ "name", "id", "client_id", "secret",]
+[tools.responses.422.schema]
+type = "object"
+title = "HTTPValidationError"
+[tools.request_body.schema.properties.name]
+type = "string"
+description = "The name of the client application"
+example = "My Client App"
+title = "Name"
+[tools.request_body.schema.properties.is_active]
+type = "boolean"
+description = "Indicates if the client account is active"
+example = true
+default = true
+title = "Is Active"
+[tools.responses.201.schema.properties.name]
+type = "string"
+description = "The name of the client application"
+example = "My Client App"
+title = "Name"
+[tools.responses.201.schema.properties.id]
+type = "string"
+format = "uuid"
+description = "Unique client identifier"
+example = "a32a0d4b-0a4f-4d98-xxxx-8f7c2c3e9a0a"
+title = "Id"
+[tools.responses.201.schema.properties.client_id]
+type = "string"
+format = "uuid"
+description = "Public client identifier"
+example = "a32a0d4b-0a4f-4d98-xxxx-8f7c2c3e9a0a"
+title = "Client Id"
+[tools.responses.201.schema.properties.is_active]
+type = "boolean"
+description = "Indicates if the client account is active"
+example = true
+default = true
+title = "Is Active"
+[tools.responses.201.schema.properties.created_at]
+description = "Creation timestamp"
+example = "2025-01-01T12:00:00Z"
+title = "Created At"
+[[tools.responses.201.schema.properties.created_at.anyOf]]
+type = "string"
+format = "date-time"
+
+[[tools.responses.201.schema.properties.created_at.anyOf]]
+type = "null"
+
+[tools.responses.201.schema.properties.permissions]
+description = "List of permission reference objects assigned to this client"
+title = "Permissions"
+[[tools.responses.201.schema.properties.permissions.example]]
+name = "users:read"
+
+[[tools.responses.201.schema.properties.permissions.example]]
+name = "roles:create"
+
+[[tools.responses.201.schema.properties.permissions.anyOf]]
+type = "array"
+
+[[tools.responses.201.schema.properties.permissions.anyOf]]
+type = "null"
+
+[tools.responses.201.schema.properties.secret]
+type = "string"
+description = "Generated client secret (save it securely!)"
+example = "generated-secret"
+title = "Secret"
+[tools.responses.422.schema.properties.detail]
+type = "array"
+title = "Detail"
+[[tools]]
+name = "read_clients_api_v1_clients_get"
+description = "Get clients with filtering and pagination"
+method = "GET"
+path = "/api/v1/clients"
+tags = [ "Clients",]
+[[tools.parameters]]
+name = "name"
+location = "query"
+type = "string"
+required = false
+description = "Partial name search"
+
+[[tools.parameters]]
+name = "is_active"
+location = "query"
+type = "string"
+required = false
+description = "Filter by active status"
+
+[[tools.parameters]]
+name = "skip"
+location = "query"
+type = "integer"
+required = false
+description = "Offset"
+default = 0
+
+[[tools.parameters]]
+name = "limit"
+location = "query"
+type = "integer"
+required = false
+description = "Limit"
+default = 100
+
+[[tools.security]]
+OAuth2PasswordBearer = []
+
+
+[tools.responses.200]
+description = "List of clients matching criteria"
+[tools.responses.422]
+description = "Validation Error"
+[tools.responses.200.schema]
+type = "array"
+title = "Response Read Clients Api V1 Clients Get"
+[tools.responses.422.schema]
+type = "object"
+title = "HTTPValidationError"
+[tools.responses.200.schema.items]
+type = "object"
+title = "ClientRead"
+required = [ "name", "id", "client_id",]
+[tools.responses.422.schema.properties.detail]
+type = "array"
+title = "Detail"
+[tools.responses.200.schema.items.properties.name]
+type = "string"
+description = "The name of the client application"
+example = "My Client App"
+title = "Name"
+[tools.responses.200.schema.items.properties.id]
+type = "string"
+format = "uuid"
+description = "Unique client identifier"
+example = "a32a0d4b-0a4f-4d98-xxxx-8f7c2c3e9a0a"
+title = "Id"
+[tools.responses.200.schema.items.properties.client_id]
+type = "string"
+format = "uuid"
+description = "Public client identifier"
+example = "a32a0d4b-0a4f-4d98-xxxx-8f7c2c3e9a0a"
+title = "Client Id"
+[tools.responses.200.schema.items.properties.is_active]
+type = "boolean"
+description = "Indicates if the client account is active"
+example = true
+default = true
+title = "Is Active"
+[tools.responses.200.schema.items.properties.created_at]
+description = "Creation timestamp"
+example = "2025-01-01T12:00:00Z"
+title = "Created At"
+[[tools.responses.200.schema.items.properties.created_at.anyOf]]
+
+[[tools.responses.200.schema.items.properties.created_at.anyOf]]
+
+[tools.responses.200.schema.items.properties.permissions]
+description = "List of permission reference objects assigned to this client"
+title = "Permissions"
+[[tools.responses.200.schema.items.properties.permissions.example]]
+name = "users:read"
+
+[[tools.responses.200.schema.items.properties.permissions.example]]
+name = "roles:create"
+
+[[tools.responses.200.schema.items.properties.permissions.anyOf]]
+
+[[tools.responses.200.schema.items.properties.permissions.anyOf]]
+
+[[tools]]
+name = "get_current_client_profile_api_v1_clients_me_get"
+description = "Get current client profile"
+method = "GET"
+path = "/api/v1/clients/me"
+parameters = []
+tags = [ "Clients",]
+[[tools.security]]
+OAuth2PasswordBearer = []
+
+
+[tools.responses.200]
+description = "The current client"
+[tools.responses.200.schema]
+type = "object"
+title = "ClientRead"
+required = [ "name", "id", "client_id",]
+[tools.responses.200.schema.properties.name]
+type = "string"
+description = "The name of the client application"
+example = "My Client App"
+title = "Name"
+[tools.responses.200.schema.properties.id]
+type = "string"
+format = "uuid"
+description = "Unique client identifier"
+example = "a32a0d4b-0a4f-4d98-xxxx-8f7c2c3e9a0a"
+title = "Id"
+[tools.responses.200.schema.properties.client_id]
+type = "string"
+format = "uuid"
+description = "Public client identifier"
+example = "a32a0d4b-0a4f-4d98-xxxx-8f7c2c3e9a0a"
+title = "Client Id"
+[tools.responses.200.schema.properties.is_active]
+type = "boolean"
+description = "Indicates if the client account is active"
+example = true
+default = true
+title = "Is Active"
+[tools.responses.200.schema.properties.created_at]
+description = "Creation timestamp"
+example = "2025-01-01T12:00:00Z"
+title = "Created At"
+[[tools.responses.200.schema.properties.created_at.anyOf]]
+type = "string"
+format = "date-time"
+
+[[tools.responses.200.schema.properties.created_at.anyOf]]
+type = "null"
+
+[tools.responses.200.schema.properties.permissions]
+description = "List of permission reference objects assigned to this client"
+title = "Permissions"
+[[tools.responses.200.schema.properties.permissions.example]]
+name = "users:read"
+
+[[tools.responses.200.schema.properties.permissions.example]]
+name = "roles:create"
+
+[[tools.responses.200.schema.properties.permissions.anyOf]]
+type = "array"
+
+[[tools.responses.200.schema.properties.permissions.anyOf]]
+type = "null"
+
+[[tools]]
+name = "read_client_api_v1_clients__client_id__get"
+description = "Get client by ID"
+method = "GET"
+path = "/api/v1/clients/{client_id}"
+tags = [ "Clients",]
+[[tools.parameters]]
+name = "client_id"
+location = "path"
+type = "string"
+format = "uuid"
+required = true
+description = "Unique client identifier"
+
+[[tools.security]]
+OAuth2PasswordBearer = []
+
+
+[tools.responses.200]
+description = "The client with the specified ID"
+[tools.responses.422]
+description = "Validation Error"
+[tools.responses.200.schema]
+type = "object"
+title = "ClientRead"
+required = [ "name", "id", "client_id",]
+[tools.responses.422.schema]
+type = "object"
+title = "HTTPValidationError"
+[tools.responses.200.schema.properties.name]
+type = "string"
+description = "The name of the client application"
+example = "My Client App"
+title = "Name"
+[tools.responses.200.schema.properties.id]
+type = "string"
+format = "uuid"
+description = "Unique client identifier"
+example = "a32a0d4b-0a4f-4d98-xxxx-8f7c2c3e9a0a"
+title = "Id"
+[tools.responses.200.schema.properties.client_id]
+type = "string"
+format = "uuid"
+description = "Public client identifier"
+example = "a32a0d4b-0a4f-4d98-xxxx-8f7c2c3e9a0a"
+title = "Client Id"
+[tools.responses.200.schema.properties.is_active]
+type = "boolean"
+description = "Indicates if the client account is active"
+example = true
+default = true
+title = "Is Active"
+[tools.responses.200.schema.properties.created_at]
+description = "Creation timestamp"
+example = "2025-01-01T12:00:00Z"
+title = "Created At"
+[[tools.responses.200.schema.properties.created_at.anyOf]]
+type = "string"
+format = "date-time"
+
+[[tools.responses.200.schema.properties.created_at.anyOf]]
+type = "null"
+
+[tools.responses.200.schema.properties.permissions]
+description = "List of permission reference objects assigned to this client"
+title = "Permissions"
+[[tools.responses.200.schema.properties.permissions.example]]
+name = "users:read"
+
+[[tools.responses.200.schema.properties.permissions.example]]
+name = "roles:create"
+
+[[tools.responses.200.schema.properties.permissions.anyOf]]
+type = "array"
+
+[[tools.responses.200.schema.properties.permissions.anyOf]]
+type = "null"
+
+[tools.responses.422.schema.properties.detail]
+type = "array"
+title = "Detail"
+[[tools]]
+name = "update_client_api_v1_clients__client_id__patch"
+description = "Update client by ID"
+method = "PATCH"
+path = "/api/v1/clients/{client_id}"
+tags = [ "Clients",]
+[[tools.parameters]]
+name = "client_id"
+location = "path"
+type = "string"
+format = "uuid"
+required = true
+description = "Unique client identifier"
+
+[[tools.security]]
+OAuth2PasswordBearer = []
+
+
+[tools.request_body]
+required = false
+content_type = "application/json"
+description = ""
+[tools.request_body.schema]
+type = "object"
+title = "ClientUpdate"
+[tools.responses.200]
+description = "The updated client"
+[tools.responses.422]
+description = "Validation Error"
+[tools.responses.200.schema]
+type = "object"
+title = "ClientRead"
+required = [ "name", "id", "client_id",]
+[tools.responses.422.schema]
+type = "object"
+title = "HTTPValidationError"
+[tools.request_body.schema.properties.name]
+description = "Updated client name"
+example = "Updated Client"
+title = "Name"
+[[tools.request_body.schema.properties.name.anyOf]]
+type = "string"
+
+[[tools.request_body.schema.properties.name.anyOf]]
+type = "null"
+
+[tools.request_body.schema.properties.is_active]
+description = "Updated active status"
+example = true
+title = "Is Active"
+[[tools.request_body.schema.properties.is_active.anyOf]]
+type = "boolean"
+
+[[tools.request_body.schema.properties.is_active.anyOf]]
+type = "null"
+
+[tools.request_body.schema.properties.permissions]
+description = "List of permission reference objects assigned to this client"
+title = "Permissions"
+[[tools.request_body.schema.properties.permissions.example]]
+name = "users:read"
+
+[[tools.request_body.schema.properties.permissions.example]]
+name = "roles:create"
+
+[[tools.request_body.schema.properties.permissions.anyOf]]
+type = "array"
+
+[[tools.request_body.schema.properties.permissions.anyOf]]
+type = "null"
+
+[tools.responses.200.schema.properties.name]
+type = "string"
+description = "The name of the client application"
+example = "My Client App"
+title = "Name"
+[tools.responses.200.schema.properties.id]
+type = "string"
+format = "uuid"
+description = "Unique client identifier"
+example = "a32a0d4b-0a4f-4d98-xxxx-8f7c2c3e9a0a"
+title = "Id"
+[tools.responses.200.schema.properties.client_id]
+type = "string"
+format = "uuid"
+description = "Public client identifier"
+example = "a32a0d4b-0a4f-4d98-xxxx-8f7c2c3e9a0a"
+title = "Client Id"
+[tools.responses.200.schema.properties.is_active]
+type = "boolean"
+description = "Indicates if the client account is active"
+example = true
+default = true
+title = "Is Active"
+[tools.responses.200.schema.properties.created_at]
+description = "Creation timestamp"
+example = "2025-01-01T12:00:00Z"
+title = "Created At"
+[[tools.responses.200.schema.properties.created_at.anyOf]]
+type = "string"
+format = "date-time"
+
+[[tools.responses.200.schema.properties.created_at.anyOf]]
+type = "null"
+
+[tools.responses.200.schema.properties.permissions]
+description = "List of permission reference objects assigned to this client"
+title = "Permissions"
+[[tools.responses.200.schema.properties.permissions.example]]
+name = "users:read"
+
+[[tools.responses.200.schema.properties.permissions.example]]
+name = "roles:create"
+
+[[tools.responses.200.schema.properties.permissions.anyOf]]
+type = "array"
+
+[[tools.responses.200.schema.properties.permissions.anyOf]]
+type = "null"
+
+[tools.responses.422.schema.properties.detail]
+type = "array"
+title = "Detail"
+[[tools]]
+name = "delete_client_api_v1_clients__client_id__delete"
+description = "Delete client by ID"
+method = "DELETE"
+path = "/api/v1/clients/{client_id}"
+tags = [ "Clients",]
+[[tools.parameters]]
+name = "client_id"
+location = "path"
+type = "string"
+format = "uuid"
+required = true
+description = "Unique client identifier"
+
+[[tools.security]]
+OAuth2PasswordBearer = []
+
+
+[tools.responses.204]
+description = "Successful Response"
+[tools.responses.422]
+description = "Validation Error"
+[tools.responses.422.schema]
+type = "object"
+title = "HTTPValidationError"
+[tools.responses.422.schema.properties.detail]
+type = "array"
+title = "Detail"
+[[tools]]
+name = "assign_client_permissions_by_ids_api_v1_clients__client_id__permissions__permission_id__post"
+description = "Assign permissions to client by IDs"
+method = "POST"
+path = "/api/v1/clients/{client_id}/permissions/{permission_id}"
+tags = [ "Clients",]
+[[tools.parameters]]
+name = "client_id"
+location = "path"
+type = "string"
+format = "uuid"
+required = true
+description = "Unique client identifier"
+
+[[tools.parameters]]
+name = "permission_id"
+location = "path"
+type = "string"
+format = "uuid"
+required = true
+description = "Unique permission identifier"
+
+[[tools.security]]
+OAuth2PasswordBearer = []
+
+
+[tools.responses.200]
+description = "The updated client with assigned permissions"
+[tools.responses.422]
+description = "Validation Error"
+[tools.responses.200.schema]
+type = "object"
+title = "ClientRead"
+required = [ "name", "id", "client_id",]
+[tools.responses.422.schema]
+type = "object"
+title = "HTTPValidationError"
+[tools.responses.200.schema.properties.name]
+type = "string"
+description = "The name of the client application"
+example = "My Client App"
+title = "Name"
+[tools.responses.200.schema.properties.id]
+type = "string"
+format = "uuid"
+description = "Unique client identifier"
+example = "a32a0d4b-0a4f-4d98-xxxx-8f7c2c3e9a0a"
+title = "Id"
+[tools.responses.200.schema.properties.client_id]
+type = "string"
+format = "uuid"
+description = "Public client identifier"
+example = "a32a0d4b-0a4f-4d98-xxxx-8f7c2c3e9a0a"
+title = "Client Id"
+[tools.responses.200.schema.properties.is_active]
+type = "boolean"
+description = "Indicates if the client account is active"
+example = true
+default = true
+title = "Is Active"
+[tools.responses.200.schema.properties.created_at]
+description = "Creation timestamp"
+example = "2025-01-01T12:00:00Z"
+title = "Created At"
+[[tools.responses.200.schema.properties.created_at.anyOf]]
+type = "string"
+format = "date-time"
+
+[[tools.responses.200.schema.properties.created_at.anyOf]]
+type = "null"
+
+[tools.responses.200.schema.properties.permissions]
+description = "List of permission reference objects assigned to this client"
+title = "Permissions"
+[[tools.responses.200.schema.properties.permissions.example]]
+name = "users:read"
+
+[[tools.responses.200.schema.properties.permissions.example]]
+name = "roles:create"
+
+[[tools.responses.200.schema.properties.permissions.anyOf]]
+type = "array"
+
+[[tools.responses.200.schema.properties.permissions.anyOf]]
+type = "null"
+
+[tools.responses.422.schema.properties.detail]
+type = "array"
+title = "Detail"
+[[tools]]
+name = "remove_client_permission_api_v1_clients__client_id__permissions__permission_id__delete"
+description = "Remove permission from client by ID"
+method = "DELETE"
+path = "/api/v1/clients/{client_id}/permissions/{permission_id}"
+tags = [ "Clients",]
+[[tools.parameters]]
+name = "client_id"
+location = "path"
+type = "string"
+format = "uuid"
+required = true
+description = "Unique client identifier"
+
+[[tools.parameters]]
+name = "permission_id"
+location = "path"
+type = "string"
+format = "uuid"
+required = true
+description = "Unique permission identifier"
+
+[[tools.security]]
+OAuth2PasswordBearer = []
+
+
+[tools.responses.200]
+description = "The updated client with the permission removed"
+[tools.responses.422]
+description = "Validation Error"
+[tools.responses.200.schema]
+type = "object"
+title = "ClientRead"
+required = [ "name", "id", "client_id",]
+[tools.responses.422.schema]
+type = "object"
+title = "HTTPValidationError"
+[tools.responses.200.schema.properties.name]
+type = "string"
+description = "The name of the client application"
+example = "My Client App"
+title = "Name"
+[tools.responses.200.schema.properties.id]
+type = "string"
+format = "uuid"
+description = "Unique client identifier"
+example = "a32a0d4b-0a4f-4d98-xxxx-8f7c2c3e9a0a"
+title = "Id"
+[tools.responses.200.schema.properties.client_id]
+type = "string"
+format = "uuid"
+description = "Public client identifier"
+example = "a32a0d4b-0a4f-4d98-xxxx-8f7c2c3e9a0a"
+title = "Client Id"
+[tools.responses.200.schema.properties.is_active]
+type = "boolean"
+description = "Indicates if the client account is active"
+example = true
+default = true
+title = "Is Active"
+[tools.responses.200.schema.properties.created_at]
+description = "Creation timestamp"
+example = "2025-01-01T12:00:00Z"
+title = "Created At"
+[[tools.responses.200.schema.properties.created_at.anyOf]]
+type = "string"
+format = "date-time"
+
+[[tools.responses.200.schema.properties.created_at.anyOf]]
+type = "null"
+
+[tools.responses.200.schema.properties.permissions]
+description = "List of permission reference objects assigned to this client"
+title = "Permissions"
+[[tools.responses.200.schema.properties.permissions.example]]
+name = "users:read"
+
+[[tools.responses.200.schema.properties.permissions.example]]
+name = "roles:create"
+
+[[tools.responses.200.schema.properties.permissions.anyOf]]
+type = "array"
+
+[[tools.responses.200.schema.properties.permissions.anyOf]]
+type = "null"
+
+[tools.responses.422.schema.properties.detail]
+type = "array"
+title = "Detail"
+[[tools]]
+name = "create_user_api_v1_users_post"
+description = "Create a new user"
+method = "POST"
+path = "/api/v1/users"
+parameters = []
+tags = [ "Users",]
+[[tools.security]]
+OAuth2PasswordBearer = []
+
+
+[tools.request_body]
+required = true
+content_type = "application/json"
+description = ""
+[tools.request_body.schema]
+type = "object"
+title = "UserCreateByAdmin"
+required = [ "email", "full_name", "password",]
+[tools.responses.201]
+description = "The created user"
+[tools.responses.422]
+description = "Validation Error"
+[tools.responses.201.schema]
+type = "object"
+title = "UserRead"
+required = [ "email", "full_name", "id",]
+[tools.responses.422.schema]
+type = "object"
+title = "HTTPValidationError"
+[tools.request_body.schema.properties.email]
+type = "string"
+description = "The user's email address"
+example = "user@gmail.com"
+title = "Email"
+[tools.request_body.schema.properties.full_name]
+type = "string"
+description = "The user's name and surname"
+example = "Name Surname"
+title = "Full Name"
+[tools.request_body.schema.properties.is_active]
+type = "boolean"
+description = "Is the user active?"
+example = true
+default = true
+title = "Is Active"
+[tools.request_body.schema.properties.is_superuser]
+type = "boolean"
+description = "Is the user a superuser for get all permissions?"
+example = false
+default = false
+title = "Is Superuser"
+[tools.request_body.schema.properties.password]
+type = "string"
+description = "The user's password"
+example = "strongpassword123"
+title = "Password"
+[tools.responses.201.schema.properties.email]
+type = "string"
+description = "The user's email address"
+example = "user@gmail.com"
+title = "Email"
+[tools.responses.201.schema.properties.full_name]
+type = "string"
+description = "The user's name and surname"
+example = "Name Surname"
+title = "Full Name"
+[tools.responses.201.schema.properties.is_active]
+type = "boolean"
+description = "Is the user active?"
+example = true
+default = true
+title = "Is Active"
+[tools.responses.201.schema.properties.is_superuser]
+type = "boolean"
+description = "Is the user a superuser for get all permissions?"
+example = false
+default = false
+title = "Is Superuser"
+[tools.responses.201.schema.properties.id]
+type = "string"
+format = "uuid"
+description = "Unique user identifier"
+example = "c55df1d2-216a-4359-81xx-1d805801vg0g"
+title = "Id"
+[tools.responses.201.schema.properties.created_at]
+description = "The date and time when the user was created"
+example = "2023-01-01T00:00:00Z"
+title = "Created At"
+[[tools.responses.201.schema.properties.created_at.anyOf]]
+type = "string"
+format = "date-time"
+
+[[tools.responses.201.schema.properties.created_at.anyOf]]
+type = "null"
+
+[tools.responses.201.schema.properties.updated_at]
+description = "The date and time when the user was last updated"
+example = "2023-01-05T15:30:00Z"
+title = "Updated At"
+[[tools.responses.201.schema.properties.updated_at.anyOf]]
+type = "string"
+format = "date-time"
+
+[[tools.responses.201.schema.properties.updated_at.anyOf]]
+type = "null"
+
+[tools.responses.201.schema.properties.last_login]
+description = "The date and time of the user's last login"
+example = "2023-01-10T12:34:56Z"
+title = "Last Login"
+[[tools.responses.201.schema.properties.last_login.anyOf]]
+type = "string"
+format = "date-time"
+
+[[tools.responses.201.schema.properties.last_login.anyOf]]
+type = "null"
+
+[tools.responses.201.schema.properties.roles]
+type = "array"
+description = "List of roles assigned to the user"
+example = [ "admin", "user",]
+default = []
+title = "Roles"
+[tools.responses.201.schema.properties.require_password_change]
+type = "boolean"
+description = "Flag to force the user change the password"
+example = false
+default = false
+title = "Require Password Change"
+[tools.responses.422.schema.properties.detail]
+type = "array"
+title = "Detail"
+[[tools]]
+name = "read_with_filters_api_v1_users_get"
+description = "Get users with filtering and pagination"
+method = "GET"
+path = "/api/v1/users"
+tags = [ "Users",]
+[[tools.parameters]]
+name = "name"
+location = "query"
+type = "string"
+required = false
+description = "Partial name search"
+
+[[tools.parameters]]
+name = "email"
+location = "query"
+type = "string"
+required = false
+description = "Exact email match"
+
+[[tools.parameters]]
+name = "active"
+location = "query"
+type = "string"
+required = false
+description = "Filter by active status"
+
+[[tools.parameters]]
+name = "is_superuser"
+location = "query"
+type = "string"
+required = false
+description = "Filter by superuser status"
+
+[[tools.parameters]]
+name = "skip"
+location = "query"
+type = "integer"
+required = false
+description = "Number of records to skip (offset)"
+default = 0
+
+[[tools.parameters]]
+name = "limit"
+location = "query"
+type = "integer"
+required = false
+description = "Maximum records to return"
+default = 100
+
+[[tools.security]]
+OAuth2PasswordBearer = []
+
+
+[tools.responses.200]
+description = "List of users matching criteria"
+[tools.responses.422]
+description = "Validation Error"
+[tools.responses.200.schema]
+type = "array"
+title = "Response Read With Filters Api V1 Users Get"
+[tools.responses.422.schema]
+type = "object"
+title = "HTTPValidationError"
+[tools.responses.200.schema.items]
+type = "object"
+title = "UserRead"
+required = [ "email", "full_name", "id",]
+[tools.responses.422.schema.properties.detail]
+type = "array"
+title = "Detail"
+[tools.responses.200.schema.items.properties.email]
+type = "string"
+description = "The user's email address"
+example = "user@gmail.com"
+title = "Email"
+[tools.responses.200.schema.items.properties.full_name]
+type = "string"
+description = "The user's name and surname"
+example = "Name Surname"
+title = "Full Name"
+[tools.responses.200.schema.items.properties.is_active]
+type = "boolean"
+description = "Is the user active?"
+example = true
+default = true
+title = "Is Active"
+[tools.responses.200.schema.items.properties.is_superuser]
+type = "boolean"
+description = "Is the user a superuser for get all permissions?"
+example = false
+default = false
+title = "Is Superuser"
+[tools.responses.200.schema.items.properties.id]
+type = "string"
+format = "uuid"
+description = "Unique user identifier"
+example = "c55df1d2-216a-4359-81xx-1d805801vg0g"
+title = "Id"
+[tools.responses.200.schema.items.properties.created_at]
+description = "The date and time when the user was created"
+example = "2023-01-01T00:00:00Z"
+title = "Created At"
+[[tools.responses.200.schema.items.properties.created_at.anyOf]]
+
+[[tools.responses.200.schema.items.properties.created_at.anyOf]]
+
+[tools.responses.200.schema.items.properties.updated_at]
+description = "The date and time when the user was last updated"
+example = "2023-01-05T15:30:00Z"
+title = "Updated At"
+[[tools.responses.200.schema.items.properties.updated_at.anyOf]]
+
+[[tools.responses.200.schema.items.properties.updated_at.anyOf]]
+
+[tools.responses.200.schema.items.properties.last_login]
+description = "The date and time of the user's last login"
+example = "2023-01-10T12:34:56Z"
+title = "Last Login"
+[[tools.responses.200.schema.items.properties.last_login.anyOf]]
+
+[[tools.responses.200.schema.items.properties.last_login.anyOf]]
+
+[tools.responses.200.schema.items.properties.roles]
+type = "array"
+description = "List of roles assigned to the user"
+example = [ "admin", "user",]
+default = []
+title = "Roles"
+[tools.responses.200.schema.items.properties.require_password_change]
+type = "boolean"
+description = "Flag to force the user change the password"
+example = false
+default = false
+title = "Require Password Change"
+[[tools]]
+name = "get_current_user_profile_api_v1_users_me_get"
+description = "Get current user profile"
+method = "GET"
+path = "/api/v1/users/me"
+parameters = []
+tags = [ "Users",]
+[[tools.security]]
+OAuth2PasswordBearer = []
+
+
+[tools.responses.200]
+description = "The current user"
+[tools.responses.200.schema]
+type = "object"
+title = "UserRead"
+required = [ "email", "full_name", "id",]
+[tools.responses.200.schema.properties.email]
+type = "string"
+description = "The user's email address"
+example = "user@gmail.com"
+title = "Email"
+[tools.responses.200.schema.properties.full_name]
+type = "string"
+description = "The user's name and surname"
+example = "Name Surname"
+title = "Full Name"
+[tools.responses.200.schema.properties.is_active]
+type = "boolean"
+description = "Is the user active?"
+example = true
+default = true
+title = "Is Active"
+[tools.responses.200.schema.properties.is_superuser]
+type = "boolean"
+description = "Is the user a superuser for get all permissions?"
+example = false
+default = false
+title = "Is Superuser"
+[tools.responses.200.schema.properties.id]
+type = "string"
+format = "uuid"
+description = "Unique user identifier"
+example = "c55df1d2-216a-4359-81xx-1d805801vg0g"
+title = "Id"
+[tools.responses.200.schema.properties.created_at]
+description = "The date and time when the user was created"
+example = "2023-01-01T00:00:00Z"
+title = "Created At"
+[[tools.responses.200.schema.properties.created_at.anyOf]]
+type = "string"
+format = "date-time"
+
+[[tools.responses.200.schema.properties.created_at.anyOf]]
+type = "null"
+
+[tools.responses.200.schema.properties.updated_at]
+description = "The date and time when the user was last updated"
+example = "2023-01-05T15:30:00Z"
+title = "Updated At"
+[[tools.responses.200.schema.properties.updated_at.anyOf]]
+type = "string"
+format = "date-time"
+
+[[tools.responses.200.schema.properties.updated_at.anyOf]]
+type = "null"
+
+[tools.responses.200.schema.properties.last_login]
+description = "The date and time of the user's last login"
+example = "2023-01-10T12:34:56Z"
+title = "Last Login"
+[[tools.responses.200.schema.properties.last_login.anyOf]]
+type = "string"
+format = "date-time"
+
+[[tools.responses.200.schema.properties.last_login.anyOf]]
+type = "null"
+
+[tools.responses.200.schema.properties.roles]
+type = "array"
+description = "List of roles assigned to the user"
+example = [ "admin", "user",]
+default = []
+title = "Roles"
+[tools.responses.200.schema.properties.require_password_change]
+type = "boolean"
+description = "Flag to force the user change the password"
+example = false
+default = false
+title = "Require Password Change"
+[[tools]]
+name = "read_user_by_id_api_v1_users__user_id__get"
+description = "Get a user by unique identifier"
+method = "GET"
+path = "/api/v1/users/{user_id}"
+tags = [ "Users",]
+[[tools.parameters]]
+name = "user_id"
+location = "path"
+type = "string"
+format = "uuid"
+required = true
+description = "Unique user identifier"
+
+[[tools.security]]
+OAuth2PasswordBearer = []
+
+
+[tools.responses.200]
+description = "The requested user"
+[tools.responses.422]
+description = "Validation Error"
+[tools.responses.200.schema]
+type = "object"
+title = "UserRead"
+required = [ "email", "full_name", "id",]
+[tools.responses.422.schema]
+type = "object"
+title = "HTTPValidationError"
+[tools.responses.200.schema.properties.email]
+type = "string"
+description = "The user's email address"
+example = "user@gmail.com"
+title = "Email"
+[tools.responses.200.schema.properties.full_name]
+type = "string"
+description = "The user's name and surname"
+example = "Name Surname"
+title = "Full Name"
+[tools.responses.200.schema.properties.is_active]
+type = "boolean"
+description = "Is the user active?"
+example = true
+default = true
+title = "Is Active"
+[tools.responses.200.schema.properties.is_superuser]
+type = "boolean"
+description = "Is the user a superuser for get all permissions?"
+example = false
+default = false
+title = "Is Superuser"
+[tools.responses.200.schema.properties.id]
+type = "string"
+format = "uuid"
+description = "Unique user identifier"
+example = "c55df1d2-216a-4359-81xx-1d805801vg0g"
+title = "Id"
+[tools.responses.200.schema.properties.created_at]
+description = "The date and time when the user was created"
+example = "2023-01-01T00:00:00Z"
+title = "Created At"
+[[tools.responses.200.schema.properties.created_at.anyOf]]
+type = "string"
+format = "date-time"
+
+[[tools.responses.200.schema.properties.created_at.anyOf]]
+type = "null"
+
+[tools.responses.200.schema.properties.updated_at]
+description = "The date and time when the user was last updated"
+example = "2023-01-05T15:30:00Z"
+title = "Updated At"
+[[tools.responses.200.schema.properties.updated_at.anyOf]]
+type = "string"
+format = "date-time"
+
+[[tools.responses.200.schema.properties.updated_at.anyOf]]
+type = "null"
+
+[tools.responses.200.schema.properties.last_login]
+description = "The date and time of the user's last login"
+example = "2023-01-10T12:34:56Z"
+title = "Last Login"
+[[tools.responses.200.schema.properties.last_login.anyOf]]
+type = "string"
+format = "date-time"
+
+[[tools.responses.200.schema.properties.last_login.anyOf]]
+type = "null"
+
+[tools.responses.200.schema.properties.roles]
+type = "array"
+description = "List of roles assigned to the user"
+example = [ "admin", "user",]
+default = []
+title = "Roles"
+[tools.responses.200.schema.properties.require_password_change]
+type = "boolean"
+description = "Flag to force the user change the password"
+example = false
+default = false
+title = "Require Password Change"
+[tools.responses.422.schema.properties.detail]
+type = "array"
+title = "Detail"
+[[tools]]
+name = "update_user_api_v1_users__user_id__patch"
+description = "Update a user partially"
+method = "PATCH"
+path = "/api/v1/users/{user_id}"
+tags = [ "Users",]
+[[tools.parameters]]
+name = "user_id"
+location = "path"
+type = "string"
+format = "uuid"
+required = true
+description = "Unique user identifier"
+
+[[tools.security]]
+OAuth2PasswordBearer = []
+
+
+[tools.request_body]
+required = true
+content_type = "application/json"
+description = ""
+[tools.request_body.schema]
+type = "object"
+title = "UserUpdate"
+[tools.responses.200]
+description = "Updated user"
+[tools.responses.422]
+description = "Validation Error"
+[tools.responses.200.schema]
+type = "object"
+title = "UserRead"
+required = [ "email", "full_name", "id",]
+[tools.responses.422.schema]
+type = "object"
+title = "HTTPValidationError"
+[tools.request_body.schema.properties.full_name]
+description = "The user's name and surname"
+example = "Name Surname"
+title = "Full Name"
+[[tools.request_body.schema.properties.full_name.anyOf]]
+type = "string"
+
+[[tools.request_body.schema.properties.full_name.anyOf]]
+type = "null"
+
+[tools.request_body.schema.properties.is_active]
+description = "Is the user active?"
+example = true
+title = "Is Active"
+[[tools.request_body.schema.properties.is_active.anyOf]]
+type = "boolean"
+
+[[tools.request_body.schema.properties.is_active.anyOf]]
+type = "null"
+
+[tools.request_body.schema.properties.is_superuser]
+description = "Is the user a superuser for get all permissions?"
+example = false
+title = "Is Superuser"
+[[tools.request_body.schema.properties.is_superuser.anyOf]]
+type = "boolean"
+
+[[tools.request_body.schema.properties.is_superuser.anyOf]]
+type = "null"
+
+[tools.request_body.schema.properties.roles]
+description = "List of roles assigned to the user"
+example = [ "admin", "developer",]
+title = "Roles"
+[[tools.request_body.schema.properties.roles.anyOf]]
+type = "array"
+
+[[tools.request_body.schema.properties.roles.anyOf]]
+type = "null"
+
+[tools.responses.200.schema.properties.email]
+type = "string"
+description = "The user's email address"
+example = "user@gmail.com"
+title = "Email"
+[tools.responses.200.schema.properties.full_name]
+type = "string"
+description = "The user's name and surname"
+example = "Name Surname"
+title = "Full Name"
+[tools.responses.200.schema.properties.is_active]
+type = "boolean"
+description = "Is the user active?"
+example = true
+default = true
+title = "Is Active"
+[tools.responses.200.schema.properties.is_superuser]
+type = "boolean"
+description = "Is the user a superuser for get all permissions?"
+example = false
+default = false
+title = "Is Superuser"
+[tools.responses.200.schema.properties.id]
+type = "string"
+format = "uuid"
+description = "Unique user identifier"
+example = "c55df1d2-216a-4359-81xx-1d805801vg0g"
+title = "Id"
+[tools.responses.200.schema.properties.created_at]
+description = "The date and time when the user was created"
+example = "2023-01-01T00:00:00Z"
+title = "Created At"
+[[tools.responses.200.schema.properties.created_at.anyOf]]
+type = "string"
+format = "date-time"
+
+[[tools.responses.200.schema.properties.created_at.anyOf]]
+type = "null"
+
+[tools.responses.200.schema.properties.updated_at]
+description = "The date and time when the user was last updated"
+example = "2023-01-05T15:30:00Z"
+title = "Updated At"
+[[tools.responses.200.schema.properties.updated_at.anyOf]]
+type = "string"
+format = "date-time"
+
+[[tools.responses.200.schema.properties.updated_at.anyOf]]
+type = "null"
+
+[tools.responses.200.schema.properties.last_login]
+description = "The date and time of the user's last login"
+example = "2023-01-10T12:34:56Z"
+title = "Last Login"
+[[tools.responses.200.schema.properties.last_login.anyOf]]
+type = "string"
+format = "date-time"
+
+[[tools.responses.200.schema.properties.last_login.anyOf]]
+type = "null"
+
+[tools.responses.200.schema.properties.roles]
+type = "array"
+description = "List of roles assigned to the user"
+example = [ "admin", "user",]
+default = []
+title = "Roles"
+[tools.responses.200.schema.properties.require_password_change]
+type = "boolean"
+description = "Flag to force the user change the password"
+example = false
+default = false
+title = "Require Password Change"
+[tools.responses.422.schema.properties.detail]
+type = "array"
+title = "Detail"
+[[tools]]
+name = "delete_user_api_v1_users__user_id__delete"
+description = "Delete a user"
+method = "DELETE"
+path = "/api/v1/users/{user_id}"
+tags = [ "Users",]
+[[tools.parameters]]
+name = "user_id"
+location = "path"
+type = "string"
+format = "uuid"
+required = true
+description = "Unique user identifier"
+
+[[tools.security]]
+OAuth2PasswordBearer = []
+
+
+[tools.responses.204]
+description = "Successful Response"
+[tools.responses.422]
+description = "Validation Error"
+[tools.responses.422.schema]
+type = "object"
+title = "HTTPValidationError"
+[tools.responses.422.schema.properties.detail]
+type = "array"
+title = "Detail"
+[[tools]]
+name = "change_user_email_api_v1_users_email_put"
+description = "Change user email"
+method = "PUT"
+path = "/api/v1/users/email"
+parameters = []
+tags = [ "Users",]
+[[tools.security]]
+OAuth2PasswordBearer = []
+
+
+[tools.request_body]
+required = false
+content_type = "application/json"
+description = ""
+[tools.request_body.schema]
+type = "object"
+title = "UserChangeEmail"
+required = [ "current_email", "new_email", "current_password",]
+[tools.responses.200]
+description = "Updated user"
+[tools.responses.422]
+description = "Validation Error"
+[tools.responses.200.schema]
+type = "object"
+title = "UserRead"
+required = [ "email", "full_name", "id",]
+[tools.responses.422.schema]
+type = "object"
+title = "HTTPValidationError"
+[tools.request_body.schema.properties.current_email]
+type = "string"
+description = "Current email address for verification"
+example = "currentemail@email.com"
+title = "Current Email"
+[tools.request_body.schema.properties.new_email]
+type = "string"
+description = "The new email address"
+example = "newemail@email.com"
+title = "New Email"
+[tools.request_body.schema.properties.current_password]
+type = "string"
+description = "Current password for verification"
+example = "CurrentPassword123!"
+title = "Current Password"
+[tools.responses.200.schema.properties.email]
+type = "string"
+description = "The user's email address"
+example = "user@gmail.com"
+title = "Email"
+[tools.responses.200.schema.properties.full_name]
+type = "string"
+description = "The user's name and surname"
+example = "Name Surname"
+title = "Full Name"
+[tools.responses.200.schema.properties.is_active]
+type = "boolean"
+description = "Is the user active?"
+example = true
+default = true
+title = "Is Active"
+[tools.responses.200.schema.properties.is_superuser]
+type = "boolean"
+description = "Is the user a superuser for get all permissions?"
+example = false
+default = false
+title = "Is Superuser"
+[tools.responses.200.schema.properties.id]
+type = "string"
+format = "uuid"
+description = "Unique user identifier"
+example = "c55df1d2-216a-4359-81xx-1d805801vg0g"
+title = "Id"
+[tools.responses.200.schema.properties.created_at]
+description = "The date and time when the user was created"
+example = "2023-01-01T00:00:00Z"
+title = "Created At"
+[[tools.responses.200.schema.properties.created_at.anyOf]]
+type = "string"
+format = "date-time"
+
+[[tools.responses.200.schema.properties.created_at.anyOf]]
+type = "null"
+
+[tools.responses.200.schema.properties.updated_at]
+description = "The date and time when the user was last updated"
+example = "2023-01-05T15:30:00Z"
+title = "Updated At"
+[[tools.responses.200.schema.properties.updated_at.anyOf]]
+type = "string"
+format = "date-time"
+
+[[tools.responses.200.schema.properties.updated_at.anyOf]]
+type = "null"
+
+[tools.responses.200.schema.properties.last_login]
+description = "The date and time of the user's last login"
+example = "2023-01-10T12:34:56Z"
+title = "Last Login"
+[[tools.responses.200.schema.properties.last_login.anyOf]]
+type = "string"
+format = "date-time"
+
+[[tools.responses.200.schema.properties.last_login.anyOf]]
+type = "null"
+
+[tools.responses.200.schema.properties.roles]
+type = "array"
+description = "List of roles assigned to the user"
+example = [ "admin", "user",]
+default = []
+title = "Roles"
+[tools.responses.200.schema.properties.require_password_change]
+type = "boolean"
+description = "Flag to force the user change the password"
+example = false
+default = false
+title = "Require Password Change"
+[tools.responses.422.schema.properties.detail]
+type = "array"
+title = "Detail"
+[[tools]]
+name = "change_user_password_api_v1_users_password_put"
+description = "Change user password"
+method = "PUT"
+path = "/api/v1/users/password"
+parameters = []
+tags = [ "Users",]
+[[tools.security]]
+OAuth2PasswordBearer = []
+
+
+[tools.request_body]
+required = false
+content_type = "application/json"
+description = ""
+[tools.request_body.schema]
+type = "object"
+title = "PasswordChange"
+required = [ "old_password", "new_password",]
+[tools.responses.200]
+description = "Updated user"
+[tools.responses.422]
+description = "Validation Error"
+[tools.responses.200.schema]
+type = "object"
+title = "UserRead"
+required = [ "email", "full_name", "id",]
+[tools.responses.422.schema]
+type = "object"
+title = "HTTPValidationError"
+[tools.request_body.schema.properties.old_password]
+type = "string"
+description = "The user's current password"
+example = "oldpassword123"
+title = "Old Password"
+[tools.request_body.schema.properties.new_password]
+type = "string"
+description = "The new password for the user"
+example = "newstrongpassword123"
+title = "New Password"
+[tools.responses.200.schema.properties.email]
+type = "string"
+description = "The user's email address"
+example = "user@gmail.com"
+title = "Email"
+[tools.responses.200.schema.properties.full_name]
+type = "string"
+description = "The user's name and surname"
+example = "Name Surname"
+title = "Full Name"
+[tools.responses.200.schema.properties.is_active]
+type = "boolean"
+description = "Is the user active?"
+example = true
+default = true
+title = "Is Active"
+[tools.responses.200.schema.properties.is_superuser]
+type = "boolean"
+description = "Is the user a superuser for get all permissions?"
+example = false
+default = false
+title = "Is Superuser"
+[tools.responses.200.schema.properties.id]
+type = "string"
+format = "uuid"
+description = "Unique user identifier"
+example = "c55df1d2-216a-4359-81xx-1d805801vg0g"
+title = "Id"
+[tools.responses.200.schema.properties.created_at]
+description = "The date and time when the user was created"
+example = "2023-01-01T00:00:00Z"
+title = "Created At"
+[[tools.responses.200.schema.properties.created_at.anyOf]]
+type = "string"
+format = "date-time"
+
+[[tools.responses.200.schema.properties.created_at.anyOf]]
+type = "null"
+
+[tools.responses.200.schema.properties.updated_at]
+description = "The date and time when the user was last updated"
+example = "2023-01-05T15:30:00Z"
+title = "Updated At"
+[[tools.responses.200.schema.properties.updated_at.anyOf]]
+type = "string"
+format = "date-time"
+
+[[tools.responses.200.schema.properties.updated_at.anyOf]]
+type = "null"
+
+[tools.responses.200.schema.properties.last_login]
+description = "The date and time of the user's last login"
+example = "2023-01-10T12:34:56Z"
+title = "Last Login"
+[[tools.responses.200.schema.properties.last_login.anyOf]]
+type = "string"
+format = "date-time"
+
+[[tools.responses.200.schema.properties.last_login.anyOf]]
+type = "null"
+
+[tools.responses.200.schema.properties.roles]
+type = "array"
+description = "List of roles assigned to the user"
+example = [ "admin", "user",]
+default = []
+title = "Roles"
+[tools.responses.200.schema.properties.require_password_change]
+type = "boolean"
+description = "Flag to force the user change the password"
+example = false
+default = false
+title = "Require Password Change"
+[tools.responses.422.schema.properties.detail]
+type = "array"
+title = "Detail"
+[[tools]]
+name = "add_role_to_user_api_v1_users__user_id__roles__role_id__post"
+description = "Add a role to a user"
+method = "POST"
+path = "/api/v1/users/{user_id}/roles/{role_id}"
+tags = [ "Users",]
+[[tools.parameters]]
+name = "user_id"
+location = "path"
+type = "string"
+format = "uuid"
+required = true
+description = "Unique user identifier"
+
+[[tools.parameters]]
+name = "role_id"
+location = "path"
+type = "string"
+format = "uuid"
+required = true
+description = "Unique role identifier to add"
+
+[[tools.security]]
+OAuth2PasswordBearer = []
+
+
+[tools.responses.200]
+description = "User with the added role"
+[tools.responses.422]
+description = "Validation Error"
+[tools.responses.200.schema]
+type = "object"
+title = "UserRead"
+required = [ "email", "full_name", "id",]
+[tools.responses.422.schema]
+type = "object"
+title = "HTTPValidationError"
+[tools.responses.200.schema.properties.email]
+type = "string"
+description = "The user's email address"
+example = "user@gmail.com"
+title = "Email"
+[tools.responses.200.schema.properties.full_name]
+type = "string"
+description = "The user's name and surname"
+example = "Name Surname"
+title = "Full Name"
+[tools.responses.200.schema.properties.is_active]
+type = "boolean"
+description = "Is the user active?"
+example = true
+default = true
+title = "Is Active"
+[tools.responses.200.schema.properties.is_superuser]
+type = "boolean"
+description = "Is the user a superuser for get all permissions?"
+example = false
+default = false
+title = "Is Superuser"
+[tools.responses.200.schema.properties.id]
+type = "string"
+format = "uuid"
+description = "Unique user identifier"
+example = "c55df1d2-216a-4359-81xx-1d805801vg0g"
+title = "Id"
+[tools.responses.200.schema.properties.created_at]
+description = "The date and time when the user was created"
+example = "2023-01-01T00:00:00Z"
+title = "Created At"
+[[tools.responses.200.schema.properties.created_at.anyOf]]
+type = "string"
+format = "date-time"
+
+[[tools.responses.200.schema.properties.created_at.anyOf]]
+type = "null"
+
+[tools.responses.200.schema.properties.updated_at]
+description = "The date and time when the user was last updated"
+example = "2023-01-05T15:30:00Z"
+title = "Updated At"
+[[tools.responses.200.schema.properties.updated_at.anyOf]]
+type = "string"
+format = "date-time"
+
+[[tools.responses.200.schema.properties.updated_at.anyOf]]
+type = "null"
+
+[tools.responses.200.schema.properties.last_login]
+description = "The date and time of the user's last login"
+example = "2023-01-10T12:34:56Z"
+title = "Last Login"
+[[tools.responses.200.schema.properties.last_login.anyOf]]
+type = "string"
+format = "date-time"
+
+[[tools.responses.200.schema.properties.last_login.anyOf]]
+type = "null"
+
+[tools.responses.200.schema.properties.roles]
+type = "array"
+description = "List of roles assigned to the user"
+example = [ "admin", "user",]
+default = []
+title = "Roles"
+[tools.responses.200.schema.properties.require_password_change]
+type = "boolean"
+description = "Flag to force the user change the password"
+example = false
+default = false
+title = "Require Password Change"
+[tools.responses.422.schema.properties.detail]
+type = "array"
+title = "Detail"
+[[tools]]
+name = "remove_role_from_user_api_v1_users__user_id__roles__role_id__delete"
+description = "Remove a role from a user"
+method = "DELETE"
+path = "/api/v1/users/{user_id}/roles/{role_id}"
+tags = [ "Users",]
+[[tools.parameters]]
+name = "user_id"
+location = "path"
+type = "string"
+format = "uuid"
+required = true
+description = "Unique user identifier"
+
+[[tools.parameters]]
+name = "role_id"
+location = "path"
+type = "string"
+format = "uuid"
+required = true
+description = "Unique role identifier to remove"
+
+[[tools.security]]
+OAuth2PasswordBearer = []
+
+
+[tools.responses.200]
+description = "User with the role removed"
+[tools.responses.422]
+description = "Validation Error"
+[tools.responses.200.schema]
+type = "object"
+title = "UserRead"
+required = [ "email", "full_name", "id",]
+[tools.responses.422.schema]
+type = "object"
+title = "HTTPValidationError"
+[tools.responses.200.schema.properties.email]
+type = "string"
+description = "The user's email address"
+example = "user@gmail.com"
+title = "Email"
+[tools.responses.200.schema.properties.full_name]
+type = "string"
+description = "The user's name and surname"
+example = "Name Surname"
+title = "Full Name"
+[tools.responses.200.schema.properties.is_active]
+type = "boolean"
+description = "Is the user active?"
+example = true
+default = true
+title = "Is Active"
+[tools.responses.200.schema.properties.is_superuser]
+type = "boolean"
+description = "Is the user a superuser for get all permissions?"
+example = false
+default = false
+title = "Is Superuser"
+[tools.responses.200.schema.properties.id]
+type = "string"
+format = "uuid"
+description = "Unique user identifier"
+example = "c55df1d2-216a-4359-81xx-1d805801vg0g"
+title = "Id"
+[tools.responses.200.schema.properties.created_at]
+description = "The date and time when the user was created"
+example = "2023-01-01T00:00:00Z"
+title = "Created At"
+[[tools.responses.200.schema.properties.created_at.anyOf]]
+type = "string"
+format = "date-time"
+
+[[tools.responses.200.schema.properties.created_at.anyOf]]
+type = "null"
+
+[tools.responses.200.schema.properties.updated_at]
+description = "The date and time when the user was last updated"
+example = "2023-01-05T15:30:00Z"
+title = "Updated At"
+[[tools.responses.200.schema.properties.updated_at.anyOf]]
+type = "string"
+format = "date-time"
+
+[[tools.responses.200.schema.properties.updated_at.anyOf]]
+type = "null"
+
+[tools.responses.200.schema.properties.last_login]
+description = "The date and time of the user's last login"
+example = "2023-01-10T12:34:56Z"
+title = "Last Login"
+[[tools.responses.200.schema.properties.last_login.anyOf]]
+type = "string"
+format = "date-time"
+
+[[tools.responses.200.schema.properties.last_login.anyOf]]
+type = "null"
+
+[tools.responses.200.schema.properties.roles]
+type = "array"
+description = "List of roles assigned to the user"
+example = [ "admin", "user",]
+default = []
+title = "Roles"
+[tools.responses.200.schema.properties.require_password_change]
+type = "boolean"
+description = "Flag to force the user change the password"
+example = false
+default = false
+title = "Require Password Change"
+[tools.responses.422.schema.properties.detail]
+type = "array"
+title = "Detail"
+[[tools]]
+name = "create_role_api_v1_roles_post"
+description = "Create a new role"
+method = "POST"
+path = "/api/v1/roles"
+parameters = []
+tags = [ "Roles",]
+[[tools.security]]
+OAuth2PasswordBearer = []
+
+
+[tools.request_body]
+required = true
+content_type = "application/json"
+description = ""
+[tools.request_body.schema]
+type = "object"
+title = "RoleCreate"
+required = [ "name",]
+[tools.responses.201]
+description = "The created role"
+[tools.responses.422]
+description = "Validation Error"
+[tools.responses.201.schema]
+type = "object"
+title = "RoleRead"
+required = [ "name", "id",]
+[tools.responses.422.schema]
+type = "object"
+title = "HTTPValidationError"
+[tools.request_body.schema.properties.name]
+type = "string"
+description = "The name of the role"
+example = "admin"
+title = "Name"
+[tools.request_body.schema.properties.description]
+description = "Description of the role"
+example = "Administrator with full access"
+title = "Description"
+[[tools.request_body.schema.properties.description.anyOf]]
+type = "string"
+
+[[tools.request_body.schema.properties.description.anyOf]]
+type = "null"
+
+[tools.request_body.schema.properties.permissions]
+description = "List of permissions assigned to this role"
+title = "Permissions"
+[[tools.request_body.schema.properties.permissions.example]]
+name = "users:read"
+
+[[tools.request_body.schema.properties.permissions.anyOf]]
+type = "array"
+
+[[tools.request_body.schema.properties.permissions.anyOf]]
+type = "null"
+
+[tools.responses.201.schema.properties.name]
+type = "string"
+description = "The name of the role"
+example = "admin"
+title = "Name"
+[tools.responses.201.schema.properties.description]
+description = "Description of the role"
+example = "Administrator with full access"
+title = "Description"
+[[tools.responses.201.schema.properties.description.anyOf]]
+type = "string"
+
+[[tools.responses.201.schema.properties.description.anyOf]]
+type = "null"
+
+[tools.responses.201.schema.properties.id]
+type = "string"
+format = "uuid"
+description = "Unique role identifier"
+example = "d44b9c8f-4b36-4ffb-xxxx-1f0b70cced7d"
+title = "Id"
+[tools.responses.201.schema.properties.created_at]
+description = "Creation timestamp"
+example = "2025-01-01T12:00:00Z"
+title = "Created At"
+[[tools.responses.201.schema.properties.created_at.anyOf]]
+type = "string"
+format = "date-time"
+
+[[tools.responses.201.schema.properties.created_at.anyOf]]
+type = "null"
+
+[tools.responses.201.schema.properties.updated_at]
+description = "Last update timestamp"
+example = "2025-01-02T12:00:00Z"
+title = "Updated At"
+[[tools.responses.201.schema.properties.updated_at.anyOf]]
+type = "string"
+format = "date-time"
+
+[[tools.responses.201.schema.properties.updated_at.anyOf]]
+type = "null"
+
+[tools.responses.201.schema.properties.permissions]
+description = "List of permissions assigned to this role"
+default = []
+title = "Permissions"
+[[tools.responses.201.schema.properties.permissions.example]]
+description = "Allows reading users"
+id = "uuid"
+name = "users:read"
+
+[[tools.responses.201.schema.properties.permissions.anyOf]]
+type = "array"
+
+[[tools.responses.201.schema.properties.permissions.anyOf]]
+type = "null"
+
+[tools.responses.422.schema.properties.detail]
+type = "array"
+title = "Detail"
+[[tools]]
+name = "read_roles_api_v1_roles_get"
+description = "Get roles with filtering and pagination"
+method = "GET"
+path = "/api/v1/roles"
+tags = [ "Roles",]
+[[tools.parameters]]
+name = "name"
+location = "query"
+type = "string"
+required = false
+description = "Partial name search"
+
+[[tools.parameters]]
+name = "description"
+location = "query"
+type = "string"
+required = false
+description = "Partial description search"
+
+[[tools.parameters]]
+name = "skip"
+location = "query"
+type = "integer"
+required = false
+description = "Number of records to skip (offset)"
+default = 0
+
+[[tools.parameters]]
+name = "limit"
+location = "query"
+type = "integer"
+required = false
+description = "Maximum records to return"
+default = 100
+
+[[tools.security]]
+OAuth2PasswordBearer = []
+
+
+[tools.responses.200]
+description = "List of roles matching criteria"
+[tools.responses.422]
+description = "Validation Error"
+[tools.responses.200.schema]
+type = "array"
+title = "Response Read Roles Api V1 Roles Get"
+[tools.responses.422.schema]
+type = "object"
+title = "HTTPValidationError"
+[tools.responses.200.schema.items]
+type = "object"
+title = "RoleRead"
+required = [ "name", "id",]
+[tools.responses.422.schema.properties.detail]
+type = "array"
+title = "Detail"
+[tools.responses.200.schema.items.properties.name]
+type = "string"
+description = "The name of the role"
+example = "admin"
+title = "Name"
+[tools.responses.200.schema.items.properties.description]
+description = "Description of the role"
+example = "Administrator with full access"
+title = "Description"
+[[tools.responses.200.schema.items.properties.description.anyOf]]
+
+[[tools.responses.200.schema.items.properties.description.anyOf]]
+
+[tools.responses.200.schema.items.properties.id]
+type = "string"
+format = "uuid"
+description = "Unique role identifier"
+example = "d44b9c8f-4b36-4ffb-xxxx-1f0b70cced7d"
+title = "Id"
+[tools.responses.200.schema.items.properties.created_at]
+description = "Creation timestamp"
+example = "2025-01-01T12:00:00Z"
+title = "Created At"
+[[tools.responses.200.schema.items.properties.created_at.anyOf]]
+
+[[tools.responses.200.schema.items.properties.created_at.anyOf]]
+
+[tools.responses.200.schema.items.properties.updated_at]
+description = "Last update timestamp"
+example = "2025-01-02T12:00:00Z"
+title = "Updated At"
+[[tools.responses.200.schema.items.properties.updated_at.anyOf]]
+
+[[tools.responses.200.schema.items.properties.updated_at.anyOf]]
+
+[tools.responses.200.schema.items.properties.permissions]
+description = "List of permissions assigned to this role"
+default = []
+title = "Permissions"
+[[tools.responses.200.schema.items.properties.permissions.example]]
+description = "Allows reading users"
+id = "uuid"
+name = "users:read"
+
+[[tools.responses.200.schema.items.properties.permissions.anyOf]]
+
+[[tools.responses.200.schema.items.properties.permissions.anyOf]]
+
+[[tools]]
+name = "read_role_api_v1_roles__role_id__get"
+description = "Get role by ID"
+method = "GET"
+path = "/api/v1/roles/{role_id}"
+tags = [ "Roles",]
+[[tools.parameters]]
+name = "role_id"
+location = "path"
+type = "string"
+format = "uuid"
+required = true
+description = "Unique role identifier"
+
+[[tools.security]]
+OAuth2PasswordBearer = []
+
+
+[tools.responses.200]
+description = "The role with the specified ID"
+[tools.responses.422]
+description = "Validation Error"
+[tools.responses.200.schema]
+type = "object"
+title = "RoleRead"
+required = [ "name", "id",]
+[tools.responses.422.schema]
+type = "object"
+title = "HTTPValidationError"
+[tools.responses.200.schema.properties.name]
+type = "string"
+description = "The name of the role"
+example = "admin"
+title = "Name"
+[tools.responses.200.schema.properties.description]
+description = "Description of the role"
+example = "Administrator with full access"
+title = "Description"
+[[tools.responses.200.schema.properties.description.anyOf]]
+type = "string"
+
+[[tools.responses.200.schema.properties.description.anyOf]]
+type = "null"
+
+[tools.responses.200.schema.properties.id]
+type = "string"
+format = "uuid"
+description = "Unique role identifier"
+example = "d44b9c8f-4b36-4ffb-xxxx-1f0b70cced7d"
+title = "Id"
+[tools.responses.200.schema.properties.created_at]
+description = "Creation timestamp"
+example = "2025-01-01T12:00:00Z"
+title = "Created At"
+[[tools.responses.200.schema.properties.created_at.anyOf]]
+type = "string"
+format = "date-time"
+
+[[tools.responses.200.schema.properties.created_at.anyOf]]
+type = "null"
+
+[tools.responses.200.schema.properties.updated_at]
+description = "Last update timestamp"
+example = "2025-01-02T12:00:00Z"
+title = "Updated At"
+[[tools.responses.200.schema.properties.updated_at.anyOf]]
+type = "string"
+format = "date-time"
+
+[[tools.responses.200.schema.properties.updated_at.anyOf]]
+type = "null"
+
+[tools.responses.200.schema.properties.permissions]
+description = "List of permissions assigned to this role"
+default = []
+title = "Permissions"
+[[tools.responses.200.schema.properties.permissions.example]]
+description = "Allows reading users"
+id = "uuid"
+name = "users:read"
+
+[[tools.responses.200.schema.properties.permissions.anyOf]]
+type = "array"
+
+[[tools.responses.200.schema.properties.permissions.anyOf]]
+type = "null"
+
+[tools.responses.422.schema.properties.detail]
+type = "array"
+title = "Detail"
+[[tools]]
+name = "update_role_api_v1_roles__role_id__patch"
+description = "Update role by ID"
+method = "PATCH"
+path = "/api/v1/roles/{role_id}"
+tags = [ "Roles",]
+[[tools.parameters]]
+name = "role_id"
+location = "path"
+type = "string"
+format = "uuid"
+required = true
+description = "Unique role identifier"
+
+[[tools.security]]
+OAuth2PasswordBearer = []
+
+
+[tools.request_body]
+required = true
+content_type = "application/json"
+description = ""
+[tools.request_body.schema]
+type = "object"
+title = "RoleUpdate"
+[tools.responses.200]
+description = "The updated role"
+[tools.responses.422]
+description = "Validation Error"
+[tools.responses.200.schema]
+type = "object"
+title = "RoleRead"
+required = [ "name", "id",]
+[tools.responses.422.schema]
+type = "object"
+title = "HTTPValidationError"
+[tools.request_body.schema.properties.name]
+description = "Updated role name"
+example = "manager"
+title = "Name"
+[[tools.request_body.schema.properties.name.anyOf]]
+type = "string"
+
+[[tools.request_body.schema.properties.name.anyOf]]
+type = "null"
+
+[tools.request_body.schema.properties.description]
+description = "Updated role description"
+example = "Manager role"
+title = "Description"
+[[tools.request_body.schema.properties.description.anyOf]]
+type = "string"
+
+[[tools.request_body.schema.properties.description.anyOf]]
+type = "null"
+
+[tools.request_body.schema.properties.permissions]
+description = "Updated list of permissions"
+title = "Permissions"
+[[tools.request_body.schema.properties.permissions.example]]
+name = "users:read"
+
+[[tools.request_body.schema.properties.permissions.anyOf]]
+type = "array"
+
+[[tools.request_body.schema.properties.permissions.anyOf]]
+type = "null"
+
+[tools.responses.200.schema.properties.name]
+type = "string"
+description = "The name of the role"
+example = "admin"
+title = "Name"
+[tools.responses.200.schema.properties.description]
+description = "Description of the role"
+example = "Administrator with full access"
+title = "Description"
+[[tools.responses.200.schema.properties.description.anyOf]]
+type = "string"
+
+[[tools.responses.200.schema.properties.description.anyOf]]
+type = "null"
+
+[tools.responses.200.schema.properties.id]
+type = "string"
+format = "uuid"
+description = "Unique role identifier"
+example = "d44b9c8f-4b36-4ffb-xxxx-1f0b70cced7d"
+title = "Id"
+[tools.responses.200.schema.properties.created_at]
+description = "Creation timestamp"
+example = "2025-01-01T12:00:00Z"
+title = "Created At"
+[[tools.responses.200.schema.properties.created_at.anyOf]]
+type = "string"
+format = "date-time"
+
+[[tools.responses.200.schema.properties.created_at.anyOf]]
+type = "null"
+
+[tools.responses.200.schema.properties.updated_at]
+description = "Last update timestamp"
+example = "2025-01-02T12:00:00Z"
+title = "Updated At"
+[[tools.responses.200.schema.properties.updated_at.anyOf]]
+type = "string"
+format = "date-time"
+
+[[tools.responses.200.schema.properties.updated_at.anyOf]]
+type = "null"
+
+[tools.responses.200.schema.properties.permissions]
+description = "List of permissions assigned to this role"
+default = []
+title = "Permissions"
+[[tools.responses.200.schema.properties.permissions.example]]
+description = "Allows reading users"
+id = "uuid"
+name = "users:read"
+
+[[tools.responses.200.schema.properties.permissions.anyOf]]
+type = "array"
+
+[[tools.responses.200.schema.properties.permissions.anyOf]]
+type = "null"
+
+[tools.responses.422.schema.properties.detail]
+type = "array"
+title = "Detail"
+[[tools]]
+name = "delete_role_api_v1_roles__role_id__delete"
+description = "Delete role by ID"
+method = "DELETE"
+path = "/api/v1/roles/{role_id}"
+tags = [ "Roles",]
+[[tools.parameters]]
+name = "role_id"
+location = "path"
+type = "string"
+format = "uuid"
+required = true
+description = "Unique role identifier"
+
+[[tools.security]]
+OAuth2PasswordBearer = []
+
+
+[tools.responses.204]
+description = "Successful Response"
+[tools.responses.422]
+description = "Validation Error"
+[tools.responses.422.schema]
+type = "object"
+title = "HTTPValidationError"
+[tools.responses.422.schema.properties.detail]
+type = "array"
+title = "Detail"
+[[tools]]
+name = "add_permission_to_role_api_v1_roles__role_id__permissions__permission_id__post"
+description = "Add permission to role"
+method = "POST"
+path = "/api/v1/roles/{role_id}/permissions/{permission_id}"
+tags = [ "Roles",]
+[[tools.parameters]]
+name = "role_id"
+location = "path"
+type = "string"
+format = "uuid"
+required = true
+description = "Unique role identifier"
+
+[[tools.parameters]]
+name = "permission_id"
+location = "path"
+type = "string"
+format = "uuid"
+required = true
+description = "Unique permission identifier"
+
+[[tools.security]]
+OAuth2PasswordBearer = []
+
+
+[tools.responses.200]
+description = "Role with the added permission"
+[tools.responses.422]
+description = "Validation Error"
+[tools.responses.200.schema]
+type = "object"
+title = "RoleRead"
+required = [ "name", "id",]
+[tools.responses.422.schema]
+type = "object"
+title = "HTTPValidationError"
+[tools.responses.200.schema.properties.name]
+type = "string"
+description = "The name of the role"
+example = "admin"
+title = "Name"
+[tools.responses.200.schema.properties.description]
+description = "Description of the role"
+example = "Administrator with full access"
+title = "Description"
+[[tools.responses.200.schema.properties.description.anyOf]]
+type = "string"
+
+[[tools.responses.200.schema.properties.description.anyOf]]
+type = "null"
+
+[tools.responses.200.schema.properties.id]
+type = "string"
+format = "uuid"
+description = "Unique role identifier"
+example = "d44b9c8f-4b36-4ffb-xxxx-1f0b70cced7d"
+title = "Id"
+[tools.responses.200.schema.properties.created_at]
+description = "Creation timestamp"
+example = "2025-01-01T12:00:00Z"
+title = "Created At"
+[[tools.responses.200.schema.properties.created_at.anyOf]]
+type = "string"
+format = "date-time"
+
+[[tools.responses.200.schema.properties.created_at.anyOf]]
+type = "null"
+
+[tools.responses.200.schema.properties.updated_at]
+description = "Last update timestamp"
+example = "2025-01-02T12:00:00Z"
+title = "Updated At"
+[[tools.responses.200.schema.properties.updated_at.anyOf]]
+type = "string"
+format = "date-time"
+
+[[tools.responses.200.schema.properties.updated_at.anyOf]]
+type = "null"
+
+[tools.responses.200.schema.properties.permissions]
+description = "List of permissions assigned to this role"
+default = []
+title = "Permissions"
+[[tools.responses.200.schema.properties.permissions.example]]
+description = "Allows reading users"
+id = "uuid"
+name = "users:read"
+
+[[tools.responses.200.schema.properties.permissions.anyOf]]
+type = "array"
+
+[[tools.responses.200.schema.properties.permissions.anyOf]]
+type = "null"
+
+[tools.responses.422.schema.properties.detail]
+type = "array"
+title = "Detail"
+[[tools]]
+name = "remove_permission_from_role_api_v1_roles__role_id__permissions__permission_id__delete"
+description = "Remove permission from role"
+method = "DELETE"
+path = "/api/v1/roles/{role_id}/permissions/{permission_id}"
+tags = [ "Roles",]
+[[tools.parameters]]
+name = "role_id"
+location = "path"
+type = "string"
+format = "uuid"
+required = true
+description = "Unique role identifier"
+
+[[tools.parameters]]
+name = "permission_id"
+location = "path"
+type = "string"
+format = "uuid"
+required = true
+description = "Unique permission identifier"
+
+[[tools.security]]
+OAuth2PasswordBearer = []
+
+
+[tools.responses.200]
+description = "Role with the permission removed"
+[tools.responses.422]
+description = "Validation Error"
+[tools.responses.200.schema]
+type = "object"
+title = "RoleRead"
+required = [ "name", "id",]
+[tools.responses.422.schema]
+type = "object"
+title = "HTTPValidationError"
+[tools.responses.200.schema.properties.name]
+type = "string"
+description = "The name of the role"
+example = "admin"
+title = "Name"
+[tools.responses.200.schema.properties.description]
+description = "Description of the role"
+example = "Administrator with full access"
+title = "Description"
+[[tools.responses.200.schema.properties.description.anyOf]]
+type = "string"
+
+[[tools.responses.200.schema.properties.description.anyOf]]
+type = "null"
+
+[tools.responses.200.schema.properties.id]
+type = "string"
+format = "uuid"
+description = "Unique role identifier"
+example = "d44b9c8f-4b36-4ffb-xxxx-1f0b70cced7d"
+title = "Id"
+[tools.responses.200.schema.properties.created_at]
+description = "Creation timestamp"
+example = "2025-01-01T12:00:00Z"
+title = "Created At"
+[[tools.responses.200.schema.properties.created_at.anyOf]]
+type = "string"
+format = "date-time"
+
+[[tools.responses.200.schema.properties.created_at.anyOf]]
+type = "null"
+
+[tools.responses.200.schema.properties.updated_at]
+description = "Last update timestamp"
+example = "2025-01-02T12:00:00Z"
+title = "Updated At"
+[[tools.responses.200.schema.properties.updated_at.anyOf]]
+type = "string"
+format = "date-time"
+
+[[tools.responses.200.schema.properties.updated_at.anyOf]]
+type = "null"
+
+[tools.responses.200.schema.properties.permissions]
+description = "List of permissions assigned to this role"
+default = []
+title = "Permissions"
+[[tools.responses.200.schema.properties.permissions.example]]
+description = "Allows reading users"
+id = "uuid"
+name = "users:read"
+
+[[tools.responses.200.schema.properties.permissions.anyOf]]
+type = "array"
+
+[[tools.responses.200.schema.properties.permissions.anyOf]]
+type = "null"
+
+[tools.responses.422.schema.properties.detail]
+type = "array"
+title = "Detail"
+[[tools]]
+name = "create_permission_api_v1_permissions_post"
+description = "Create a new permission"
+method = "POST"
+path = "/api/v1/permissions"
+parameters = []
+tags = [ "Permissions",]
+[[tools.security]]
+OAuth2PasswordBearer = []
+
+
+[tools.request_body]
+required = true
+content_type = "application/json"
+description = ""
+[tools.request_body.schema]
+type = "object"
+title = "PermissionCreate"
+required = [ "name",]
+[tools.responses.201]
+description = "The created permission"
+[tools.responses.422]
+description = "Validation Error"
+[tools.responses.201.schema]
+type = "object"
+title = "PermissionRead"
+required = [ "name", "id",]
+[tools.responses.422.schema]
+type = "object"
+title = "HTTPValidationError"
+[tools.request_body.schema.properties.name]
+type = "string"
+description = "The permission name"
+example = "users:create"
+title = "Name"
+[tools.request_body.schema.properties.description]
+description = "Description of the permission"
+example = "Allows creating users"
+title = "Description"
+[[tools.request_body.schema.properties.description.anyOf]]
+type = "string"
+
+[[tools.request_body.schema.properties.description.anyOf]]
+type = "null"
+
+[tools.responses.201.schema.properties.name]
+type = "string"
+description = "The permission name"
+example = "users:create"
+title = "Name"
+[tools.responses.201.schema.properties.description]
+description = "Description of the permission"
+example = "Allows creating users"
+title = "Description"
+[[tools.responses.201.schema.properties.description.anyOf]]
+type = "string"
+
+[[tools.responses.201.schema.properties.description.anyOf]]
+type = "null"
+
+[tools.responses.201.schema.properties.id]
+type = "string"
+format = "uuid"
+description = "Unique permission identifier"
+example = "a32a0d4b-0a4f-4d98-xxxx-8f7c2c3e9a0a"
+title = "Id"
+[tools.responses.201.schema.properties.created_at]
+description = "Creation timestamp"
+example = "2025-01-01T12:00:00Z"
+title = "Created At"
+[[tools.responses.201.schema.properties.created_at.anyOf]]
+type = "string"
+format = "date-time"
+
+[[tools.responses.201.schema.properties.created_at.anyOf]]
+type = "null"
+
+[tools.responses.201.schema.properties.updated_at]
+description = "Last update timestamp"
+example = "2025-01-02T12:00:00Z"
+title = "Updated At"
+[[tools.responses.201.schema.properties.updated_at.anyOf]]
+type = "string"
+format = "date-time"
+
+[[tools.responses.201.schema.properties.updated_at.anyOf]]
+type = "null"
+
+[tools.responses.422.schema.properties.detail]
+type = "array"
+title = "Detail"
+[[tools]]
+name = "read_permissions_api_v1_permissions_get"
+description = "Get permissions with filtering and pagination"
+method = "GET"
+path = "/api/v1/permissions"
+tags = [ "Permissions",]
+[[tools.parameters]]
+name = "name"
+location = "query"
+type = "string"
+required = false
+description = "Partial name search"
+
+[[tools.parameters]]
+name = "description"
+location = "query"
+type = "string"
+required = false
+description = "Partial description search"
+
+[[tools.parameters]]
+name = "skip"
+location = "query"
+type = "integer"
+required = false
+description = "Offset"
+default = 0
+
+[[tools.parameters]]
+name = "limit"
+location = "query"
+type = "integer"
+required = false
+description = "Limit"
+default = 100
+
+[[tools.security]]
+OAuth2PasswordBearer = []
+
+
+[tools.responses.200]
+description = "List of permissions matching criteria"
+[tools.responses.422]
+description = "Validation Error"
+[tools.responses.200.schema]
+type = "array"
+title = "Response Read Permissions Api V1 Permissions Get"
+[tools.responses.422.schema]
+type = "object"
+title = "HTTPValidationError"
+[tools.responses.200.schema.items]
+type = "object"
+title = "PermissionRead"
+required = [ "name", "id",]
+[tools.responses.422.schema.properties.detail]
+type = "array"
+title = "Detail"
+[tools.responses.200.schema.items.properties.name]
+type = "string"
+description = "The permission name"
+example = "users:create"
+title = "Name"
+[tools.responses.200.schema.items.properties.description]
+description = "Description of the permission"
+example = "Allows creating users"
+title = "Description"
+[[tools.responses.200.schema.items.properties.description.anyOf]]
+
+[[tools.responses.200.schema.items.properties.description.anyOf]]
+
+[tools.responses.200.schema.items.properties.id]
+type = "string"
+format = "uuid"
+description = "Unique permission identifier"
+example = "a32a0d4b-0a4f-4d98-xxxx-8f7c2c3e9a0a"
+title = "Id"
+[tools.responses.200.schema.items.properties.created_at]
+description = "Creation timestamp"
+example = "2025-01-01T12:00:00Z"
+title = "Created At"
+[[tools.responses.200.schema.items.properties.created_at.anyOf]]
+
+[[tools.responses.200.schema.items.properties.created_at.anyOf]]
+
+[tools.responses.200.schema.items.properties.updated_at]
+description = "Last update timestamp"
+example = "2025-01-02T12:00:00Z"
+title = "Updated At"
+[[tools.responses.200.schema.items.properties.updated_at.anyOf]]
+
+[[tools.responses.200.schema.items.properties.updated_at.anyOf]]
+
+[[tools]]
+name = "read_permission_api_v1_permissions__permission_id__get"
+description = "Get permission by ID"
+method = "GET"
+path = "/api/v1/permissions/{permission_id}"
+tags = [ "Permissions",]
+[[tools.parameters]]
+name = "permission_id"
+location = "path"
+type = "string"
+format = "uuid"
+required = true
+description = "Unique permission identifier"
+
+[[tools.security]]
+OAuth2PasswordBearer = []
+
+
+[tools.responses.200]
+description = "The permission with the specified ID"
+[tools.responses.422]
+description = "Validation Error"
+[tools.responses.200.schema]
+type = "object"
+title = "PermissionRead"
+required = [ "name", "id",]
+[tools.responses.422.schema]
+type = "object"
+title = "HTTPValidationError"
+[tools.responses.200.schema.properties.name]
+type = "string"
+description = "The permission name"
+example = "users:create"
+title = "Name"
+[tools.responses.200.schema.properties.description]
+description = "Description of the permission"
+example = "Allows creating users"
+title = "Description"
+[[tools.responses.200.schema.properties.description.anyOf]]
+type = "string"
+
+[[tools.responses.200.schema.properties.description.anyOf]]
+type = "null"
+
+[tools.responses.200.schema.properties.id]
+type = "string"
+format = "uuid"
+description = "Unique permission identifier"
+example = "a32a0d4b-0a4f-4d98-xxxx-8f7c2c3e9a0a"
+title = "Id"
+[tools.responses.200.schema.properties.created_at]
+description = "Creation timestamp"
+example = "2025-01-01T12:00:00Z"
+title = "Created At"
+[[tools.responses.200.schema.properties.created_at.anyOf]]
+type = "string"
+format = "date-time"
+
+[[tools.responses.200.schema.properties.created_at.anyOf]]
+type = "null"
+
+[tools.responses.200.schema.properties.updated_at]
+description = "Last update timestamp"
+example = "2025-01-02T12:00:00Z"
+title = "Updated At"
+[[tools.responses.200.schema.properties.updated_at.anyOf]]
+type = "string"
+format = "date-time"
+
+[[tools.responses.200.schema.properties.updated_at.anyOf]]
+type = "null"
+
+[tools.responses.422.schema.properties.detail]
+type = "array"
+title = "Detail"
+[[tools]]
+name = "update_permission_api_v1_permissions__permission_id__patch"
+description = "Update permission by ID"
+method = "PATCH"
+path = "/api/v1/permissions/{permission_id}"
+tags = [ "Permissions",]
+[[tools.parameters]]
+name = "permission_id"
+location = "path"
+type = "string"
+format = "uuid"
+required = true
+description = "Unique permission identifier"
+
+[[tools.security]]
+OAuth2PasswordBearer = []
+
+
+[tools.request_body]
+required = true
+content_type = "application/json"
+description = ""
+[tools.request_body.schema]
+type = "object"
+title = "PermissionUpdate"
+[tools.responses.200]
+description = "The updated permission"
+[tools.responses.422]
+description = "Validation Error"
+[tools.responses.200.schema]
+type = "object"
+title = "PermissionRead"
+required = [ "name", "id",]
+[tools.responses.422.schema]
+type = "object"
+title = "HTTPValidationError"
+[tools.request_body.schema.properties.name]
+description = "The updated permission name"
+example = "users:create"
+title = "Name"
+[[tools.request_body.schema.properties.name.anyOf]]
+type = "string"
+
+[[tools.request_body.schema.properties.name.anyOf]]
+type = "null"
+
+[tools.request_body.schema.properties.description]
+description = "Updated description"
+example = "Allows creating users"
+title = "Description"
+[[tools.request_body.schema.properties.description.anyOf]]
+type = "string"
+
+[[tools.request_body.schema.properties.description.anyOf]]
+type = "null"
+
+[tools.responses.200.schema.properties.name]
+type = "string"
+description = "The permission name"
+example = "users:create"
+title = "Name"
+[tools.responses.200.schema.properties.description]
+description = "Description of the permission"
+example = "Allows creating users"
+title = "Description"
+[[tools.responses.200.schema.properties.description.anyOf]]
+type = "string"
+
+[[tools.responses.200.schema.properties.description.anyOf]]
+type = "null"
+
+[tools.responses.200.schema.properties.id]
+type = "string"
+format = "uuid"
+description = "Unique permission identifier"
+example = "a32a0d4b-0a4f-4d98-xxxx-8f7c2c3e9a0a"
+title = "Id"
+[tools.responses.200.schema.properties.created_at]
+description = "Creation timestamp"
+example = "2025-01-01T12:00:00Z"
+title = "Created At"
+[[tools.responses.200.schema.properties.created_at.anyOf]]
+type = "string"
+format = "date-time"
+
+[[tools.responses.200.schema.properties.created_at.anyOf]]
+type = "null"
+
+[tools.responses.200.schema.properties.updated_at]
+description = "Last update timestamp"
+example = "2025-01-02T12:00:00Z"
+title = "Updated At"
+[[tools.responses.200.schema.properties.updated_at.anyOf]]
+type = "string"
+format = "date-time"
+
+[[tools.responses.200.schema.properties.updated_at.anyOf]]
+type = "null"
+
+[tools.responses.422.schema.properties.detail]
+type = "array"
+title = "Detail"
+[[tools]]
+name = "delete_permission_api_v1_permissions__permission_id__delete"
+description = "Delete permission by ID"
+method = "DELETE"
+path = "/api/v1/permissions/{permission_id}"
+tags = [ "Permissions",]
+[[tools.parameters]]
+name = "permission_id"
+location = "path"
+type = "string"
+format = "uuid"
+required = true
+description = "Unique permission identifier"
+
+[[tools.security]]
+OAuth2PasswordBearer = []
+
+
+[tools.responses.204]
+description = "Successful Response"
+[tools.responses.422]
+description = "Validation Error"
+[tools.responses.422.schema]
+type = "object"
+title = "HTTPValidationError"
+[tools.responses.422.schema.properties.detail]
+type = "array"
+title = "Detail"
+
+[metadata]
+generated_at = "2025-11-18T17:25:38.259692Z"
+version = "1.0.0"
+total_tools = 37
+format = "IAM Service Tool Definitions"

@@ -1,0 +1,20 @@
+# Development dependencies for IAM Service
+# Install with: pip install -r requirements-dev.txt
+
+# Include production dependencies
+-r requirements.txt
+
+# Code formatting and linting
+black==24.10.0
+ruff==0.7.4
+
+# Testing tools
+pytest-cov==6.0.0
+
+# Tool generation dependencies
+toml==0.10.2
+pyyaml==6.0.2
+
+# Security scanning (for local testing before CI)
+safety==3.2.11
+bandit==1.8.0
