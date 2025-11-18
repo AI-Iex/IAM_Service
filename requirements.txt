@@ -13,6 +13,7 @@ pydantic-settings
 python-dotenv
 pytest
 pytest-anyio
+pytest-cov
 asyncpg
 jsonschema
 python-multipart
