@@ -1,4 +1,4 @@
-from fastapi import APIRouter, Depends, Query, status
+from fastapi import APIRouter, Depends, Path, Query, status
 from uuid import UUID
 from typing import List, Optional
 from app.schemas.permission import PermissionCreate, PermissionRead, PermissionUpdate
@@ -64,7 +64,7 @@ async def read_permissions(
     response_description="The permission with the specified ID",
 )
 async def read_permission(
-    permission_id: UUID,
+    permission_id: UUID = Path(..., description="Unique permission identifier"),
     permission_service: PermissionService = Depends(get_permission_service),
     principal: Principal = requires_permission(Permissions.PERMISSIONS_READ),
 ) -> PermissionRead:
@@ -83,8 +83,8 @@ async def read_permission(
     response_description="The updated permission",
 )
 async def update_permission(
-    permission_id: UUID,
-    payload: PermissionUpdate,
+    permission_id: UUID = Path(..., description="Unique permission identifier"),
+    payload: PermissionUpdate = ...,
     permission_service: PermissionService = Depends(get_permission_service),
     principal: Principal = requires_permission(Permissions.PERMISSIONS_UPDATE),
 ) -> PermissionRead:
@@ -100,7 +100,7 @@ async def update_permission(
     "- `permission_id`: The unique identifier of the permission.",
 )
 async def delete_permission(
-    permission_id: UUID,
+    permission_id: UUID = Path(..., description="Unique permission identifier"),
     permission_service: PermissionService = Depends(get_permission_service),
     principal: Principal = requires_permission(Permissions.PERMISSIONS_DELETE),
 ) -> None:

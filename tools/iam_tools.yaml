@@ -1,0 +1,3136 @@
+metadata:
+  format: IAM Service Tool Definitions
+  generated_at: '2025-11-18T17:25:38.275206Z'
+  total_tools: 37
+  version: 1.0.0
+tools:
+- description: Register a new user
+  method: POST
+  name: create_user_api_v1_auth_post
+  parameters: []
+  path: /api/v1/auth
+  request_body:
+    content_type: application/json
+    description: ''
+    required: true
+    schema:
+      properties:
+        email:
+          description: The user's email address
+          example: user@gmail.com
+          title: Email
+          type: string
+        full_name:
+          description: The user's name and surname
+          example: Name Surname
+          title: Full Name
+          type: string
+        password:
+          description: The user's password
+          example: strongpassword123
+          title: Password
+          type: string
+      required:
+      - email
+      - full_name
+      - password
+      title: UserRegister
+      type: object
+  responses:
+    '201':
+      description: Successful Response
+      schema:
+        properties:
+          created_at:
+            anyOf:
+            - format: date-time
+              type: string
+            - type: 'null'
+            description: The date and time when the user was created
+            example: '2023-01-01T00:00:00Z'
+            title: Created At
+          email:
+            description: The user's email address
+            example: user@gmail.com
+            title: Email
+            type: string
+          full_name:
+            description: The user's name and surname
+            example: Name Surname
+            title: Full Name
+            type: string
+          id:
+            description: Unique user identifier
+            example: c55df1d2-216a-4359-81xx-1d805801vg0g
+            format: uuid
+            title: Id
+            type: string
+          is_active:
+            default: true
+            description: Is the user active?
+            example: true
+            title: Is Active
+            type: boolean
+          is_superuser:
+            default: false
+            description: Is the user a superuser for get all permissions?
+            example: false
+            title: Is Superuser
+            type: boolean
+          last_login:
+            anyOf:
+            - format: date-time
+              type: string
+            - type: 'null'
+            description: The date and time of the user's last login
+            example: '2023-01-10T12:34:56Z'
+            title: Last Login
+          require_password_change:
+            default: false
+            description: Flag to force the user change the password
+            example: false
+            title: Require Password Change
+            type: boolean
+          roles:
+            default: &id006 []
+            description: List of roles assigned to the user
+            example: &id007
+            - admin
+            - user
+            items: {}
+            title: Roles
+            type: array
+          updated_at:
+            anyOf:
+            - format: date-time
+              type: string
+            - type: 'null'
+            description: The date and time when the user was last updated
+            example: '2023-01-05T15:30:00Z'
+            title: Updated At
+        required: &id001
+        - email
+        - full_name
+        - id
+        title: UserRead
+        type: object
+    '422':
+      description: Validation Error
+      schema:
+        properties:
+          detail:
+            items: {}
+            title: Detail
+            type: array
+        title: HTTPValidationError
+        type: object
+  security: []
+  tags:
+  - Auth
+- description: Log in
+  method: POST
+  name: login_user_api_v1_auth_login_post
+  parameters: []
+  path: /api/v1/auth/login
+  request_body:
+    content_type: application/json
+    description: ''
+    required: true
+    schema: {}
+  responses:
+    '200':
+      description: Returns access and refresh tokens for the authenticated user and
+        user data
+      schema:
+        properties:
+          token:
+            properties:
+              access_token: {}
+              expires_in: {}
+              jti: {}
+              refresh_token: {}
+              token_type: {}
+            required: &id002
+            - access_token
+            - expires_in
+            title: TokenPair
+            type: object
+          user:
+            properties:
+              created_at: {}
+              email: {}
+              full_name: {}
+              id: {}
+              is_active: {}
+              is_superuser: {}
+              last_login: {}
+              require_password_change: {}
+              roles: {}
+              updated_at: {}
+            required: *id001
+            title: UserRead
+            type: object
+        required: &id003
+        - user
+        - token
+        title: UserAndToken
+        type: object
+    '422':
+      description: Validation Error
+      schema:
+        properties:
+          detail:
+            items: {}
+            title: Detail
+            type: array
+        title: HTTPValidationError
+        type: object
+  security: []
+  tags:
+  - Auth
+- description: Log out
+  method: POST
+  name: logout_user_api_v1_auth_logout_post
+  parameters: []
+  path: /api/v1/auth/logout
+  request_body:
+    content_type: application/json
+    description: ''
+    required: false
+    schema:
+      anyOf:
+      - properties:
+          refresh_token:
+            anyOf:
+            - {}
+            - {}
+            title: Refresh Token
+        title: LogoutRequest
+        type: object
+      - type: 'null'
+      title: Body
+  responses:
+    '204':
+      description: Successful Response
+      schema: {}
+    '422':
+      description: Validation Error
+      schema:
+        properties:
+          detail:
+            items: {}
+            title: Detail
+            type: array
+        title: HTTPValidationError
+        type: object
+  security:
+  - OAuth2PasswordBearer: []
+  tags:
+  - Auth
+- description: Log out the user from all devices
+  method: POST
+  name: logout_all_devices_handler_api_v1_auth_logout_all_devices_post
+  parameters: []
+  path: /api/v1/auth/logout_all_devices
+  request_body: null
+  responses:
+    '204':
+      description: ''
+      schema: {}
+  security:
+  - OAuth2PasswordBearer: []
+  tags:
+  - Auth
+- description: Refresh access token
+  method: POST
+  name: refresh_token_api_v1_auth_refresh_post
+  parameters:
+  - default: null
+    description: ''
+    enum: null
+    format: null
+    location: header
+    name: refresh
+    required: false
+    type: string
+  - default: null
+    description: ''
+    enum: null
+    format: null
+    location: header
+    name: refresh-jti
+    required: false
+    type: string
+  path: /api/v1/auth/refresh
+  request_body:
+    content_type: application/json
+    description: ''
+    required: false
+    schema:
+      anyOf:
+      - properties:
+          refresh_token:
+            anyOf:
+            - {}
+            - {}
+            title: Refresh Token
+        title: LogoutRequest
+        type: object
+      - type: 'null'
+      title: Body
+  responses:
+    '200':
+      description: Returns new access and refresh tokens for the user
+      schema:
+        properties:
+          token:
+            properties:
+              access_token: {}
+              expires_in: {}
+              jti: {}
+              refresh_token: {}
+              token_type: {}
+            required: *id002
+            title: TokenPair
+            type: object
+          user:
+            properties:
+              created_at: {}
+              email: {}
+              full_name: {}
+              id: {}
+              is_active: {}
+              is_superuser: {}
+              last_login: {}
+              require_password_change: {}
+              roles: {}
+              updated_at: {}
+            required: *id001
+            title: UserRead
+            type: object
+        required: *id003
+        title: UserAndToken
+        type: object
+    '422':
+      description: Validation Error
+      schema:
+        properties:
+          detail:
+            items: {}
+            title: Detail
+            type: array
+        title: HTTPValidationError
+        type: object
+  security: []
+  tags:
+  - Auth
+- description: Token endpoint for Swagger, OAuth2 password and client_credentials
+    flows
+  method: POST
+  name: token_endpoint_api_v1_auth_token_post
+  parameters: []
+  path: /api/v1/auth/token
+  request_body:
+    content_type: application/json
+    description: ''
+    required: true
+    schema: {}
+  responses:
+    '200':
+      description: Returns access and refresh tokens
+      schema:
+        properties:
+          email:
+            format: email
+            title: Email
+            type: string
+          token:
+            properties:
+              access_token: {}
+              expires_in: {}
+              jti: {}
+              refresh_token: {}
+              token_type: {}
+            required: *id002
+            title: TokenPair
+            type: object
+          user_id:
+            format: uuid
+            title: User Id
+            type: string
+        required:
+        - user_id
+        - email
+        - token
+        title: AuthResponse
+        type: object
+    '422':
+      description: Validation Error
+      schema:
+        properties:
+          detail:
+            items: {}
+            title: Detail
+            type: array
+        title: HTTPValidationError
+        type: object
+  security: []
+  tags:
+  - Auth
+- description: Authenticate client
+  method: POST
+  name: authenticate_client_api_v1_auth_client_post
+  parameters: []
+  path: /api/v1/auth/client
+  request_body:
+    content_type: application/json
+    description: ''
+    required: true
+    schema:
+      properties:
+        client_id:
+          description: The client identifier
+          title: Client Id
+          type: string
+        client_secret:
+          description: The client secret
+          title: Client Secret
+          type: string
+        grant_type:
+          default: client_credentials
+          description: OAuth2 grant type
+          title: Grant Type
+          type: string
+      required:
+      - client_id
+      - client_secret
+      title: ClientAuthRequest
+      type: object
+  responses:
+    '200':
+      description: Access token for the authenticated client
+      schema:
+        properties:
+          client_id:
+            title: Client Id
+            type: string
+          token:
+            properties:
+              access_token: {}
+              expires_in: {}
+              jti: {}
+              refresh_token: {}
+              token_type: {}
+            required: *id002
+            title: TokenPair
+            type: object
+        required:
+        - client_id
+        - token
+        title: ClientAuthResponse
+        type: object
+    '422':
+      description: Validation Error
+      schema:
+        properties:
+          detail:
+            items: {}
+            title: Detail
+            type: array
+        title: HTTPValidationError
+        type: object
+  security: []
+  tags:
+  - Auth
+- description: Create a new client
+  method: POST
+  name: create_client_api_v1_clients_post
+  parameters: []
+  path: /api/v1/clients
+  request_body:
+    content_type: application/json
+    description: ''
+    required: true
+    schema:
+      properties:
+        is_active:
+          default: true
+          description: Indicates if the client account is active
+          example: true
+          title: Is Active
+          type: boolean
+        name:
+          description: The name of the client application
+          example: My Client App
+          title: Name
+          type: string
+      required:
+      - name
+      title: ClientCreate
+      type: object
+  responses:
+    '201':
+      description: The created client with generated credentials
+      schema:
+        properties:
+          client_id:
+            description: Public client identifier
+            example: a32a0d4b-0a4f-4d98-xxxx-8f7c2c3e9a0a
+            format: uuid
+            title: Client Id
+            type: string
+          created_at:
+            anyOf:
+            - format: date-time
+              type: string
+            - type: 'null'
+            description: Creation timestamp
+            example: '2025-01-01T12:00:00Z'
+            title: Created At
+          id:
+            description: Unique client identifier
+            example: a32a0d4b-0a4f-4d98-xxxx-8f7c2c3e9a0a
+            format: uuid
+            title: Id
+            type: string
+          is_active:
+            default: true
+            description: Indicates if the client account is active
+            example: true
+            title: Is Active
+            type: boolean
+          name:
+            description: The name of the client application
+            example: My Client App
+            title: Name
+            type: string
+          permissions:
+            anyOf:
+            - items: {}
+              type: array
+            - type: 'null'
+            description: List of permission reference objects assigned to this client
+            example:
+            - name: users:read
+            - name: roles:create
+            title: Permissions
+          secret:
+            description: Generated client secret (save it securely!)
+            example: generated-secret
+            title: Secret
+            type: string
+        required:
+        - name
+        - id
+        - client_id
+        - secret
+        title: ClientCreateResponse
+        type: object
+    '422':
+      description: Validation Error
+      schema:
+        properties:
+          detail:
+            items: {}
+            title: Detail
+            type: array
+        title: HTTPValidationError
+        type: object
+  security:
+  - OAuth2PasswordBearer: []
+  tags:
+  - Clients
+- description: Get clients with filtering and pagination
+  method: GET
+  name: read_clients_api_v1_clients_get
+  parameters:
+  - default: null
+    description: Partial name search
+    enum: null
+    format: null
+    location: query
+    name: name
+    required: false
+    type: string
+  - default: null
+    description: Filter by active status
+    enum: null
+    format: null
+    location: query
+    name: is_active
+    required: false
+    type: string
+  - default: 0
+    description: Offset
+    enum: null
+    format: null
+    location: query
+    name: skip
+    required: false
+    type: integer
+  - default: 100
+    description: Limit
+    enum: null
+    format: null
+    location: query
+    name: limit
+    required: false
+    type: integer
+  path: /api/v1/clients
+  request_body: null
+  responses:
+    '200':
+      description: List of clients matching criteria
+      schema:
+        items:
+          properties:
+            client_id:
+              description: Public client identifier
+              example: a32a0d4b-0a4f-4d98-xxxx-8f7c2c3e9a0a
+              format: uuid
+              title: Client Id
+              type: string
+            created_at:
+              anyOf:
+              - {}
+              - {}
+              description: Creation timestamp
+              example: '2025-01-01T12:00:00Z'
+              title: Created At
+            id:
+              description: Unique client identifier
+              example: a32a0d4b-0a4f-4d98-xxxx-8f7c2c3e9a0a
+              format: uuid
+              title: Id
+              type: string
+            is_active:
+              default: true
+              description: Indicates if the client account is active
+              example: true
+              title: Is Active
+              type: boolean
+            name:
+              description: The name of the client application
+              example: My Client App
+              title: Name
+              type: string
+            permissions:
+              anyOf:
+              - {}
+              - {}
+              description: List of permission reference objects assigned to this client
+              example: &id004
+              - name: users:read
+              - name: roles:create
+              title: Permissions
+          required: &id005
+          - name
+          - id
+          - client_id
+          title: ClientRead
+          type: object
+        title: Response Read Clients Api V1 Clients Get
+        type: array
+    '422':
+      description: Validation Error
+      schema:
+        properties:
+          detail:
+            items: {}
+            title: Detail
+            type: array
+        title: HTTPValidationError
+        type: object
+  security:
+  - OAuth2PasswordBearer: []
+  tags:
+  - Clients
+- description: Get current client profile
+  method: GET
+  name: get_current_client_profile_api_v1_clients_me_get
+  parameters: []
+  path: /api/v1/clients/me
+  request_body: null
+  responses:
+    '200':
+      description: The current client
+      schema:
+        properties:
+          client_id:
+            description: Public client identifier
+            example: a32a0d4b-0a4f-4d98-xxxx-8f7c2c3e9a0a
+            format: uuid
+            title: Client Id
+            type: string
+          created_at:
+            anyOf:
+            - format: date-time
+              type: string
+            - type: 'null'
+            description: Creation timestamp
+            example: '2025-01-01T12:00:00Z'
+            title: Created At
+          id:
+            description: Unique client identifier
+            example: a32a0d4b-0a4f-4d98-xxxx-8f7c2c3e9a0a
+            format: uuid
+            title: Id
+            type: string
+          is_active:
+            default: true
+            description: Indicates if the client account is active
+            example: true
+            title: Is Active
+            type: boolean
+          name:
+            description: The name of the client application
+            example: My Client App
+            title: Name
+            type: string
+          permissions:
+            anyOf:
+            - items: {}
+              type: array
+            - type: 'null'
+            description: List of permission reference objects assigned to this client
+            example: *id004
+            title: Permissions
+        required: *id005
+        title: ClientRead
+        type: object
+  security:
+  - OAuth2PasswordBearer: []
+  tags:
+  - Clients
+- description: Get client by ID
+  method: GET
+  name: read_client_api_v1_clients__client_id__get
+  parameters:
+  - default: null
+    description: Unique client identifier
+    enum: null
+    format: uuid
+    location: path
+    name: client_id
+    required: true
+    type: string
+  path: /api/v1/clients/{client_id}
+  request_body: null
+  responses:
+    '200':
+      description: The client with the specified ID
+      schema:
+        properties:
+          client_id:
+            description: Public client identifier
+            example: a32a0d4b-0a4f-4d98-xxxx-8f7c2c3e9a0a
+            format: uuid
+            title: Client Id
+            type: string
+          created_at:
+            anyOf:
+            - format: date-time
+              type: string
+            - type: 'null'
+            description: Creation timestamp
+            example: '2025-01-01T12:00:00Z'
+            title: Created At
+          id:
+            description: Unique client identifier
+            example: a32a0d4b-0a4f-4d98-xxxx-8f7c2c3e9a0a
+            format: uuid
+            title: Id
+            type: string
+          is_active:
+            default: true
+            description: Indicates if the client account is active
+            example: true
+            title: Is Active
+            type: boolean
+          name:
+            description: The name of the client application
+            example: My Client App
+            title: Name
+            type: string
+          permissions:
+            anyOf:
+            - items: {}
+              type: array
+            - type: 'null'
+            description: List of permission reference objects assigned to this client
+            example: *id004
+            title: Permissions
+        required: *id005
+        title: ClientRead
+        type: object
+    '422':
+      description: Validation Error
+      schema:
+        properties:
+          detail:
+            items: {}
+            title: Detail
+            type: array
+        title: HTTPValidationError
+        type: object
+  security:
+  - OAuth2PasswordBearer: []
+  tags:
+  - Clients
+- description: Update client by ID
+  method: PATCH
+  name: update_client_api_v1_clients__client_id__patch
+  parameters:
+  - default: null
+    description: Unique client identifier
+    enum: null
+    format: uuid
+    location: path
+    name: client_id
+    required: true
+    type: string
+  path: /api/v1/clients/{client_id}
+  request_body:
+    content_type: application/json
+    description: ''
+    required: false
+    schema:
+      properties:
+        is_active:
+          anyOf:
+          - type: boolean
+          - type: 'null'
+          description: Updated active status
+          example: true
+          title: Is Active
+        name:
+          anyOf:
+          - type: string
+          - type: 'null'
+          description: Updated client name
+          example: Updated Client
+          title: Name
+        permissions:
+          anyOf:
+          - items: {}
+            type: array
+          - type: 'null'
+          description: List of permission reference objects assigned to this client
+          example:
+          - name: users:read
+          - name: roles:create
+          title: Permissions
+      title: ClientUpdate
+      type: object
+  responses:
+    '200':
+      description: The updated client
+      schema:
+        properties:
+          client_id:
+            description: Public client identifier
+            example: a32a0d4b-0a4f-4d98-xxxx-8f7c2c3e9a0a
+            format: uuid
+            title: Client Id
+            type: string
+          created_at:
+            anyOf:
+            - format: date-time
+              type: string
+            - type: 'null'
+            description: Creation timestamp
+            example: '2025-01-01T12:00:00Z'
+            title: Created At
+          id:
+            description: Unique client identifier
+            example: a32a0d4b-0a4f-4d98-xxxx-8f7c2c3e9a0a
+            format: uuid
+            title: Id
+            type: string
+          is_active:
+            default: true
+            description: Indicates if the client account is active
+            example: true
+            title: Is Active
+            type: boolean
+          name:
+            description: The name of the client application
+            example: My Client App
+            title: Name
+            type: string
+          permissions:
+            anyOf:
+            - items: {}
+              type: array
+            - type: 'null'
+            description: List of permission reference objects assigned to this client
+            example: *id004
+            title: Permissions
+        required: *id005
+        title: ClientRead
+        type: object
+    '422':
+      description: Validation Error
+      schema:
+        properties:
+          detail:
+            items: {}
+            title: Detail
+            type: array
+        title: HTTPValidationError
+        type: object
+  security:
+  - OAuth2PasswordBearer: []
+  tags:
+  - Clients
+- description: Delete client by ID
+  method: DELETE
+  name: delete_client_api_v1_clients__client_id__delete
+  parameters:
+  - default: null
+    description: Unique client identifier
+    enum: null
+    format: uuid
+    location: path
+    name: client_id
+    required: true
+    type: string
+  path: /api/v1/clients/{client_id}
+  request_body: null
+  responses:
+    '204':
+      description: Successful Response
+      schema: {}
+    '422':
+      description: Validation Error
+      schema:
+        properties:
+          detail:
+            items: {}
+            title: Detail
+            type: array
+        title: HTTPValidationError
+        type: object
+  security:
+  - OAuth2PasswordBearer: []
+  tags:
+  - Clients
+- description: Assign permissions to client by IDs
+  method: POST
+  name: assign_client_permissions_by_ids_api_v1_clients__client_id__permissions__permission_id__post
+  parameters:
+  - default: null
+    description: Unique client identifier
+    enum: null
+    format: uuid
+    location: path
+    name: client_id
+    required: true
+    type: string
+  - default: null
+    description: Unique permission identifier
+    enum: null
+    format: uuid
+    location: path
+    name: permission_id
+    required: true
+    type: string
+  path: /api/v1/clients/{client_id}/permissions/{permission_id}
+  request_body: null
+  responses:
+    '200':
+      description: The updated client with assigned permissions
+      schema:
+        properties:
+          client_id:
+            description: Public client identifier
+            example: a32a0d4b-0a4f-4d98-xxxx-8f7c2c3e9a0a
+            format: uuid
+            title: Client Id
+            type: string
+          created_at:
+            anyOf:
+            - format: date-time
+              type: string
+            - type: 'null'
+            description: Creation timestamp
+            example: '2025-01-01T12:00:00Z'
+            title: Created At
+          id:
+            description: Unique client identifier
+            example: a32a0d4b-0a4f-4d98-xxxx-8f7c2c3e9a0a
+            format: uuid
+            title: Id
+            type: string
+          is_active:
+            default: true
+            description: Indicates if the client account is active
+            example: true
+            title: Is Active
+            type: boolean
+          name:
+            description: The name of the client application
+            example: My Client App
+            title: Name
+            type: string
+          permissions:
+            anyOf:
+            - items: {}
+              type: array
+            - type: 'null'
+            description: List of permission reference objects assigned to this client
+            example: *id004
+            title: Permissions
+        required: *id005
+        title: ClientRead
+        type: object
+    '422':
+      description: Validation Error
+      schema:
+        properties:
+          detail:
+            items: {}
+            title: Detail
+            type: array
+        title: HTTPValidationError
+        type: object
+  security:
+  - OAuth2PasswordBearer: []
+  tags:
+  - Clients
+- description: Remove permission from client by ID
+  method: DELETE
+  name: remove_client_permission_api_v1_clients__client_id__permissions__permission_id__delete
+  parameters:
+  - default: null
+    description: Unique client identifier
+    enum: null
+    format: uuid
+    location: path
+    name: client_id
+    required: true
+    type: string
+  - default: null
+    description: Unique permission identifier
+    enum: null
+    format: uuid
+    location: path
+    name: permission_id
+    required: true
+    type: string
+  path: /api/v1/clients/{client_id}/permissions/{permission_id}
+  request_body: null
+  responses:
+    '200':
+      description: The updated client with the permission removed
+      schema:
+        properties:
+          client_id:
+            description: Public client identifier
+            example: a32a0d4b-0a4f-4d98-xxxx-8f7c2c3e9a0a
+            format: uuid
+            title: Client Id
+            type: string
+          created_at:
+            anyOf:
+            - format: date-time
+              type: string
+            - type: 'null'
+            description: Creation timestamp
+            example: '2025-01-01T12:00:00Z'
+            title: Created At
+          id:
+            description: Unique client identifier
+            example: a32a0d4b-0a4f-4d98-xxxx-8f7c2c3e9a0a
+            format: uuid
+            title: Id
+            type: string
+          is_active:
+            default: true
+            description: Indicates if the client account is active
+            example: true
+            title: Is Active
+            type: boolean
+          name:
+            description: The name of the client application
+            example: My Client App
+            title: Name
+            type: string
+          permissions:
+            anyOf:
+            - items: {}
+              type: array
+            - type: 'null'
+            description: List of permission reference objects assigned to this client
+            example: *id004
+            title: Permissions
+        required: *id005
+        title: ClientRead
+        type: object
+    '422':
+      description: Validation Error
+      schema:
+        properties:
+          detail:
+            items: {}
+            title: Detail
+            type: array
+        title: HTTPValidationError
+        type: object
+  security:
+  - OAuth2PasswordBearer: []
+  tags:
+  - Clients
+- description: Create a new user
+  method: POST
+  name: create_user_api_v1_users_post
+  parameters: []
+  path: /api/v1/users
+  request_body:
+    content_type: application/json
+    description: ''
+    required: true
+    schema:
+      properties:
+        email:
+          description: The user's email address
+          example: user@gmail.com
+          title: Email
+          type: string
+        full_name:
+          description: The user's name and surname
+          example: Name Surname
+          title: Full Name
+          type: string
+        is_active:
+          default: true
+          description: Is the user active?
+          example: true
+          title: Is Active
+          type: boolean
+        is_superuser:
+          default: false
+          description: Is the user a superuser for get all permissions?
+          example: false
+          title: Is Superuser
+          type: boolean
+        password:
+          description: The user's password
+          example: strongpassword123
+          title: Password
+          type: string
+      required:
+      - email
+      - full_name
+      - password
+      title: UserCreateByAdmin
+      type: object
+  responses:
+    '201':
+      description: The created user
+      schema:
+        properties:
+          created_at:
+            anyOf:
+            - format: date-time
+              type: string
+            - type: 'null'
+            description: The date and time when the user was created
+            example: '2023-01-01T00:00:00Z'
+            title: Created At
+          email:
+            description: The user's email address
+            example: user@gmail.com
+            title: Email
+            type: string
+          full_name:
+            description: The user's name and surname
+            example: Name Surname
+            title: Full Name
+            type: string
+          id:
+            description: Unique user identifier
+            example: c55df1d2-216a-4359-81xx-1d805801vg0g
+            format: uuid
+            title: Id
+            type: string
+          is_active:
+            default: true
+            description: Is the user active?
+            example: true
+            title: Is Active
+            type: boolean
+          is_superuser:
+            default: false
+            description: Is the user a superuser for get all permissions?
+            example: false
+            title: Is Superuser
+            type: boolean
+          last_login:
+            anyOf:
+            - format: date-time
+              type: string
+            - type: 'null'
+            description: The date and time of the user's last login
+            example: '2023-01-10T12:34:56Z'
+            title: Last Login
+          require_password_change:
+            default: false
+            description: Flag to force the user change the password
+            example: false
+            title: Require Password Change
+            type: boolean
+          roles:
+            default: *id006
+            description: List of roles assigned to the user
+            example: *id007
+            items: {}
+            title: Roles
+            type: array
+          updated_at:
+            anyOf:
+            - format: date-time
+              type: string
+            - type: 'null'
+            description: The date and time when the user was last updated
+            example: '2023-01-05T15:30:00Z'
+            title: Updated At
+        required: *id001
+        title: UserRead
+        type: object
+    '422':
+      description: Validation Error
+      schema:
+        properties:
+          detail:
+            items: {}
+            title: Detail
+            type: array
+        title: HTTPValidationError
+        type: object
+  security:
+  - OAuth2PasswordBearer: []
+  tags:
+  - Users
+- description: Get users with filtering and pagination
+  method: GET
+  name: read_with_filters_api_v1_users_get
+  parameters:
+  - default: null
+    description: Partial name search
+    enum: null
+    format: null
+    location: query
+    name: name
+    required: false
+    type: string
+  - default: null
+    description: Exact email match
+    enum: null
+    format: null
+    location: query
+    name: email
+    required: false
+    type: string
+  - default: null
+    description: Filter by active status
+    enum: null
+    format: null
+    location: query
+    name: active
+    required: false
+    type: string
+  - default: null
+    description: Filter by superuser status
+    enum: null
+    format: null
+    location: query
+    name: is_superuser
+    required: false
+    type: string
+  - default: 0
+    description: Number of records to skip (offset)
+    enum: null
+    format: null
+    location: query
+    name: skip
+    required: false
+    type: integer
+  - default: 100
+    description: Maximum records to return
+    enum: null
+    format: null
+    location: query
+    name: limit
+    required: false
+    type: integer
+  path: /api/v1/users
+  request_body: null
+  responses:
+    '200':
+      description: List of users matching criteria
+      schema:
+        items:
+          properties:
+            created_at:
+              anyOf:
+              - {}
+              - {}
+              description: The date and time when the user was created
+              example: '2023-01-01T00:00:00Z'
+              title: Created At
+            email:
+              description: The user's email address
+              example: user@gmail.com
+              title: Email
+              type: string
+            full_name:
+              description: The user's name and surname
+              example: Name Surname
+              title: Full Name
+              type: string
+            id:
+              description: Unique user identifier
+              example: c55df1d2-216a-4359-81xx-1d805801vg0g
+              format: uuid
+              title: Id
+              type: string
+            is_active:
+              default: true
+              description: Is the user active?
+              example: true
+              title: Is Active
+              type: boolean
+            is_superuser:
+              default: false
+              description: Is the user a superuser for get all permissions?
+              example: false
+              title: Is Superuser
+              type: boolean
+            last_login:
+              anyOf:
+              - {}
+              - {}
+              description: The date and time of the user's last login
+              example: '2023-01-10T12:34:56Z'
+              title: Last Login
+            require_password_change:
+              default: false
+              description: Flag to force the user change the password
+              example: false
+              title: Require Password Change
+              type: boolean
+            roles:
+              default: *id006
+              description: List of roles assigned to the user
+              example: *id007
+              items: {}
+              title: Roles
+              type: array
+            updated_at:
+              anyOf:
+              - {}
+              - {}
+              description: The date and time when the user was last updated
+              example: '2023-01-05T15:30:00Z'
+              title: Updated At
+          required: *id001
+          title: UserRead
+          type: object
+        title: Response Read With Filters Api V1 Users Get
+        type: array
+    '422':
+      description: Validation Error
+      schema:
+        properties:
+          detail:
+            items: {}
+            title: Detail
+            type: array
+        title: HTTPValidationError
+        type: object
+  security:
+  - OAuth2PasswordBearer: []
+  tags:
+  - Users
+- description: Get current user profile
+  method: GET
+  name: get_current_user_profile_api_v1_users_me_get
+  parameters: []
+  path: /api/v1/users/me
+  request_body: null
+  responses:
+    '200':
+      description: The current user
+      schema:
+        properties:
+          created_at:
+            anyOf:
+            - format: date-time
+              type: string
+            - type: 'null'
+            description: The date and time when the user was created
+            example: '2023-01-01T00:00:00Z'
+            title: Created At
+          email:
+            description: The user's email address
+            example: user@gmail.com
+            title: Email
+            type: string
+          full_name:
+            description: The user's name and surname
+            example: Name Surname
+            title: Full Name
+            type: string
+          id:
+            description: Unique user identifier
+            example: c55df1d2-216a-4359-81xx-1d805801vg0g
+            format: uuid
+            title: Id
+            type: string
+          is_active:
+            default: true
+            description: Is the user active?
+            example: true
+            title: Is Active
+            type: boolean
+          is_superuser:
+            default: false
+            description: Is the user a superuser for get all permissions?
+            example: false
+            title: Is Superuser
+            type: boolean
+          last_login:
+            anyOf:
+            - format: date-time
+              type: string
+            - type: 'null'
+            description: The date and time of the user's last login
+            example: '2023-01-10T12:34:56Z'
+            title: Last Login
+          require_password_change:
+            default: false
+            description: Flag to force the user change the password
+            example: false
+            title: Require Password Change
+            type: boolean
+          roles:
+            default: *id006
+            description: List of roles assigned to the user
+            example: *id007
+            items: {}
+            title: Roles
+            type: array
+          updated_at:
+            anyOf:
+            - format: date-time
+              type: string
+            - type: 'null'
+            description: The date and time when the user was last updated
+            example: '2023-01-05T15:30:00Z'
+            title: Updated At
+        required: *id001
+        title: UserRead
+        type: object
+  security:
+  - OAuth2PasswordBearer: []
+  tags:
+  - Users
+- description: Get a user by unique identifier
+  method: GET
+  name: read_user_by_id_api_v1_users__user_id__get
+  parameters:
+  - default: null
+    description: Unique user identifier
+    enum: null
+    format: uuid
+    location: path
+    name: user_id
+    required: true
+    type: string
+  path: /api/v1/users/{user_id}
+  request_body: null
+  responses:
+    '200':
+      description: The requested user
+      schema:
+        properties:
+          created_at:
+            anyOf:
+            - format: date-time
+              type: string
+            - type: 'null'
+            description: The date and time when the user was created
+            example: '2023-01-01T00:00:00Z'
+            title: Created At
+          email:
+            description: The user's email address
+            example: user@gmail.com
+            title: Email
+            type: string
+          full_name:
+            description: The user's name and surname
+            example: Name Surname
+            title: Full Name
+            type: string
+          id:
+            description: Unique user identifier
+            example: c55df1d2-216a-4359-81xx-1d805801vg0g
+            format: uuid
+            title: Id
+            type: string
+          is_active:
+            default: true
+            description: Is the user active?
+            example: true
+            title: Is Active
+            type: boolean
+          is_superuser:
+            default: false
+            description: Is the user a superuser for get all permissions?
+            example: false
+            title: Is Superuser
+            type: boolean
+          last_login:
+            anyOf:
+            - format: date-time
+              type: string
+            - type: 'null'
+            description: The date and time of the user's last login
+            example: '2023-01-10T12:34:56Z'
+            title: Last Login
+          require_password_change:
+            default: false
+            description: Flag to force the user change the password
+            example: false
+            title: Require Password Change
+            type: boolean
+          roles:
+            default: *id006
+            description: List of roles assigned to the user
+            example: *id007
+            items: {}
+            title: Roles
+            type: array
+          updated_at:
+            anyOf:
+            - format: date-time
+              type: string
+            - type: 'null'
+            description: The date and time when the user was last updated
+            example: '2023-01-05T15:30:00Z'
+            title: Updated At
+        required: *id001
+        title: UserRead
+        type: object
+    '422':
+      description: Validation Error
+      schema:
+        properties:
+          detail:
+            items: {}
+            title: Detail
+            type: array
+        title: HTTPValidationError
+        type: object
+  security:
+  - OAuth2PasswordBearer: []
+  tags:
+  - Users
+- description: Update a user partially
+  method: PATCH
+  name: update_user_api_v1_users__user_id__patch
+  parameters:
+  - default: null
+    description: Unique user identifier
+    enum: null
+    format: uuid
+    location: path
+    name: user_id
+    required: true
+    type: string
+  path: /api/v1/users/{user_id}
+  request_body:
+    content_type: application/json
+    description: ''
+    required: true
+    schema:
+      properties:
+        full_name:
+          anyOf:
+          - type: string
+          - type: 'null'
+          description: The user's name and surname
+          example: Name Surname
+          title: Full Name
+        is_active:
+          anyOf:
+          - type: boolean
+          - type: 'null'
+          description: Is the user active?
+          example: true
+          title: Is Active
+        is_superuser:
+          anyOf:
+          - type: boolean
+          - type: 'null'
+          description: Is the user a superuser for get all permissions?
+          example: false
+          title: Is Superuser
+        roles:
+          anyOf:
+          - items: {}
+            type: array
+          - type: 'null'
+          description: List of roles assigned to the user
+          example:
+          - admin
+          - developer
+          title: Roles
+      title: UserUpdate
+      type: object
+  responses:
+    '200':
+      description: Updated user
+      schema:
+        properties:
+          created_at:
+            anyOf:
+            - format: date-time
+              type: string
+            - type: 'null'
+            description: The date and time when the user was created
+            example: '2023-01-01T00:00:00Z'
+            title: Created At
+          email:
+            description: The user's email address
+            example: user@gmail.com
+            title: Email
+            type: string
+          full_name:
+            description: The user's name and surname
+            example: Name Surname
+            title: Full Name
+            type: string
+          id:
+            description: Unique user identifier
+            example: c55df1d2-216a-4359-81xx-1d805801vg0g
+            format: uuid
+            title: Id
+            type: string
+          is_active:
+            default: true
+            description: Is the user active?
+            example: true
+            title: Is Active
+            type: boolean
+          is_superuser:
+            default: false
+            description: Is the user a superuser for get all permissions?
+            example: false
+            title: Is Superuser
+            type: boolean
+          last_login:
+            anyOf:
+            - format: date-time
+              type: string
+            - type: 'null'
+            description: The date and time of the user's last login
+            example: '2023-01-10T12:34:56Z'
+            title: Last Login
+          require_password_change:
+            default: false
+            description: Flag to force the user change the password
+            example: false
+            title: Require Password Change
+            type: boolean
+          roles:
+            default: *id006
+            description: List of roles assigned to the user
+            example: *id007
+            items: {}
+            title: Roles
+            type: array
+          updated_at:
+            anyOf:
+            - format: date-time
+              type: string
+            - type: 'null'
+            description: The date and time when the user was last updated
+            example: '2023-01-05T15:30:00Z'
+            title: Updated At
+        required: *id001
+        title: UserRead
+        type: object
+    '422':
+      description: Validation Error
+      schema:
+        properties:
+          detail:
+            items: {}
+            title: Detail
+            type: array
+        title: HTTPValidationError
+        type: object
+  security:
+  - OAuth2PasswordBearer: []
+  tags:
+  - Users
+- description: Delete a user
+  method: DELETE
+  name: delete_user_api_v1_users__user_id__delete
+  parameters:
+  - default: null
+    description: Unique user identifier
+    enum: null
+    format: uuid
+    location: path
+    name: user_id
+    required: true
+    type: string
+  path: /api/v1/users/{user_id}
+  request_body: null
+  responses:
+    '204':
+      description: Successful Response
+      schema: {}
+    '422':
+      description: Validation Error
+      schema:
+        properties:
+          detail:
+            items: {}
+            title: Detail
+            type: array
+        title: HTTPValidationError
+        type: object
+  security:
+  - OAuth2PasswordBearer: []
+  tags:
+  - Users
+- description: Change user email
+  method: PUT
+  name: change_user_email_api_v1_users_email_put
+  parameters: []
+  path: /api/v1/users/email
+  request_body:
+    content_type: application/json
+    description: ''
+    required: false
+    schema:
+      properties:
+        current_email:
+          description: Current email address for verification
+          example: currentemail@email.com
+          title: Current Email
+          type: string
+        current_password:
+          description: Current password for verification
+          example: CurrentPassword123!
+          title: Current Password
+          type: string
+        new_email:
+          description: The new email address
+          example: newemail@email.com
+          title: New Email
+          type: string
+      required:
+      - current_email
+      - new_email
+      - current_password
+      title: UserChangeEmail
+      type: object
+  responses:
+    '200':
+      description: Updated user
+      schema:
+        properties:
+          created_at:
+            anyOf:
+            - format: date-time
+              type: string
+            - type: 'null'
+            description: The date and time when the user was created
+            example: '2023-01-01T00:00:00Z'
+            title: Created At
+          email:
+            description: The user's email address
+            example: user@gmail.com
+            title: Email
+            type: string
+          full_name:
+            description: The user's name and surname
+            example: Name Surname
+            title: Full Name
+            type: string
+          id:
+            description: Unique user identifier
+            example: c55df1d2-216a-4359-81xx-1d805801vg0g
+            format: uuid
+            title: Id
+            type: string
+          is_active:
+            default: true
+            description: Is the user active?
+            example: true
+            title: Is Active
+            type: boolean
+          is_superuser:
+            default: false
+            description: Is the user a superuser for get all permissions?
+            example: false
+            title: Is Superuser
+            type: boolean
+          last_login:
+            anyOf:
+            - format: date-time
+              type: string
+            - type: 'null'
+            description: The date and time of the user's last login
+            example: '2023-01-10T12:34:56Z'
+            title: Last Login
+          require_password_change:
+            default: false
+            description: Flag to force the user change the password
+            example: false
+            title: Require Password Change
+            type: boolean
+          roles:
+            default: *id006
+            description: List of roles assigned to the user
+            example: *id007
+            items: {}
+            title: Roles
+            type: array
+          updated_at:
+            anyOf:
+            - format: date-time
+              type: string
+            - type: 'null'
+            description: The date and time when the user was last updated
+            example: '2023-01-05T15:30:00Z'
+            title: Updated At
+        required: *id001
+        title: UserRead
+        type: object
+    '422':
+      description: Validation Error
+      schema:
+        properties:
+          detail:
+            items: {}
+            title: Detail
+            type: array
+        title: HTTPValidationError
+        type: object
+  security:
+  - OAuth2PasswordBearer: []
+  tags:
+  - Users
+- description: Change user password
+  method: PUT
+  name: change_user_password_api_v1_users_password_put
+  parameters: []
+  path: /api/v1/users/password
+  request_body:
+    content_type: application/json
+    description: ''
+    required: false
+    schema:
+      properties:
+        new_password:
+          description: The new password for the user
+          example: newstrongpassword123
+          title: New Password
+          type: string
+        old_password:
+          description: The user's current password
+          example: oldpassword123
+          title: Old Password
+          type: string
+      required:
+      - old_password
+      - new_password
+      title: PasswordChange
+      type: object
+  responses:
+    '200':
+      description: Updated user
+      schema:
+        properties:
+          created_at:
+            anyOf:
+            - format: date-time
+              type: string
+            - type: 'null'
+            description: The date and time when the user was created
+            example: '2023-01-01T00:00:00Z'
+            title: Created At
+          email:
+            description: The user's email address
+            example: user@gmail.com
+            title: Email
+            type: string
+          full_name:
+            description: The user's name and surname
+            example: Name Surname
+            title: Full Name
+            type: string
+          id:
+            description: Unique user identifier
+            example: c55df1d2-216a-4359-81xx-1d805801vg0g
+            format: uuid
+            title: Id
+            type: string
+          is_active:
+            default: true
+            description: Is the user active?
+            example: true
+            title: Is Active
+            type: boolean
+          is_superuser:
+            default: false
+            description: Is the user a superuser for get all permissions?
+            example: false
+            title: Is Superuser
+            type: boolean
+          last_login:
+            anyOf:
+            - format: date-time
+              type: string
+            - type: 'null'
+            description: The date and time of the user's last login
+            example: '2023-01-10T12:34:56Z'
+            title: Last Login
+          require_password_change:
+            default: false
+            description: Flag to force the user change the password
+            example: false
+            title: Require Password Change
+            type: boolean
+          roles:
+            default: *id006
+            description: List of roles assigned to the user
+            example: *id007
+            items: {}
+            title: Roles
+            type: array
+          updated_at:
+            anyOf:
+            - format: date-time
+              type: string
+            - type: 'null'
+            description: The date and time when the user was last updated
+            example: '2023-01-05T15:30:00Z'
+            title: Updated At
+        required: *id001
+        title: UserRead
+        type: object
+    '422':
+      description: Validation Error
+      schema:
+        properties:
+          detail:
+            items: {}
+            title: Detail
+            type: array
+        title: HTTPValidationError
+        type: object
+  security:
+  - OAuth2PasswordBearer: []
+  tags:
+  - Users
+- description: Add a role to a user
+  method: POST
+  name: add_role_to_user_api_v1_users__user_id__roles__role_id__post
+  parameters:
+  - default: null
+    description: Unique user identifier
+    enum: null
+    format: uuid
+    location: path
+    name: user_id
+    required: true
+    type: string
+  - default: null
+    description: Unique role identifier to add
+    enum: null
+    format: uuid
+    location: path
+    name: role_id
+    required: true
+    type: string
+  path: /api/v1/users/{user_id}/roles/{role_id}
+  request_body: null
+  responses:
+    '200':
+      description: User with the added role
+      schema:
+        properties:
+          created_at:
+            anyOf:
+            - format: date-time
+              type: string
+            - type: 'null'
+            description: The date and time when the user was created
+            example: '2023-01-01T00:00:00Z'
+            title: Created At
+          email:
+            description: The user's email address
+            example: user@gmail.com
+            title: Email
+            type: string
+          full_name:
+            description: The user's name and surname
+            example: Name Surname
+            title: Full Name
+            type: string
+          id:
+            description: Unique user identifier
+            example: c55df1d2-216a-4359-81xx-1d805801vg0g
+            format: uuid
+            title: Id
+            type: string
+          is_active:
+            default: true
+            description: Is the user active?
+            example: true
+            title: Is Active
+            type: boolean
+          is_superuser:
+            default: false
+            description: Is the user a superuser for get all permissions?
+            example: false
+            title: Is Superuser
+            type: boolean
+          last_login:
+            anyOf:
+            - format: date-time
+              type: string
+            - type: 'null'
+            description: The date and time of the user's last login
+            example: '2023-01-10T12:34:56Z'
+            title: Last Login
+          require_password_change:
+            default: false
+            description: Flag to force the user change the password
+            example: false
+            title: Require Password Change
+            type: boolean
+          roles:
+            default: *id006
+            description: List of roles assigned to the user
+            example: *id007
+            items: {}
+            title: Roles
+            type: array
+          updated_at:
+            anyOf:
+            - format: date-time
+              type: string
+            - type: 'null'
+            description: The date and time when the user was last updated
+            example: '2023-01-05T15:30:00Z'
+            title: Updated At
+        required: *id001
+        title: UserRead
+        type: object
+    '422':
+      description: Validation Error
+      schema:
+        properties:
+          detail:
+            items: {}
+            title: Detail
+            type: array
+        title: HTTPValidationError
+        type: object
+  security:
+  - OAuth2PasswordBearer: []
+  tags:
+  - Users
+- description: Remove a role from a user
+  method: DELETE
+  name: remove_role_from_user_api_v1_users__user_id__roles__role_id__delete
+  parameters:
+  - default: null
+    description: Unique user identifier
+    enum: null
+    format: uuid
+    location: path
+    name: user_id
+    required: true
+    type: string
+  - default: null
+    description: Unique role identifier to remove
+    enum: null
+    format: uuid
+    location: path
+    name: role_id
+    required: true
+    type: string
+  path: /api/v1/users/{user_id}/roles/{role_id}
+  request_body: null
+  responses:
+    '200':
+      description: User with the role removed
+      schema:
+        properties:
+          created_at:
+            anyOf:
+            - format: date-time
+              type: string
+            - type: 'null'
+            description: The date and time when the user was created
+            example: '2023-01-01T00:00:00Z'
+            title: Created At
+          email:
+            description: The user's email address
+            example: user@gmail.com
+            title: Email
+            type: string
+          full_name:
+            description: The user's name and surname
+            example: Name Surname
+            title: Full Name
+            type: string
+          id:
+            description: Unique user identifier
+            example: c55df1d2-216a-4359-81xx-1d805801vg0g
+            format: uuid
+            title: Id
+            type: string
+          is_active:
+            default: true
+            description: Is the user active?
+            example: true
+            title: Is Active
+            type: boolean
+          is_superuser:
+            default: false
+            description: Is the user a superuser for get all permissions?
+            example: false
+            title: Is Superuser
+            type: boolean
+          last_login:
+            anyOf:
+            - format: date-time
+              type: string
+            - type: 'null'
+            description: The date and time of the user's last login
+            example: '2023-01-10T12:34:56Z'
+            title: Last Login
+          require_password_change:
+            default: false
+            description: Flag to force the user change the password
+            example: false
+            title: Require Password Change
+            type: boolean
+          roles:
+            default: *id006
+            description: List of roles assigned to the user
+            example: *id007
+            items: {}
+            title: Roles
+            type: array
+          updated_at:
+            anyOf:
+            - format: date-time
+              type: string
+            - type: 'null'
+            description: The date and time when the user was last updated
+            example: '2023-01-05T15:30:00Z'
+            title: Updated At
+        required: *id001
+        title: UserRead
+        type: object
+    '422':
+      description: Validation Error
+      schema:
+        properties:
+          detail:
+            items: {}
+            title: Detail
+            type: array
+        title: HTTPValidationError
+        type: object
+  security:
+  - OAuth2PasswordBearer: []
+  tags:
+  - Users
+- description: Create a new role
+  method: POST
+  name: create_role_api_v1_roles_post
+  parameters: []
+  path: /api/v1/roles
+  request_body:
+    content_type: application/json
+    description: ''
+    required: true
+    schema:
+      properties:
+        description:
+          anyOf:
+          - type: string
+          - type: 'null'
+          description: Description of the role
+          example: Administrator with full access
+          title: Description
+        name:
+          description: The name of the role
+          example: admin
+          title: Name
+          type: string
+        permissions:
+          anyOf:
+          - items: {}
+            type: array
+          - type: 'null'
+          description: List of permissions assigned to this role
+          example:
+          - name: users:read
+          title: Permissions
+      required:
+      - name
+      title: RoleCreate
+      type: object
+  responses:
+    '201':
+      description: The created role
+      schema:
+        properties:
+          created_at:
+            anyOf:
+            - format: date-time
+              type: string
+            - type: 'null'
+            description: Creation timestamp
+            example: '2025-01-01T12:00:00Z'
+            title: Created At
+          description:
+            anyOf:
+            - type: string
+            - type: 'null'
+            description: Description of the role
+            example: Administrator with full access
+            title: Description
+          id:
+            description: Unique role identifier
+            example: d44b9c8f-4b36-4ffb-xxxx-1f0b70cced7d
+            format: uuid
+            title: Id
+            type: string
+          name:
+            description: The name of the role
+            example: admin
+            title: Name
+            type: string
+          permissions:
+            anyOf:
+            - items: {}
+              type: array
+            - type: 'null'
+            default: &id008 []
+            description: List of permissions assigned to this role
+            example: &id009
+            - description: Allows reading users
+              id: uuid
+              name: users:read
+            title: Permissions
+          updated_at:
+            anyOf:
+            - format: date-time
+              type: string
+            - type: 'null'
+            description: Last update timestamp
+            example: '2025-01-02T12:00:00Z'
+            title: Updated At
+        required: &id010
+        - name
+        - id
+        title: RoleRead
+        type: object
+    '422':
+      description: Validation Error
+      schema:
+        properties:
+          detail:
+            items: {}
+            title: Detail
+            type: array
+        title: HTTPValidationError
+        type: object
+  security:
+  - OAuth2PasswordBearer: []
+  tags:
+  - Roles
+- description: Get roles with filtering and pagination
+  method: GET
+  name: read_roles_api_v1_roles_get
+  parameters:
+  - default: null
+    description: Partial name search
+    enum: null
+    format: null
+    location: query
+    name: name
+    required: false
+    type: string
+  - default: null
+    description: Partial description search
+    enum: null
+    format: null
+    location: query
+    name: description
+    required: false
+    type: string
+  - default: 0
+    description: Number of records to skip (offset)
+    enum: null
+    format: null
+    location: query
+    name: skip
+    required: false
+    type: integer
+  - default: 100
+    description: Maximum records to return
+    enum: null
+    format: null
+    location: query
+    name: limit
+    required: false
+    type: integer
+  path: /api/v1/roles
+  request_body: null
+  responses:
+    '200':
+      description: List of roles matching criteria
+      schema:
+        items:
+          properties:
+            created_at:
+              anyOf:
+              - {}
+              - {}
+              description: Creation timestamp
+              example: '2025-01-01T12:00:00Z'
+              title: Created At
+            description:
+              anyOf:
+              - {}
+              - {}
+              description: Description of the role
+              example: Administrator with full access
+              title: Description
+            id:
+              description: Unique role identifier
+              example: d44b9c8f-4b36-4ffb-xxxx-1f0b70cced7d
+              format: uuid
+              title: Id
+              type: string
+            name:
+              description: The name of the role
+              example: admin
+              title: Name
+              type: string
+            permissions:
+              anyOf:
+              - {}
+              - {}
+              default: *id008
+              description: List of permissions assigned to this role
+              example: *id009
+              title: Permissions
+            updated_at:
+              anyOf:
+              - {}
+              - {}
+              description: Last update timestamp
+              example: '2025-01-02T12:00:00Z'
+              title: Updated At
+          required: *id010
+          title: RoleRead
+          type: object
+        title: Response Read Roles Api V1 Roles Get
+        type: array
+    '422':
+      description: Validation Error
+      schema:
+        properties:
+          detail:
+            items: {}
+            title: Detail
+            type: array
+        title: HTTPValidationError
+        type: object
+  security:
+  - OAuth2PasswordBearer: []
+  tags:
+  - Roles
+- description: Get role by ID
+  method: GET
+  name: read_role_api_v1_roles__role_id__get
+  parameters:
+  - default: null
+    description: Unique role identifier
+    enum: null
+    format: uuid
+    location: path
+    name: role_id
+    required: true
+    type: string
+  path: /api/v1/roles/{role_id}
+  request_body: null
+  responses:
+    '200':
+      description: The role with the specified ID
+      schema:
+        properties:
+          created_at:
+            anyOf:
+            - format: date-time
+              type: string
+            - type: 'null'
+            description: Creation timestamp
+            example: '2025-01-01T12:00:00Z'
+            title: Created At
+          description:
+            anyOf:
+            - type: string
+            - type: 'null'
+            description: Description of the role
+            example: Administrator with full access
+            title: Description
+          id:
+            description: Unique role identifier
+            example: d44b9c8f-4b36-4ffb-xxxx-1f0b70cced7d
+            format: uuid
+            title: Id
+            type: string
+          name:
+            description: The name of the role
+            example: admin
+            title: Name
+            type: string
+          permissions:
+            anyOf:
+            - items: {}
+              type: array
+            - type: 'null'
+            default: *id008
+            description: List of permissions assigned to this role
+            example: *id009
+            title: Permissions
+          updated_at:
+            anyOf:
+            - format: date-time
+              type: string
+            - type: 'null'
+            description: Last update timestamp
+            example: '2025-01-02T12:00:00Z'
+            title: Updated At
+        required: *id010
+        title: RoleRead
+        type: object
+    '422':
+      description: Validation Error
+      schema:
+        properties:
+          detail:
+            items: {}
+            title: Detail
+            type: array
+        title: HTTPValidationError
+        type: object
+  security:
+  - OAuth2PasswordBearer: []
+  tags:
+  - Roles
+- description: Update role by ID
+  method: PATCH
+  name: update_role_api_v1_roles__role_id__patch
+  parameters:
+  - default: null
+    description: Unique role identifier
+    enum: null
+    format: uuid
+    location: path
+    name: role_id
+    required: true
+    type: string
+  path: /api/v1/roles/{role_id}
+  request_body:
+    content_type: application/json
+    description: ''
+    required: true
+    schema:
+      properties:
+        description:
+          anyOf:
+          - type: string
+          - type: 'null'
+          description: Updated role description
+          example: Manager role
+          title: Description
+        name:
+          anyOf:
+          - type: string
+          - type: 'null'
+          description: Updated role name
+          example: manager
+          title: Name
+        permissions:
+          anyOf:
+          - items: {}
+            type: array
+          - type: 'null'
+          description: Updated list of permissions
+          example:
+          - name: users:read
+          title: Permissions
+      title: RoleUpdate
+      type: object
+  responses:
+    '200':
+      description: The updated role
+      schema:
+        properties:
+          created_at:
+            anyOf:
+            - format: date-time
+              type: string
+            - type: 'null'
+            description: Creation timestamp
+            example: '2025-01-01T12:00:00Z'
+            title: Created At
+          description:
+            anyOf:
+            - type: string
+            - type: 'null'
+            description: Description of the role
+            example: Administrator with full access
+            title: Description
+          id:
+            description: Unique role identifier
+            example: d44b9c8f-4b36-4ffb-xxxx-1f0b70cced7d
+            format: uuid
+            title: Id
+            type: string
+          name:
+            description: The name of the role
+            example: admin
+            title: Name
+            type: string
+          permissions:
+            anyOf:
+            - items: {}
+              type: array
+            - type: 'null'
+            default: *id008
+            description: List of permissions assigned to this role
+            example: *id009
+            title: Permissions
+          updated_at:
+            anyOf:
+            - format: date-time
+              type: string
+            - type: 'null'
+            description: Last update timestamp
+            example: '2025-01-02T12:00:00Z'
+            title: Updated At
+        required: *id010
+        title: RoleRead
+        type: object
+    '422':
+      description: Validation Error
+      schema:
+        properties:
+          detail:
+            items: {}
+            title: Detail
+            type: array
+        title: HTTPValidationError
+        type: object
+  security:
+  - OAuth2PasswordBearer: []
+  tags:
+  - Roles
+- description: Delete role by ID
+  method: DELETE
+  name: delete_role_api_v1_roles__role_id__delete
+  parameters:
+  - default: null
+    description: Unique role identifier
+    enum: null
+    format: uuid
+    location: path
+    name: role_id
+    required: true
+    type: string
+  path: /api/v1/roles/{role_id}
+  request_body: null
+  responses:
+    '204':
+      description: Successful Response
+      schema: {}
+    '422':
+      description: Validation Error
+      schema:
+        properties:
+          detail:
+            items: {}
+            title: Detail
+            type: array
+        title: HTTPValidationError
+        type: object
+  security:
+  - OAuth2PasswordBearer: []
+  tags:
+  - Roles
+- description: Add permission to role
+  method: POST
+  name: add_permission_to_role_api_v1_roles__role_id__permissions__permission_id__post
+  parameters:
+  - default: null
+    description: Unique role identifier
+    enum: null
+    format: uuid
+    location: path
+    name: role_id
+    required: true
+    type: string
+  - default: null
+    description: Unique permission identifier
+    enum: null
+    format: uuid
+    location: path
+    name: permission_id
+    required: true
+    type: string
+  path: /api/v1/roles/{role_id}/permissions/{permission_id}
+  request_body: null
+  responses:
+    '200':
+      description: Role with the added permission
+      schema:
+        properties:
+          created_at:
+            anyOf:
+            - format: date-time
+              type: string
+            - type: 'null'
+            description: Creation timestamp
+            example: '2025-01-01T12:00:00Z'
+            title: Created At
+          description:
+            anyOf:
+            - type: string
+            - type: 'null'
+            description: Description of the role
+            example: Administrator with full access
+            title: Description
+          id:
+            description: Unique role identifier
+            example: d44b9c8f-4b36-4ffb-xxxx-1f0b70cced7d
+            format: uuid
+            title: Id
+            type: string
+          name:
+            description: The name of the role
+            example: admin
+            title: Name
+            type: string
+          permissions:
+            anyOf:
+            - items: {}
+              type: array
+            - type: 'null'
+            default: *id008
+            description: List of permissions assigned to this role
+            example: *id009
+            title: Permissions
+          updated_at:
+            anyOf:
+            - format: date-time
+              type: string
+            - type: 'null'
+            description: Last update timestamp
+            example: '2025-01-02T12:00:00Z'
+            title: Updated At
+        required: *id010
+        title: RoleRead
+        type: object
+    '422':
+      description: Validation Error
+      schema:
+        properties:
+          detail:
+            items: {}
+            title: Detail
+            type: array
+        title: HTTPValidationError
+        type: object
+  security:
+  - OAuth2PasswordBearer: []
+  tags:
+  - Roles
+- description: Remove permission from role
+  method: DELETE
+  name: remove_permission_from_role_api_v1_roles__role_id__permissions__permission_id__delete
+  parameters:
+  - default: null
+    description: Unique role identifier
+    enum: null
+    format: uuid
+    location: path
+    name: role_id
+    required: true
+    type: string
+  - default: null
+    description: Unique permission identifier
+    enum: null
+    format: uuid
+    location: path
+    name: permission_id
+    required: true
+    type: string
+  path: /api/v1/roles/{role_id}/permissions/{permission_id}
+  request_body: null
+  responses:
+    '200':
+      description: Role with the permission removed
+      schema:
+        properties:
+          created_at:
+            anyOf:
+            - format: date-time
+              type: string
+            - type: 'null'
+            description: Creation timestamp
+            example: '2025-01-01T12:00:00Z'
+            title: Created At
+          description:
+            anyOf:
+            - type: string
+            - type: 'null'
+            description: Description of the role
+            example: Administrator with full access
+            title: Description
+          id:
+            description: Unique role identifier
+            example: d44b9c8f-4b36-4ffb-xxxx-1f0b70cced7d
+            format: uuid
+            title: Id
+            type: string
+          name:
+            description: The name of the role
+            example: admin
+            title: Name
+            type: string
+          permissions:
+            anyOf:
+            - items: {}
+              type: array
+            - type: 'null'
+            default: *id008
+            description: List of permissions assigned to this role
+            example: *id009
+            title: Permissions
+          updated_at:
+            anyOf:
+            - format: date-time
+              type: string
+            - type: 'null'
+            description: Last update timestamp
+            example: '2025-01-02T12:00:00Z'
+            title: Updated At
+        required: *id010
+        title: RoleRead
+        type: object
+    '422':
+      description: Validation Error
+      schema:
+        properties:
+          detail:
+            items: {}
+            title: Detail
+            type: array
+        title: HTTPValidationError
+        type: object
+  security:
+  - OAuth2PasswordBearer: []
+  tags:
+  - Roles
+- description: Create a new permission
+  method: POST
+  name: create_permission_api_v1_permissions_post
+  parameters: []
+  path: /api/v1/permissions
+  request_body:
+    content_type: application/json
+    description: ''
+    required: true
+    schema:
+      properties:
+        description:
+          anyOf:
+          - type: string
+          - type: 'null'
+          description: Description of the permission
+          example: Allows creating users
+          title: Description
+        name:
+          description: The permission name
+          example: users:create
+          title: Name
+          type: string
+      required:
+      - name
+      title: PermissionCreate
+      type: object
+  responses:
+    '201':
+      description: The created permission
+      schema:
+        properties:
+          created_at:
+            anyOf:
+            - format: date-time
+              type: string
+            - type: 'null'
+            description: Creation timestamp
+            example: '2025-01-01T12:00:00Z'
+            title: Created At
+          description:
+            anyOf:
+            - type: string
+            - type: 'null'
+            description: Description of the permission
+            example: Allows creating users
+            title: Description
+          id:
+            description: Unique permission identifier
+            example: a32a0d4b-0a4f-4d98-xxxx-8f7c2c3e9a0a
+            format: uuid
+            title: Id
+            type: string
+          name:
+            description: The permission name
+            example: users:create
+            title: Name
+            type: string
+          updated_at:
+            anyOf:
+            - format: date-time
+              type: string
+            - type: 'null'
+            description: Last update timestamp
+            example: '2025-01-02T12:00:00Z'
+            title: Updated At
+        required: &id011
+        - name
+        - id
+        title: PermissionRead
+        type: object
+    '422':
+      description: Validation Error
+      schema:
+        properties:
+          detail:
+            items: {}
+            title: Detail
+            type: array
+        title: HTTPValidationError
+        type: object
+  security:
+  - OAuth2PasswordBearer: []
+  tags:
+  - Permissions
+- description: Get permissions with filtering and pagination
+  method: GET
+  name: read_permissions_api_v1_permissions_get
+  parameters:
+  - default: null
+    description: Partial name search
+    enum: null
+    format: null
+    location: query
+    name: name
+    required: false
+    type: string
+  - default: null
+    description: Partial description search
+    enum: null
+    format: null
+    location: query
+    name: description
+    required: false
+    type: string
+  - default: 0
+    description: Offset
+    enum: null
+    format: null
+    location: query
+    name: skip
+    required: false
+    type: integer
+  - default: 100
+    description: Limit
+    enum: null
+    format: null
+    location: query
+    name: limit
+    required: false
+    type: integer
+  path: /api/v1/permissions
+  request_body: null
+  responses:
+    '200':
+      description: List of permissions matching criteria
+      schema:
+        items:
+          properties:
+            created_at:
+              anyOf:
+              - {}
+              - {}
+              description: Creation timestamp
+              example: '2025-01-01T12:00:00Z'
+              title: Created At
+            description:
+              anyOf:
+              - {}
+              - {}
+              description: Description of the permission
+              example: Allows creating users
+              title: Description
+            id:
+              description: Unique permission identifier
+              example: a32a0d4b-0a4f-4d98-xxxx-8f7c2c3e9a0a
+              format: uuid
+              title: Id
+              type: string
+            name:
+              description: The permission name
+              example: users:create
+              title: Name
+              type: string
+            updated_at:
+              anyOf:
+              - {}
+              - {}
+              description: Last update timestamp
+              example: '2025-01-02T12:00:00Z'
+              title: Updated At
+          required: *id011
+          title: PermissionRead
+          type: object
+        title: Response Read Permissions Api V1 Permissions Get
+        type: array
+    '422':
+      description: Validation Error
+      schema:
+        properties:
+          detail:
+            items: {}
+            title: Detail
+            type: array
+        title: HTTPValidationError
+        type: object
+  security:
+  - OAuth2PasswordBearer: []
+  tags:
+  - Permissions
+- description: Get permission by ID
+  method: GET
+  name: read_permission_api_v1_permissions__permission_id__get
+  parameters:
+  - default: null
+    description: Unique permission identifier
+    enum: null
+    format: uuid
+    location: path
+    name: permission_id
+    required: true
+    type: string
+  path: /api/v1/permissions/{permission_id}
+  request_body: null
+  responses:
+    '200':
+      description: The permission with the specified ID
+      schema:
+        properties:
+          created_at:
+            anyOf:
+            - format: date-time
+              type: string
+            - type: 'null'
+            description: Creation timestamp
+            example: '2025-01-01T12:00:00Z'
+            title: Created At
+          description:
+            anyOf:
+            - type: string
+            - type: 'null'
+            description: Description of the permission
+            example: Allows creating users
+            title: Description
+          id:
+            description: Unique permission identifier
+            example: a32a0d4b-0a4f-4d98-xxxx-8f7c2c3e9a0a
+            format: uuid
+            title: Id
+            type: string
+          name:
+            description: The permission name
+            example: users:create
+            title: Name
+            type: string
+          updated_at:
+            anyOf:
+            - format: date-time
+              type: string
+            - type: 'null'
+            description: Last update timestamp
+            example: '2025-01-02T12:00:00Z'
+            title: Updated At
+        required: *id011
+        title: PermissionRead
+        type: object
+    '422':
+      description: Validation Error
+      schema:
+        properties:
+          detail:
+            items: {}
+            title: Detail
+            type: array
+        title: HTTPValidationError
+        type: object
+  security:
+  - OAuth2PasswordBearer: []
+  tags:
+  - Permissions
+- description: Update permission by ID
+  method: PATCH
+  name: update_permission_api_v1_permissions__permission_id__patch
+  parameters:
+  - default: null
+    description: Unique permission identifier
+    enum: null
+    format: uuid
+    location: path
+    name: permission_id
+    required: true
+    type: string
+  path: /api/v1/permissions/{permission_id}
+  request_body:
+    content_type: application/json
+    description: ''
+    required: true
+    schema:
+      properties:
+        description:
+          anyOf:
+          - type: string
+          - type: 'null'
+          description: Updated description
+          example: Allows creating users
+          title: Description
+        name:
+          anyOf:
+          - type: string
+          - type: 'null'
+          description: The updated permission name
+          example: users:create
+          title: Name
+      title: PermissionUpdate
+      type: object
+  responses:
+    '200':
+      description: The updated permission
+      schema:
+        properties:
+          created_at:
+            anyOf:
+            - format: date-time
+              type: string
+            - type: 'null'
+            description: Creation timestamp
+            example: '2025-01-01T12:00:00Z'
+            title: Created At
+          description:
+            anyOf:
+            - type: string
+            - type: 'null'
+            description: Description of the permission
+            example: Allows creating users
+            title: Description
+          id:
+            description: Unique permission identifier
+            example: a32a0d4b-0a4f-4d98-xxxx-8f7c2c3e9a0a
+            format: uuid
+            title: Id
+            type: string
+          name:
+            description: The permission name
+            example: users:create
+            title: Name
+            type: string
+          updated_at:
+            anyOf:
+            - format: date-time
+              type: string
+            - type: 'null'
+            description: Last update timestamp
+            example: '2025-01-02T12:00:00Z'
+            title: Updated At
+        required: *id011
+        title: PermissionRead
+        type: object
+    '422':
+      description: Validation Error
+      schema:
+        properties:
+          detail:
+            items: {}
+            title: Detail
+            type: array
+        title: HTTPValidationError
+        type: object
+  security:
+  - OAuth2PasswordBearer: []
+  tags:
+  - Permissions
+- description: Delete permission by ID
+  method: DELETE
+  name: delete_permission_api_v1_permissions__permission_id__delete
+  parameters:
+  - default: null
+    description: Unique permission identifier
+    enum: null
+    format: uuid
+    location: path
+    name: permission_id
+    required: true
+    type: string
+  path: /api/v1/permissions/{permission_id}
+  request_body: null
+  responses:
+    '204':
+      description: Successful Response
+      schema: {}
+    '422':
+      description: Validation Error
+      schema:
+        properties:
+          detail:
+            items: {}
+            title: Detail
+            type: array
+        title: HTTPValidationError
+        type: object
+  security:
+  - OAuth2PasswordBearer: []
+  tags:
+  - Permissions

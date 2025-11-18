@@ -1,0 +1,948 @@
+{
+  "tools": [
+    {
+      "name": "create_user_api_v1_auth_post",
+      "description": "Register a new user",
+      "input_schema": {
+        "type": "object",
+        "properties": {
+          "email": {
+            "type": "string",
+            "description": "The user's email address",
+            "example": "user@gmail.com",
+            "title": "Email"
+          },
+          "full_name": {
+            "type": "string",
+            "description": "The user's name and surname",
+            "example": "Name Surname",
+            "title": "Full Name"
+          },
+          "password": {
+            "type": "string",
+            "description": "The user's password",
+            "example": "strongpassword123",
+            "title": "Password"
+          }
+        },
+        "required": [
+          "email",
+          "full_name",
+          "password"
+        ]
+      }
+    },
+    {
+      "name": "login_user_api_v1_auth_login_post",
+      "description": "Log in",
+      "input_schema": {
+        "type": "object",
+        "properties": {},
+        "required": []
+      }
+    },
+    {
+      "name": "logout_user_api_v1_auth_logout_post",
+      "description": "Log out",
+      "input_schema": {
+        "type": "object",
+        "properties": {},
+        "required": []
+      }
+    },
+    {
+      "name": "logout_all_devices_handler_api_v1_auth_logout_all_devices_post",
+      "description": "Log out the user from all devices",
+      "input_schema": {
+        "type": "object",
+        "properties": {},
+        "required": []
+      }
+    },
+    {
+      "name": "refresh_token_api_v1_auth_refresh_post",
+      "description": "Refresh access token",
+      "input_schema": {
+        "type": "object",
+        "properties": {
+          "refresh": {
+            "type": "string",
+            "description": ""
+          },
+          "refresh-jti": {
+            "type": "string",
+            "description": ""
+          }
+        },
+        "required": []
+      }
+    },
+    {
+      "name": "token_endpoint_api_v1_auth_token_post",
+      "description": "Token endpoint for Swagger, OAuth2 password and client_credentials flows",
+      "input_schema": {
+        "type": "object",
+        "properties": {},
+        "required": []
+      }
+    },
+    {
+      "name": "authenticate_client_api_v1_auth_client_post",
+      "description": "Authenticate client",
+      "input_schema": {
+        "type": "object",
+        "properties": {
+          "client_id": {
+            "type": "string",
+            "description": "The client identifier",
+            "title": "Client Id"
+          },
+          "client_secret": {
+            "type": "string",
+            "description": "The client secret",
+            "title": "Client Secret"
+          },
+          "grant_type": {
+            "type": "string",
+            "description": "OAuth2 grant type",
+            "default": "client_credentials",
+            "title": "Grant Type"
+          }
+        },
+        "required": [
+          "client_id",
+          "client_secret"
+        ]
+      }
+    },
+    {
+      "name": "create_client_api_v1_clients_post",
+      "description": "Create a new client",
+      "input_schema": {
+        "type": "object",
+        "properties": {
+          "name": {
+            "type": "string",
+            "description": "The name of the client application",
+            "example": "My Client App",
+            "title": "Name"
+          },
+          "is_active": {
+            "type": "boolean",
+            "description": "Indicates if the client account is active",
+            "example": true,
+            "default": true,
+            "title": "Is Active"
+          }
+        },
+        "required": [
+          "name"
+        ]
+      }
+    },
+    {
+      "name": "read_clients_api_v1_clients_get",
+      "description": "Get clients with filtering and pagination",
+      "input_schema": {
+        "type": "object",
+        "properties": {
+          "name": {
+            "type": "string",
+            "description": "Partial name search"
+          },
+          "is_active": {
+            "type": "string",
+            "description": "Filter by active status"
+          },
+          "skip": {
+            "type": "integer",
+            "description": "Offset"
+          },
+          "limit": {
+            "type": "integer",
+            "description": "Limit"
+          }
+        },
+        "required": []
+      }
+    },
+    {
+      "name": "get_current_client_profile_api_v1_clients_me_get",
+      "description": "Get current client profile",
+      "input_schema": {
+        "type": "object",
+        "properties": {},
+        "required": []
+      }
+    },
+    {
+      "name": "read_client_api_v1_clients__client_id__get",
+      "description": "Get client by ID",
+      "input_schema": {
+        "type": "object",
+        "properties": {
+          "client_id": {
+            "type": "string",
+            "description": "Unique client identifier"
+          }
+        },
+        "required": [
+          "client_id"
+        ]
+      }
+    },
+    {
+      "name": "update_client_api_v1_clients__client_id__patch",
+      "description": "Update client by ID",
+      "input_schema": {
+        "type": "object",
+        "properties": {
+          "client_id": {
+            "type": "string",
+            "description": "Unique client identifier"
+          },
+          "name": {
+            "description": "Updated client name",
+            "example": "Updated Client",
+            "title": "Name",
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "is_active": {
+            "description": "Updated active status",
+            "example": true,
+            "title": "Is Active",
+            "anyOf": [
+              {
+                "type": "boolean"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "permissions": {
+            "description": "List of permission reference objects assigned to this client",
+            "example": [
+              {
+                "name": "users:read"
+              },
+              {
+                "name": "roles:create"
+              }
+            ],
+            "title": "Permissions",
+            "anyOf": [
+              {
+                "type": "array",
+                "items": {}
+              },
+              {
+                "type": "null"
+              }
+            ]
+          }
+        },
+        "required": [
+          "client_id"
+        ]
+      }
+    },
+    {
+      "name": "delete_client_api_v1_clients__client_id__delete",
+      "description": "Delete client by ID",
+      "input_schema": {
+        "type": "object",
+        "properties": {
+          "client_id": {
+            "type": "string",
+            "description": "Unique client identifier"
+          }
+        },
+        "required": [
+          "client_id"
+        ]
+      }
+    },
+    {
+      "name": "assign_client_permissions_by_ids_api_v1_clients__client_id__permissions__permission_id__post",
+      "description": "Assign permissions to client by IDs",
+      "input_schema": {
+        "type": "object",
+        "properties": {
+          "client_id": {
+            "type": "string",
+            "description": "Unique client identifier"
+          },
+          "permission_id": {
+            "type": "string",
+            "description": "Unique permission identifier"
+          }
+        },
+        "required": [
+          "client_id",
+          "permission_id"
+        ]
+      }
+    },
+    {
+      "name": "remove_client_permission_api_v1_clients__client_id__permissions__permission_id__delete",
+      "description": "Remove permission from client by ID",
+      "input_schema": {
+        "type": "object",
+        "properties": {
+          "client_id": {
+            "type": "string",
+            "description": "Unique client identifier"
+          },
+          "permission_id": {
+            "type": "string",
+            "description": "Unique permission identifier"
+          }
+        },
+        "required": [
+          "client_id",
+          "permission_id"
+        ]
+      }
+    },
+    {
+      "name": "create_user_api_v1_users_post",
+      "description": "Create a new user",
+      "input_schema": {
+        "type": "object",
+        "properties": {
+          "email": {
+            "type": "string",
+            "description": "The user's email address",
+            "example": "user@gmail.com",
+            "title": "Email"
+          },
+          "full_name": {
+            "type": "string",
+            "description": "The user's name and surname",
+            "example": "Name Surname",
+            "title": "Full Name"
+          },
+          "is_active": {
+            "type": "boolean",
+            "description": "Is the user active?",
+            "example": true,
+            "default": true,
+            "title": "Is Active"
+          },
+          "is_superuser": {
+            "type": "boolean",
+            "description": "Is the user a superuser for get all permissions?",
+            "example": false,
+            "default": false,
+            "title": "Is Superuser"
+          },
+          "password": {
+            "type": "string",
+            "description": "The user's password",
+            "example": "strongpassword123",
+            "title": "Password"
+          }
+        },
+        "required": [
+          "email",
+          "full_name",
+          "password"
+        ]
+      }
+    },
+    {
+      "name": "read_with_filters_api_v1_users_get",
+      "description": "Get users with filtering and pagination",
+      "input_schema": {
+        "type": "object",
+        "properties": {
+          "name": {
+            "type": "string",
+            "description": "Partial name search"
+          },
+          "email": {
+            "type": "string",
+            "description": "Exact email match"
+          },
+          "active": {
+            "type": "string",
+            "description": "Filter by active status"
+          },
+          "is_superuser": {
+            "type": "string",
+            "description": "Filter by superuser status"
+          },
+          "skip": {
+            "type": "integer",
+            "description": "Number of records to skip (offset)"
+          },
+          "limit": {
+            "type": "integer",
+            "description": "Maximum records to return"
+          }
+        },
+        "required": []
+      }
+    },
+    {
+      "name": "get_current_user_profile_api_v1_users_me_get",
+      "description": "Get current user profile",
+      "input_schema": {
+        "type": "object",
+        "properties": {},
+        "required": []
+      }
+    },
+    {
+      "name": "read_user_by_id_api_v1_users__user_id__get",
+      "description": "Get a user by unique identifier",
+      "input_schema": {
+        "type": "object",
+        "properties": {
+          "user_id": {
+            "type": "string",
+            "description": "Unique user identifier"
+          }
+        },
+        "required": [
+          "user_id"
+        ]
+      }
+    },
+    {
+      "name": "update_user_api_v1_users__user_id__patch",
+      "description": "Update a user partially",
+      "input_schema": {
+        "type": "object",
+        "properties": {
+          "user_id": {
+            "type": "string",
+            "description": "Unique user identifier"
+          },
+          "full_name": {
+            "description": "The user's name and surname",
+            "example": "Name Surname",
+            "title": "Full Name",
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "is_active": {
+            "description": "Is the user active?",
+            "example": true,
+            "title": "Is Active",
+            "anyOf": [
+              {
+                "type": "boolean"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "is_superuser": {
+            "description": "Is the user a superuser for get all permissions?",
+            "example": false,
+            "title": "Is Superuser",
+            "anyOf": [
+              {
+                "type": "boolean"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "roles": {
+            "description": "List of roles assigned to the user",
+            "example": [
+              "admin",
+              "developer"
+            ],
+            "title": "Roles",
+            "anyOf": [
+              {
+                "type": "array",
+                "items": {}
+              },
+              {
+                "type": "null"
+              }
+            ]
+          }
+        },
+        "required": [
+          "user_id"
+        ]
+      }
+    },
+    {
+      "name": "delete_user_api_v1_users__user_id__delete",
+      "description": "Delete a user",
+      "input_schema": {
+        "type": "object",
+        "properties": {
+          "user_id": {
+            "type": "string",
+            "description": "Unique user identifier"
+          }
+        },
+        "required": [
+          "user_id"
+        ]
+      }
+    },
+    {
+      "name": "change_user_email_api_v1_users_email_put",
+      "description": "Change user email",
+      "input_schema": {
+        "type": "object",
+        "properties": {
+          "current_email": {
+            "type": "string",
+            "description": "Current email address for verification",
+            "example": "currentemail@email.com",
+            "title": "Current Email"
+          },
+          "new_email": {
+            "type": "string",
+            "description": "The new email address",
+            "example": "newemail@email.com",
+            "title": "New Email"
+          },
+          "current_password": {
+            "type": "string",
+            "description": "Current password for verification",
+            "example": "CurrentPassword123!",
+            "title": "Current Password"
+          }
+        },
+        "required": [
+          "current_email",
+          "new_email",
+          "current_password"
+        ]
+      }
+    },
+    {
+      "name": "change_user_password_api_v1_users_password_put",
+      "description": "Change user password",
+      "input_schema": {
+        "type": "object",
+        "properties": {
+          "old_password": {
+            "type": "string",
+            "description": "The user's current password",
+            "example": "oldpassword123",
+            "title": "Old Password"
+          },
+          "new_password": {
+            "type": "string",
+            "description": "The new password for the user",
+            "example": "newstrongpassword123",
+            "title": "New Password"
+          }
+        },
+        "required": [
+          "old_password",
+          "new_password"
+        ]
+      }
+    },
+    {
+      "name": "add_role_to_user_api_v1_users__user_id__roles__role_id__post",
+      "description": "Add a role to a user",
+      "input_schema": {
+        "type": "object",
+        "properties": {
+          "user_id": {
+            "type": "string",
+            "description": "Unique user identifier"
+          },
+          "role_id": {
+            "type": "string",
+            "description": "Unique role identifier to add"
+          }
+        },
+        "required": [
+          "user_id",
+          "role_id"
+        ]
+      }
+    },
+    {
+      "name": "remove_role_from_user_api_v1_users__user_id__roles__role_id__delete",
+      "description": "Remove a role from a user",
+      "input_schema": {
+        "type": "object",
+        "properties": {
+          "user_id": {
+            "type": "string",
+            "description": "Unique user identifier"
+          },
+          "role_id": {
+            "type": "string",
+            "description": "Unique role identifier to remove"
+          }
+        },
+        "required": [
+          "user_id",
+          "role_id"
+        ]
+      }
+    },
+    {
+      "name": "create_role_api_v1_roles_post",
+      "description": "Create a new role",
+      "input_schema": {
+        "type": "object",
+        "properties": {
+          "name": {
+            "type": "string",
+            "description": "The name of the role",
+            "example": "admin",
+            "title": "Name"
+          },
+          "description": {
+            "description": "Description of the role",
+            "example": "Administrator with full access",
+            "title": "Description",
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "permissions": {
+            "description": "List of permissions assigned to this role",
+            "example": [
+              {
+                "name": "users:read"
+              }
+            ],
+            "title": "Permissions",
+            "anyOf": [
+              {
+                "type": "array",
+                "items": {}
+              },
+              {
+                "type": "null"
+              }
+            ]
+          }
+        },
+        "required": [
+          "name"
+        ]
+      }
+    },
+    {
+      "name": "read_roles_api_v1_roles_get",
+      "description": "Get roles with filtering and pagination",
+      "input_schema": {
+        "type": "object",
+        "properties": {
+          "name": {
+            "type": "string",
+            "description": "Partial name search"
+          },
+          "description": {
+            "type": "string",
+            "description": "Partial description search"
+          },
+          "skip": {
+            "type": "integer",
+            "description": "Number of records to skip (offset)"
+          },
+          "limit": {
+            "type": "integer",
+            "description": "Maximum records to return"
+          }
+        },
+        "required": []
+      }
+    },
+    {
+      "name": "read_role_api_v1_roles__role_id__get",
+      "description": "Get role by ID",
+      "input_schema": {
+        "type": "object",
+        "properties": {
+          "role_id": {
+            "type": "string",
+            "description": "Unique role identifier"
+          }
+        },
+        "required": [
+          "role_id"
+        ]
+      }
+    },
+    {
+      "name": "update_role_api_v1_roles__role_id__patch",
+      "description": "Update role by ID",
+      "input_schema": {
+        "type": "object",
+        "properties": {
+          "role_id": {
+            "type": "string",
+            "description": "Unique role identifier"
+          },
+          "name": {
+            "description": "Updated role name",
+            "example": "manager",
+            "title": "Name",
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "description": {
+            "description": "Updated role description",
+            "example": "Manager role",
+            "title": "Description",
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "permissions": {
+            "description": "Updated list of permissions",
+            "example": [
+              {
+                "name": "users:read"
+              }
+            ],
+            "title": "Permissions",
+            "anyOf": [
+              {
+                "type": "array",
+                "items": {}
+              },
+              {
+                "type": "null"
+              }
+            ]
+          }
+        },
+        "required": [
+          "role_id"
+        ]
+      }
+    },
+    {
+      "name": "delete_role_api_v1_roles__role_id__delete",
+      "description": "Delete role by ID",
+      "input_schema": {
+        "type": "object",
+        "properties": {
+          "role_id": {
+            "type": "string",
+            "description": "Unique role identifier"
+          }
+        },
+        "required": [
+          "role_id"
+        ]
+      }
+    },
+    {
+      "name": "add_permission_to_role_api_v1_roles__role_id__permissions__permission_id__post",
+      "description": "Add permission to role",
+      "input_schema": {
+        "type": "object",
+        "properties": {
+          "role_id": {
+            "type": "string",
+            "description": "Unique role identifier"
+          },
+          "permission_id": {
+            "type": "string",
+            "description": "Unique permission identifier"
+          }
+        },
+        "required": [
+          "role_id",
+          "permission_id"
+        ]
+      }
+    },
+    {
+      "name": "remove_permission_from_role_api_v1_roles__role_id__permissions__permission_id__delete",
+      "description": "Remove permission from role",
+      "input_schema": {
+        "type": "object",
+        "properties": {
+          "role_id": {
+            "type": "string",
+            "description": "Unique role identifier"
+          },
+          "permission_id": {
+            "type": "string",
+            "description": "Unique permission identifier"
+          }
+        },
+        "required": [
+          "role_id",
+          "permission_id"
+        ]
+      }
+    },
+    {
+      "name": "create_permission_api_v1_permissions_post",
+      "description": "Create a new permission",
+      "input_schema": {
+        "type": "object",
+        "properties": {
+          "name": {
+            "type": "string",
+            "description": "The permission name",
+            "example": "users:create",
+            "title": "Name"
+          },
+          "description": {
+            "description": "Description of the permission",
+            "example": "Allows creating users",
+            "title": "Description",
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          }
+        },
+        "required": [
+          "name"
+        ]
+      }
+    },
+    {
+      "name": "read_permissions_api_v1_permissions_get",
+      "description": "Get permissions with filtering and pagination",
+      "input_schema": {
+        "type": "object",
+        "properties": {
+          "name": {
+            "type": "string",
+            "description": "Partial name search"
+          },
+          "description": {
+            "type": "string",
+            "description": "Partial description search"
+          },
+          "skip": {
+            "type": "integer",
+            "description": "Offset"
+          },
+          "limit": {
+            "type": "integer",
+            "description": "Limit"
+          }
+        },
+        "required": []
+      }
+    },
+    {
+      "name": "read_permission_api_v1_permissions__permission_id__get",
+      "description": "Get permission by ID",
+      "input_schema": {
+        "type": "object",
+        "properties": {
+          "permission_id": {
+            "type": "string",
+            "description": "Unique permission identifier"
+          }
+        },
+        "required": [
+          "permission_id"
+        ]
+      }
+    },
+    {
+      "name": "update_permission_api_v1_permissions__permission_id__patch",
+      "description": "Update permission by ID",
+      "input_schema": {
+        "type": "object",
+        "properties": {
+          "permission_id": {
+            "type": "string",
+            "description": "Unique permission identifier"
+          },
+          "name": {
+            "description": "The updated permission name",
+            "example": "users:create",
+            "title": "Name",
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "description": {
+            "description": "Updated description",
+            "example": "Allows creating users",
+            "title": "Description",
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          }
+        },
+        "required": [
+          "permission_id"
+        ]
+      }
+    },
+    {
+      "name": "delete_permission_api_v1_permissions__permission_id__delete",
+      "description": "Delete permission by ID",
+      "input_schema": {
+        "type": "object",
+        "properties": {
+          "permission_id": {
+            "type": "string",
+            "description": "Unique permission identifier"
+          }
+        },
+        "required": [
+          "permission_id"
+        ]
+      }
+    }
+  ]
+}

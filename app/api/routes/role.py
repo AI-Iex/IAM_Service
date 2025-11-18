@@ -1,4 +1,4 @@
-from fastapi import APIRouter, Depends, Query, status, HTTPException, Response, Request, Header
+from fastapi import APIRouter, Depends, Path, Query, status, HTTPException, Response, Request, Header
 from uuid import UUID
 from typing import List, Optional
 from app.schemas.user import UserRead
@@ -65,7 +65,7 @@ async def read_roles(
     response_description="The role with the specified ID",
 )
 async def read_role(
-    role_id: UUID,
+    role_id: UUID = Path(..., description="Unique role identifier"),
     role_service: RoleService = Depends(get_role_service),
     principal: Principal = requires_permission(Permissions.ROLES_READ),
 ) -> RoleRead:
@@ -86,8 +86,8 @@ async def read_role(
     response_description="The updated role",
 )
 async def update_role(
-    role_id: UUID,
-    payload: RoleUpdate,
+    role_id: UUID = Path(..., description="Unique role identifier"),
+    payload: RoleUpdate = ...,
     role_service: RoleService = Depends(get_role_service),
     principal: Principal = requires_permission(Permissions.ROLES_UPDATE),
 ) -> RoleRead:
@@ -106,8 +106,8 @@ async def update_role(
     response_description="Role with the added permission",
 )
 async def add_permission_to_role(
-    role_id: UUID,
-    permission_id: UUID,
+    role_id: UUID = Path(..., description="Unique role identifier"),
+    permission_id: UUID = Path(..., description="Unique permission identifier"),
     role_service: RoleService = Depends(get_role_service),
     principal: Principal = requires_permission(Permissions.ROLES_UPDATE),
 ) -> RoleRead:
@@ -126,8 +126,8 @@ async def add_permission_to_role(
     response_description="Role with the permission removed",
 )
 async def remove_permission_from_role(
-    role_id: UUID,
-    permission_id: UUID,
+    role_id: UUID = Path(..., description="Unique role identifier"),
+    permission_id: UUID = Path(..., description="Unique permission identifier"),
     role_service: RoleService = Depends(get_role_service),
     principal: Principal = requires_permission(Permissions.ROLES_UPDATE),
 ) -> RoleRead:
@@ -142,7 +142,7 @@ async def remove_permission_from_role(
     description="**Delete a role by its unique identifier.**\n" "- `role_id`: The unique identifier of the role.",
 )
 async def delete_role(
-    role_id: UUID,
+    role_id: UUID = Path(..., description="Unique role identifier"),
     role_service: RoleService = Depends(get_role_service),
     principal: Principal = requires_permission(Permissions.ROLES_DELETE),
 ) -> None:
