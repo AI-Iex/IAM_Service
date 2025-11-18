@@ -45,6 +45,10 @@ jobs:
           git config --local user.email "github-actions[bot]@users.noreply.github.com"
           git config --local user.name "github-actions[bot]"
           
+          # Create a new branch for the changes
+          BRANCH_NAME="bot/update-tools-$(date +%s)"
+          git checkout -b $BRANCH_NAME
+          
           # Add generated tools
           git add tools/
           
@@ -53,8 +57,17 @@ jobs:
             echo "No changes to commit"
           else
             git commit -m "chore: update AI agent tools for ${{ github.event.release.tag_name }}"
-            git push
+            git push origin $BRANCH_NAME
+            
+            # Create pull request
+            gh pr create \
+              --base master \
+              --head $BRANCH_NAME \
+              --title "chore: Update AI agent tools for ${{ github.event.release.tag_name }}" \
+              --body "Automated update of AI agent tools generated from OpenAPI specification."
           fi
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
       
       - name: Upload tools as release assets
         uses: softprops/action-gh-release@v1
