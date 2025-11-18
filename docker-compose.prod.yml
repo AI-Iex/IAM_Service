@@ -3,6 +3,7 @@
 
 services:
   web:
+    container_name: null  
     restart: always
     deploy:
       replicas: 3
@@ -27,6 +28,7 @@ services:
         max-file: "3"
     
   db:
+    container_name: null  
     restart: always
     deploy:
       resources:
