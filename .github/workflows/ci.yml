@@ -171,7 +171,7 @@ jobs:
         uses: actions/checkout@v4
 
       - name: Build production image
-        run: docker compose -f docker-compose.yml -f docker-compose.prod.yml build web
+        run: docker compose build web
 
   # ===== Job 5: CI Status =====
   status:

@@ -3,7 +3,6 @@
 
 services:
   web:
-    container_name: null  
     restart: always
     deploy:
       replicas: 3
