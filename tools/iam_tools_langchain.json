@@ -1,0 +1,768 @@
+{
+  "tools": [
+    {
+      "name": "create_user_api_v1_auth_post",
+      "description": "Register a new user",
+      "api_method": "POST",
+      "api_path": "/api/v1/auth",
+      "parameters": {
+        "email": {
+          "type": "string",
+          "description": "The user's email address",
+          "required": true,
+          "location": "body"
+        },
+        "full_name": {
+          "type": "string",
+          "description": "The user's name and surname",
+          "required": true,
+          "location": "body"
+        },
+        "password": {
+          "type": "string",
+          "description": "The user's password",
+          "required": true,
+          "location": "body"
+        }
+      }
+    },
+    {
+      "name": "login_user_api_v1_auth_login_post",
+      "description": "Log in",
+      "api_method": "POST",
+      "api_path": "/api/v1/auth/login",
+      "parameters": {}
+    },
+    {
+      "name": "logout_user_api_v1_auth_logout_post",
+      "description": "Log out",
+      "api_method": "POST",
+      "api_path": "/api/v1/auth/logout",
+      "parameters": {}
+    },
+    {
+      "name": "logout_all_devices_handler_api_v1_auth_logout_all_devices_post",
+      "description": "Log out the user from all devices",
+      "api_method": "POST",
+      "api_path": "/api/v1/auth/logout_all_devices",
+      "parameters": {}
+    },
+    {
+      "name": "refresh_token_api_v1_auth_refresh_post",
+      "description": "Refresh access token",
+      "api_method": "POST",
+      "api_path": "/api/v1/auth/refresh",
+      "parameters": {
+        "refresh": {
+          "type": "string",
+          "description": "",
+          "required": false,
+          "location": "header"
+        },
+        "refresh-jti": {
+          "type": "string",
+          "description": "",
+          "required": false,
+          "location": "header"
+        }
+      }
+    },
+    {
+      "name": "token_endpoint_api_v1_auth_token_post",
+      "description": "Token endpoint for Swagger, OAuth2 password and client_credentials flows",
+      "api_method": "POST",
+      "api_path": "/api/v1/auth/token",
+      "parameters": {}
+    },
+    {
+      "name": "authenticate_client_api_v1_auth_client_post",
+      "description": "Authenticate client",
+      "api_method": "POST",
+      "api_path": "/api/v1/auth/client",
+      "parameters": {
+        "client_id": {
+          "type": "string",
+          "description": "The client identifier",
+          "required": true,
+          "location": "body"
+        },
+        "client_secret": {
+          "type": "string",
+          "description": "The client secret",
+          "required": true,
+          "location": "body"
+        },
+        "grant_type": {
+          "type": "string",
+          "description": "OAuth2 grant type",
+          "required": false,
+          "location": "body"
+        }
+      }
+    },
+    {
+      "name": "create_client_api_v1_clients_post",
+      "description": "Create a new client",
+      "api_method": "POST",
+      "api_path": "/api/v1/clients",
+      "parameters": {
+        "name": {
+          "type": "string",
+          "description": "The name of the client application",
+          "required": true,
+          "location": "body"
+        },
+        "is_active": {
+          "type": "boolean",
+          "description": "Indicates if the client account is active",
+          "required": false,
+          "location": "body"
+        }
+      }
+    },
+    {
+      "name": "read_clients_api_v1_clients_get",
+      "description": "Get clients with filtering and pagination",
+      "api_method": "GET",
+      "api_path": "/api/v1/clients",
+      "parameters": {
+        "name": {
+          "type": "string",
+          "description": "Partial name search",
+          "required": false,
+          "location": "query"
+        },
+        "is_active": {
+          "type": "string",
+          "description": "Filter by active status",
+          "required": false,
+          "location": "query"
+        },
+        "skip": {
+          "type": "integer",
+          "description": "Offset",
+          "required": false,
+          "location": "query"
+        },
+        "limit": {
+          "type": "integer",
+          "description": "Limit",
+          "required": false,
+          "location": "query"
+        }
+      }
+    },
+    {
+      "name": "get_current_client_profile_api_v1_clients_me_get",
+      "description": "Get current client profile",
+      "api_method": "GET",
+      "api_path": "/api/v1/clients/me",
+      "parameters": {}
+    },
+    {
+      "name": "read_client_api_v1_clients__client_id__get",
+      "description": "Get client by ID",
+      "api_method": "GET",
+      "api_path": "/api/v1/clients/{client_id}",
+      "parameters": {
+        "client_id": {
+          "type": "string",
+          "description": "Unique client identifier",
+          "required": true,
+          "location": "path"
+        }
+      }
+    },
+    {
+      "name": "update_client_api_v1_clients__client_id__patch",
+      "description": "Update client by ID",
+      "api_method": "PATCH",
+      "api_path": "/api/v1/clients/{client_id}",
+      "parameters": {
+        "client_id": {
+          "type": "string",
+          "description": "Unique client identifier",
+          "required": true,
+          "location": "path"
+        },
+        "name": {
+          "type": "string",
+          "description": "Updated client name",
+          "required": false,
+          "location": "body"
+        },
+        "is_active": {
+          "type": "string",
+          "description": "Updated active status",
+          "required": false,
+          "location": "body"
+        },
+        "permissions": {
+          "type": "string",
+          "description": "List of permission reference objects assigned to this client",
+          "required": false,
+          "location": "body"
+        }
+      }
+    },
+    {
+      "name": "delete_client_api_v1_clients__client_id__delete",
+      "description": "Delete client by ID",
+      "api_method": "DELETE",
+      "api_path": "/api/v1/clients/{client_id}",
+      "parameters": {
+        "client_id": {
+          "type": "string",
+          "description": "Unique client identifier",
+          "required": true,
+          "location": "path"
+        }
+      }
+    },
+    {
+      "name": "assign_client_permissions_by_ids_api_v1_clients__client_id__permissions__permission_id__post",
+      "description": "Assign permissions to client by IDs",
+      "api_method": "POST",
+      "api_path": "/api/v1/clients/{client_id}/permissions/{permission_id}",
+      "parameters": {
+        "client_id": {
+          "type": "string",
+          "description": "Unique client identifier",
+          "required": true,
+          "location": "path"
+        },
+        "permission_id": {
+          "type": "string",
+          "description": "Unique permission identifier",
+          "required": true,
+          "location": "path"
+        }
+      }
+    },
+    {
+      "name": "remove_client_permission_api_v1_clients__client_id__permissions__permission_id__delete",
+      "description": "Remove permission from client by ID",
+      "api_method": "DELETE",
+      "api_path": "/api/v1/clients/{client_id}/permissions/{permission_id}",
+      "parameters": {
+        "client_id": {
+          "type": "string",
+          "description": "Unique client identifier",
+          "required": true,
+          "location": "path"
+        },
+        "permission_id": {
+          "type": "string",
+          "description": "Unique permission identifier",
+          "required": true,
+          "location": "path"
+        }
+      }
+    },
+    {
+      "name": "create_user_api_v1_users_post",
+      "description": "Create a new user",
+      "api_method": "POST",
+      "api_path": "/api/v1/users",
+      "parameters": {
+        "email": {
+          "type": "string",
+          "description": "The user's email address",
+          "required": true,
+          "location": "body"
+        },
+        "full_name": {
+          "type": "string",
+          "description": "The user's name and surname",
+          "required": true,
+          "location": "body"
+        },
+        "is_active": {
+          "type": "boolean",
+          "description": "Is the user active?",
+          "required": false,
+          "location": "body"
+        },
+        "is_superuser": {
+          "type": "boolean",
+          "description": "Is the user a superuser for get all permissions?",
+          "required": false,
+          "location": "body"
+        },
+        "password": {
+          "type": "string",
+          "description": "The user's password",
+          "required": true,
+          "location": "body"
+        }
+      }
+    },
+    {
+      "name": "read_with_filters_api_v1_users_get",
+      "description": "Get users with filtering and pagination",
+      "api_method": "GET",
+      "api_path": "/api/v1/users",
+      "parameters": {
+        "name": {
+          "type": "string",
+          "description": "Partial name search",
+          "required": false,
+          "location": "query"
+        },
+        "email": {
+          "type": "string",
+          "description": "Exact email match",
+          "required": false,
+          "location": "query"
+        },
+        "active": {
+          "type": "string",
+          "description": "Filter by active status",
+          "required": false,
+          "location": "query"
+        },
+        "is_superuser": {
+          "type": "string",
+          "description": "Filter by superuser status",
+          "required": false,
+          "location": "query"
+        },
+        "skip": {
+          "type": "integer",
+          "description": "Number of records to skip (offset)",
+          "required": false,
+          "location": "query"
+        },
+        "limit": {
+          "type": "integer",
+          "description": "Maximum records to return",
+          "required": false,
+          "location": "query"
+        }
+      }
+    },
+    {
+      "name": "get_current_user_profile_api_v1_users_me_get",
+      "description": "Get current user profile",
+      "api_method": "GET",
+      "api_path": "/api/v1/users/me",
+      "parameters": {}
+    },
+    {
+      "name": "read_user_by_id_api_v1_users__user_id__get",
+      "description": "Get a user by unique identifier",
+      "api_method": "GET",
+      "api_path": "/api/v1/users/{user_id}",
+      "parameters": {
+        "user_id": {
+          "type": "string",
+          "description": "Unique user identifier",
+          "required": true,
+          "location": "path"
+        }
+      }
+    },
+    {
+      "name": "update_user_api_v1_users__user_id__patch",
+      "description": "Update a user partially",
+      "api_method": "PATCH",
+      "api_path": "/api/v1/users/{user_id}",
+      "parameters": {
+        "user_id": {
+          "type": "string",
+          "description": "Unique user identifier",
+          "required": true,
+          "location": "path"
+        },
+        "full_name": {
+          "type": "string",
+          "description": "The user's name and surname",
+          "required": false,
+          "location": "body"
+        },
+        "is_active": {
+          "type": "string",
+          "description": "Is the user active?",
+          "required": false,
+          "location": "body"
+        },
+        "is_superuser": {
+          "type": "string",
+          "description": "Is the user a superuser for get all permissions?",
+          "required": false,
+          "location": "body"
+        },
+        "roles": {
+          "type": "string",
+          "description": "List of roles assigned to the user",
+          "required": false,
+          "location": "body"
+        }
+      }
+    },
+    {
+      "name": "delete_user_api_v1_users__user_id__delete",
+      "description": "Delete a user",
+      "api_method": "DELETE",
+      "api_path": "/api/v1/users/{user_id}",
+      "parameters": {
+        "user_id": {
+          "type": "string",
+          "description": "Unique user identifier",
+          "required": true,
+          "location": "path"
+        }
+      }
+    },
+    {
+      "name": "change_user_email_api_v1_users_email_put",
+      "description": "Change user email",
+      "api_method": "PUT",
+      "api_path": "/api/v1/users/email",
+      "parameters": {
+        "current_email": {
+          "type": "string",
+          "description": "Current email address for verification",
+          "required": true,
+          "location": "body"
+        },
+        "new_email": {
+          "type": "string",
+          "description": "The new email address",
+          "required": true,
+          "location": "body"
+        },
+        "current_password": {
+          "type": "string",
+          "description": "Current password for verification",
+          "required": true,
+          "location": "body"
+        }
+      }
+    },
+    {
+      "name": "change_user_password_api_v1_users_password_put",
+      "description": "Change user password",
+      "api_method": "PUT",
+      "api_path": "/api/v1/users/password",
+      "parameters": {
+        "old_password": {
+          "type": "string",
+          "description": "The user's current password",
+          "required": true,
+          "location": "body"
+        },
+        "new_password": {
+          "type": "string",
+          "description": "The new password for the user",
+          "required": true,
+          "location": "body"
+        }
+      }
+    },
+    {
+      "name": "add_role_to_user_api_v1_users__user_id__roles__role_id__post",
+      "description": "Add a role to a user",
+      "api_method": "POST",
+      "api_path": "/api/v1/users/{user_id}/roles/{role_id}",
+      "parameters": {
+        "user_id": {
+          "type": "string",
+          "description": "Unique user identifier",
+          "required": true,
+          "location": "path"
+        },
+        "role_id": {
+          "type": "string",
+          "description": "Unique role identifier to add",
+          "required": true,
+          "location": "path"
+        }
+      }
+    },
+    {
+      "name": "remove_role_from_user_api_v1_users__user_id__roles__role_id__delete",
+      "description": "Remove a role from a user",
+      "api_method": "DELETE",
+      "api_path": "/api/v1/users/{user_id}/roles/{role_id}",
+      "parameters": {
+        "user_id": {
+          "type": "string",
+          "description": "Unique user identifier",
+          "required": true,
+          "location": "path"
+        },
+        "role_id": {
+          "type": "string",
+          "description": "Unique role identifier to remove",
+          "required": true,
+          "location": "path"
+        }
+      }
+    },
+    {
+      "name": "create_role_api_v1_roles_post",
+      "description": "Create a new role",
+      "api_method": "POST",
+      "api_path": "/api/v1/roles",
+      "parameters": {
+        "name": {
+          "type": "string",
+          "description": "The name of the role",
+          "required": true,
+          "location": "body"
+        },
+        "description": {
+          "type": "string",
+          "description": "Description of the role",
+          "required": false,
+          "location": "body"
+        },
+        "permissions": {
+          "type": "string",
+          "description": "List of permissions assigned to this role",
+          "required": false,
+          "location": "body"
+        }
+      }
+    },
+    {
+      "name": "read_roles_api_v1_roles_get",
+      "description": "Get roles with filtering and pagination",
+      "api_method": "GET",
+      "api_path": "/api/v1/roles",
+      "parameters": {
+        "name": {
+          "type": "string",
+          "description": "Partial name search",
+          "required": false,
+          "location": "query"
+        },
+        "description": {
+          "type": "string",
+          "description": "Partial description search",
+          "required": false,
+          "location": "query"
+        },
+        "skip": {
+          "type": "integer",
+          "description": "Number of records to skip (offset)",
+          "required": false,
+          "location": "query"
+        },
+        "limit": {
+          "type": "integer",
+          "description": "Maximum records to return",
+          "required": false,
+          "location": "query"
+        }
+      }
+    },
+    {
+      "name": "read_role_api_v1_roles__role_id__get",
+      "description": "Get role by ID",
+      "api_method": "GET",
+      "api_path": "/api/v1/roles/{role_id}",
+      "parameters": {
+        "role_id": {
+          "type": "string",
+          "description": "Unique role identifier",
+          "required": true,
+          "location": "path"
+        }
+      }
+    },
+    {
+      "name": "update_role_api_v1_roles__role_id__patch",
+      "description": "Update role by ID",
+      "api_method": "PATCH",
+      "api_path": "/api/v1/roles/{role_id}",
+      "parameters": {
+        "role_id": {
+          "type": "string",
+          "description": "Unique role identifier",
+          "required": true,
+          "location": "path"
+        },
+        "name": {
+          "type": "string",
+          "description": "Updated role name",
+          "required": false,
+          "location": "body"
+        },
+        "description": {
+          "type": "string",
+          "description": "Updated role description",
+          "required": false,
+          "location": "body"
+        },
+        "permissions": {
+          "type": "string",
+          "description": "Updated list of permissions",
+          "required": false,
+          "location": "body"
+        }
+      }
+    },
+    {
+      "name": "delete_role_api_v1_roles__role_id__delete",
+      "description": "Delete role by ID",
+      "api_method": "DELETE",
+      "api_path": "/api/v1/roles/{role_id}",
+      "parameters": {
+        "role_id": {
+          "type": "string",
+          "description": "Unique role identifier",
+          "required": true,
+          "location": "path"
+        }
+      }
+    },
+    {
+      "name": "add_permission_to_role_api_v1_roles__role_id__permissions__permission_id__post",
+      "description": "Add permission to role",
+      "api_method": "POST",
+      "api_path": "/api/v1/roles/{role_id}/permissions/{permission_id}",
+      "parameters": {
+        "role_id": {
+          "type": "string",
+          "description": "Unique role identifier",
+          "required": true,
+          "location": "path"
+        },
+        "permission_id": {
+          "type": "string",
+          "description": "Unique permission identifier",
+          "required": true,
+          "location": "path"
+        }
+      }
+    },
+    {
+      "name": "remove_permission_from_role_api_v1_roles__role_id__permissions__permission_id__delete",
+      "description": "Remove permission from role",
+      "api_method": "DELETE",
+      "api_path": "/api/v1/roles/{role_id}/permissions/{permission_id}",
+      "parameters": {
+        "role_id": {
+          "type": "string",
+          "description": "Unique role identifier",
+          "required": true,
+          "location": "path"
+        },
+        "permission_id": {
+          "type": "string",
+          "description": "Unique permission identifier",
+          "required": true,
+          "location": "path"
+        }
+      }
+    },
+    {
+      "name": "create_permission_api_v1_permissions_post",
+      "description": "Create a new permission",
+      "api_method": "POST",
+      "api_path": "/api/v1/permissions",
+      "parameters": {
+        "name": {
+          "type": "string",
+          "description": "The permission name",
+          "required": true,
+          "location": "body"
+        },
+        "description": {
+          "type": "string",
+          "description": "Description of the permission",
+          "required": false,
+          "location": "body"
+        }
+      }
+    },
+    {
+      "name": "read_permissions_api_v1_permissions_get",
+      "description": "Get permissions with filtering and pagination",
+      "api_method": "GET",
+      "api_path": "/api/v1/permissions",
+      "parameters": {
+        "name": {
+          "type": "string",
+          "description": "Partial name search",
+          "required": false,
+          "location": "query"
+        },
+        "description": {
+          "type": "string",
+          "description": "Partial description search",
+          "required": false,
+          "location": "query"
+        },
+        "skip": {
+          "type": "integer",
+          "description": "Offset",
+          "required": false,
+          "location": "query"
+        },
+        "limit": {
+          "type": "integer",
+          "description": "Limit",
+          "required": false,
+          "location": "query"
+        }
+      }
+    },
+    {
+      "name": "read_permission_api_v1_permissions__permission_id__get",
+      "description": "Get permission by ID",
+      "api_method": "GET",
+      "api_path": "/api/v1/permissions/{permission_id}",
+      "parameters": {
+        "permission_id": {
+          "type": "string",
+          "description": "Unique permission identifier",
+          "required": true,
+          "location": "path"
+        }
+      }
+    },
+    {
+      "name": "update_permission_api_v1_permissions__permission_id__patch",
+      "description": "Update permission by ID",
+      "api_method": "PATCH",
+      "api_path": "/api/v1/permissions/{permission_id}",
+      "parameters": {
+        "permission_id": {
+          "type": "string",
+          "description": "Unique permission identifier",
+          "required": true,
+          "location": "path"
+        },
+        "name": {
+          "type": "string",
+          "description": "The updated permission name",
+          "required": false,
+          "location": "body"
+        },
+        "description": {
+          "type": "string",
+          "description": "Updated description",
+          "required": false,
+          "location": "body"
+        }
+      }
+    },
+    {
+      "name": "delete_permission_api_v1_permissions__permission_id__delete",
+      "description": "Delete permission by ID",
+      "api_method": "DELETE",
+      "api_path": "/api/v1/permissions/{permission_id}",
+      "parameters": {
+        "permission_id": {
+          "type": "string",
+          "description": "Unique permission identifier",
+          "required": true,
+          "location": "path"
+        }
+      }
+    }
+  ]
+}

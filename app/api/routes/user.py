@@ -115,7 +115,7 @@ async def read_user_by_id(
 )
 async def update_user(
     user_id: UUID = Path(..., description="Unique user identifier"),
-    payload: UserUpdate = None,
+    payload: UserUpdate = ...,
     user_service: UserService = Depends(get_user_service),
     current_user: UserRead = requires_permission(Permissions.USERS_UPDATE),
 ) -> UserRead:

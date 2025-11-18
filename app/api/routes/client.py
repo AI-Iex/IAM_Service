@@ -1,4 +1,4 @@
-from fastapi import APIRouter, Depends, Query, status, HTTPException
+from fastapi import APIRouter, Depends, Path, Query, status, HTTPException
 from uuid import UUID
 from typing import List, Optional
 from app.schemas.client import (
@@ -94,7 +94,7 @@ async def get_current_client_profile(
     response_description="The client with the specified ID",
 )
 async def read_client(
-    client_id: UUID,
+    client_id: UUID = Path(..., description="Unique client identifier"),
     client_service: ClientService = Depends(get_client_service),
     principal: Principal = requires_permission(Permissions.CLIENTS_READ),
 ) -> ClientRead:
@@ -115,8 +115,8 @@ async def read_client(
     response_description="The updated client",
 )
 async def update_client(
-    client_id: UUID,
-    payload: ClientUpdate,
+    client_id: UUID = Path(..., description="Unique client identifier"),
+    payload: ClientUpdate = None,
     client_service: ClientService = Depends(get_client_service),
     principal: Principal = requires_permission(Permissions.CLIENTS_UPDATE),
 ) -> ClientRead:
@@ -134,8 +134,8 @@ async def update_client(
     response_description="The updated client with assigned permissions",
 )
 async def assign_client_permissions_by_ids(
-    client_id: UUID,
-    permission_id: UUID,
+    client_id: UUID = Path(..., description="Unique client identifier"),
+    permission_id: UUID = Path(..., description="Unique permission identifier"),
     client_service: ClientService = Depends(get_client_service),
     principal: Principal = requires_permission(Permissions.CLIENTS_UPDATE),
 ) -> ClientRead:
@@ -154,8 +154,8 @@ async def assign_client_permissions_by_ids(
     response_description="The updated client with the permission removed",
 )
 async def remove_client_permission(
-    client_id: UUID,
-    permission_id: UUID,
+    client_id: UUID = Path(..., description="Unique client identifier"),
+    permission_id: UUID = Path(..., description="Unique permission identifier"),
     client_service: ClientService = Depends(get_client_service),
     principal: Principal = requires_permission(Permissions.CLIENTS_UPDATE),
 ) -> ClientRead:
@@ -170,7 +170,7 @@ async def remove_client_permission(
     description="**Delete a client by its unique identifier.**\n" "- `client_id`: The unique identifier of the client.",
 )
 async def delete_client(
-    client_id: UUID,
+    client_id: UUID = Path(..., description="Unique client identifier"),
     client_service: ClientService = Depends(get_client_service),
     principal: Principal = requires_permission(Permissions.CLIENTS_DELETE),
 ) -> None:

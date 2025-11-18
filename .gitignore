@@ -4,6 +4,9 @@
 
 # Archivos de configuración local
 *.env
+.env.local
+.env.*.local
+!.env.ci
 
 # Python
 __pycache__/
