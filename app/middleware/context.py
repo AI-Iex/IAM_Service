@@ -8,9 +8,8 @@ logger = logging.getLogger("user_service")
 
 
 async def context_middleware(request: Request, call_next):
+    """Middleware that sets the request_id into contextvars so log filters can inject it"""
 
-    """ Middleware that sets the request_id into contextvars so log filters can inject it  """
-   
     request_id = getattr(request.state, "request_id", None)
     if not request_id:
         request_id = str(uuid4())

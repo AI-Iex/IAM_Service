@@ -13,9 +13,7 @@ class UserRole(Base):
     role_id = Column(UUID(as_uuid=True), ForeignKey("roles.id", ondelete="CASCADE"), nullable=False, index=True)
     created_at = Column(DateTime(timezone=True), server_default=func.now(), nullable=False)
 
-    __table_args__ = (
-        UniqueConstraint('user_id', 'role_id', name='uq_user_roles'),
-    )
+    __table_args__ = (UniqueConstraint("user_id", "role_id", name="uq_user_roles"),)
 
     def __repr__(self):
         return f"<UserRole user_id={self.user_id} role_id={self.role_id}>"

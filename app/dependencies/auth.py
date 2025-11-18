@@ -14,15 +14,14 @@ from app.core.config import settings
 # OAuth2 scheme for token extraction
 oauth2_scheme = OAuth2PasswordBearer(tokenUrl=f"{settings.route_prefix}/auth/token")
 
-    
+
 async def get_current_principal_optional(
     token: str = Depends(oauth2_scheme),
     auth_repository: IAuthRepository = Depends(get_auth_repository),
     uow_factory: UnitOfWorkFactory = Depends(get_uow_factory),
 ) -> Optional[Principal]:
-    
     """
-    Returns None if token is missing/invalid/expired.\n 
+    Returns None if token is missing/invalid/expired.\n
     Used for endpoints that allow both authenticated and unauthenticated access like log out.
     """
 
@@ -44,8 +43,7 @@ async def get_current_principal(
     auth_repository: IAuthRepository = Depends(get_auth_repository),
     uow_factory: UnitOfWorkFactory = Depends(get_uow_factory),
 ) -> Principal:
-    
-    """Resolve the authenticated principal (user or client) from the token. """
+    """Resolve the authenticated principal (user or client) from the token."""
 
     # 0. Decode token
     try:
@@ -53,22 +51,22 @@ async def get_current_principal(
     except Exception as exc:
         msg = str(exc) or "Invalid token"
         if "expired" in msg.lower():
-            raise HTTPException(status_code = status.HTTP_401_UNAUTHORIZED, detail = "Token expired")
-        raise HTTPException(status_code = status.HTTP_401_UNAUTHORIZED, detail = msg)
+            raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Token expired")
+        raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail=msg)
 
     # 1. Get principal type
     token_type = getattr(payload, "type", None)
     if not token_type:
-        raise HTTPException(status_code = status.HTTP_401_UNAUTHORIZED, detail = "Malformed token")
+        raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Malformed token")
 
     # 2. Get the identifier
     sub = payload.sub
     if not sub:
-        raise HTTPException(status_code = status.HTTP_401_UNAUTHORIZED, detail = "Malformed token")
+        raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Malformed token")
 
     # 3. Resolve principal based on type using a unit-of-work (single DB session)
     async with uow_factory() as db:
-        
+
         # User principal handling
         if token_type == AccessTokenType.USER.value:
             try:
@@ -88,5 +86,4 @@ async def get_current_principal(
             return Principal(kind=AccessTokenType.CLIENT.value, token=payload, client=client)
 
     # Unknown token type (not user or client)
-    raise HTTPException(status_code = status.HTTP_401_UNAUTHORIZED, detail = "Unknown token type")
-
+    raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Unknown token type")

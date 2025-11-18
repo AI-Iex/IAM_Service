@@ -8,32 +8,32 @@ class IPermissionService(ABC):
 
     @abstractmethod
     async def create(self, payload: PermissionCreate) -> PermissionRead:
-        """Create a new permission. """
+        """Create a new permission."""
         pass
 
     @abstractmethod
     async def read_with_filters(
-        self, 
-        name: Optional[str] = None, 
+        self,
+        name: Optional[str] = None,
         service_name: Optional[str] = None,
-        description: Optional[str] = None, 
-        skip: int = 0, 
-        limit: int = 100
+        description: Optional[str] = None,
+        skip: int = 0,
+        limit: int = 100,
     ) -> List[PermissionRead]:
         """Retrieve permissions matching the provided filters with pagination."""
         pass
 
     @abstractmethod
     async def read_by_id(self, permission_id: UUID) -> PermissionRead:
-        """Retrieve a permission by its ID. """
+        """Retrieve a permission by its ID."""
         pass
 
     @abstractmethod
     async def update(self, permission_id: UUID, payload: PermissionUpdate) -> PermissionRead:
-        """Update a permission by its ID. """
+        """Update a permission by its ID."""
         pass
 
     @abstractmethod
     async def delete(self, permission_id: UUID) -> None:
-        """Delete a permission by its ID. """
+        """Delete a permission by its ID."""
         pass

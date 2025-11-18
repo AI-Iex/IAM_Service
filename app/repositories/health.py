@@ -6,10 +6,10 @@ from app.core.exceptions import RepositoryError
 import time
 from typing import Dict, Tuple
 
+
 class HealthRepository(IHealthRepository):
 
     async def ping(self, db: AsyncSession) -> Tuple[bool, float]:
-
         """Perform a light DB check with timing."""
 
         try:
@@ -19,21 +19,19 @@ class HealthRepository(IHealthRepository):
             return True, round(response_time, 2)
         except Exception:
             return False, 0.0
-    
+
     async def detailed_health_check(self, db: AsyncSession) -> Dict[str, DependencyHealth]:
-        
         """Perform detailed health checks with metrics."""
 
         checks = {}
-        
+
         # Database check
         db_status, db_response_time = await self.ping(db)
         checks["database"] = DependencyHealth(
-            status = "healthy" if db_status else "unhealthy",
-            response_time_ms = db_response_time
+            status="healthy" if db_status else "unhealthy", response_time_ms=db_response_time
         )
-        
+
         # checks["redis"] = await self._check_redis()
         # checks["disk"] = await self._check_disk_space()
-        
+
         return checks

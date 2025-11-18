@@ -56,4 +56,3 @@ async def test_create_default_superuser(engine, db_session, monkeypatch):
     assert user is not None, "Superuser should be created"
     assert user.is_superuser is True, "User should be a superuser"
     assert user.is_active is True, "Superuser should be active"
-

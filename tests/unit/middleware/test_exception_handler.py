@@ -17,7 +17,6 @@ class DummyModel(BaseModel):
 
 @pytest.mark.anyio
 async def test_unauthorized_error_maps_to_401(async_client):
-
     """Raising UnauthorizedError in a route should map to 401 with the correct error code."""
 
     from app.core.exceptions import UnauthorizedError
@@ -32,9 +31,9 @@ async def test_unauthorized_error_maps_to_401(async_client):
     assert body["error_type"] == "UNAUTHORIZED"
     assert body["error_code"] == "APP.AUTH.401"
 
+
 @pytest.mark.anyio
 async def test_request_validation_uuid_error(async_client):
-
     """Requests with invalid UUID path parameter should return the INVALID_UUID_FORMAT error payload and 422."""
 
     @app.get("/__test/items/{item_id}")
@@ -48,9 +47,9 @@ async def test_request_validation_uuid_error(async_client):
     assert body["error_code"] == "APP.VAL.002"
     assert "request_id" in body
 
+
 @pytest.mark.anyio
 async def test_entity_already_exists_maps_to_409(async_client):
-
     """Raising EntityAlreadyExists in a route should map to 409 and the expected error code."""
 
     @app.get("/__test/raise_exists")
@@ -62,6 +61,7 @@ async def test_entity_already_exists_maps_to_409(async_client):
     body = resp.json()
     assert body["error_type"] == "ENTITY_ALREADY_EXISTS"
     assert body["error_code"] == "APP.USR.001"
+
 
 @pytest.mark.anyio
 async def test_domain_error_maps_to_400(async_client):
@@ -75,6 +75,7 @@ async def test_domain_error_maps_to_400(async_client):
     assert body["error_type"] == "DOMAIN_ERROR"
     assert body["error_code"] == "APP.BIZ.001"
 
+
 @pytest.mark.anyio
 async def test_not_found_maps_to_404(async_client):
     @app.get("/__test/raise_not_found")
@@ -87,17 +88,18 @@ async def test_not_found_maps_to_404(async_client):
     assert body["error_type"] == "NOT_FOUND"
     assert body["error_code"] == "APP.ERR.404"
 
+
 @pytest.mark.anyio
 async def test_repository_error_maps_to_500(async_client, monkeypatch):
-
     """RepositoryError should return 500 and the REPOSITORY_ERROR code."""
-    
+
     @app.get("/__test/raise_repo")
     async def _raise_repo():
         raise RepositoryError("db fail")
 
     # Ensure DEBUG is False so sanitized_traceback is not injected into logs
     from app.core.config import settings
+
     monkeypatch.setattr(settings, "DEBUG", False)
 
     resp = await async_client.get("/__test/raise_repo")
@@ -105,6 +107,7 @@ async def test_repository_error_maps_to_500(async_client, monkeypatch):
     body = resp.json()
     assert body["error_type"] == "REPOSITORY_ERROR"
     assert body["error_code"] == "APP.DB.001"
+
 
 @pytest.mark.anyio
 async def test_unhandled_exception_maps_to_500(async_client):

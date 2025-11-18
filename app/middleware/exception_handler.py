@@ -18,12 +18,11 @@ except Exception:
 
 
 def _sanitize_traceback(tb: str, max_lines: int = 25) -> str:
-
-    '''Sanitize traceback by redacting absolute paths and limiting number of lines'''
+    """Sanitize traceback by redacting absolute paths and limiting number of lines"""
 
     if not tb:
         return ""
-    
+
     # Redact project root paths
     if _PROJECT_ROOT:
         tb = tb.replace(_PROJECT_ROOT, "[REDACTED_PATH]")
@@ -38,6 +37,7 @@ def _sanitize_traceback(tb: str, max_lines: int = 25) -> str:
         return "\n".join(head + ["...omitted..."] + tail)
     return "\n".join(lines)
 
+
 # Mapping of error types to error codes and HTTP status codes
 ERROR_MAP = {
     "validation": {"code": "APP.VAL.001", "http": status.HTTP_422_UNPROCESSABLE_ENTITY},
@@ -50,7 +50,8 @@ ERROR_MAP = {
     "internal": {"code": "APP.ERR.500", "http": status.HTTP_500_INTERNAL_SERVER_ERROR},
 }
 
-def _make_error_response(request_id: str | None, error_code: str, error_type: str, message: str, details = None):
+
+def _make_error_response(request_id: str | None, error_code: str, error_type: str, message: str, details=None):
     body = {
         "request_id": request_id,
         "error_code": error_code,
@@ -60,6 +61,7 @@ def _make_error_response(request_id: str | None, error_code: str, error_type: st
     if details is not None:
         body["details"] = details
     return body
+
 
 async def exception_handling_middleware(request: Request, call_next):
     request_id = getattr(request.state, "request_id", None)
@@ -90,7 +92,7 @@ async def exception_handling_middleware(request: Request, call_next):
                     error_code=em["code"],
                     error_type="INVALID_UUID_FORMAT",
                     message="The provided ID is not a valid UUID format",
-                    details={"expected": "xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx"}
+                    details={"expected": "xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx"},
                 ),
             )
         else:
@@ -112,7 +114,7 @@ async def exception_handling_middleware(request: Request, call_next):
                     error_code=em["code"],
                     error_type="VALIDATION_ERROR",
                     message="Request validation failed",
-                    details=exc.errors()
+                    details=exc.errors(),
                 ),
             )
 
@@ -131,11 +133,8 @@ async def exception_handling_middleware(request: Request, call_next):
         return JSONResponse(
             status_code=em["http"],
             content=_make_error_response(
-                request_id=request_id,
-                error_code=em["code"],
-                error_type="ENTITY_ALREADY_EXISTS",
-                message=str(exc)
-            )
+                request_id=request_id, error_code=em["code"], error_type="ENTITY_ALREADY_EXISTS", message=str(exc)
+            ),
         )
 
     except DomainError as exc:
@@ -153,11 +152,8 @@ async def exception_handling_middleware(request: Request, call_next):
         return JSONResponse(
             status_code=em["http"],
             content=_make_error_response(
-                request_id=request_id,
-                error_code=em["code"],
-                error_type="DOMAIN_ERROR",
-                message=str(exc)
-            )
+                request_id=request_id, error_code=em["code"], error_type="DOMAIN_ERROR", message=str(exc)
+            ),
         )
 
     except UnauthorizedError as exc:
@@ -197,11 +193,8 @@ async def exception_handling_middleware(request: Request, call_next):
         return JSONResponse(
             status_code=em["http"],
             content=_make_error_response(
-                request_id=request_id,
-                error_code=em["code"],
-                error_type="NOT_FOUND",
-                message=str(exc)
-            )
+                request_id=request_id, error_code=em["code"], error_type="NOT_FOUND", message=str(exc)
+            ),
         )
 
     except RepositoryError as exc:
@@ -222,11 +215,8 @@ async def exception_handling_middleware(request: Request, call_next):
         return JSONResponse(
             status_code=em["http"],
             content=_make_error_response(
-                request_id=request_id,
-                error_code=em["code"],
-                error_type="REPOSITORY_ERROR",
-                message="Database error"
-            )
+                request_id=request_id, error_code=em["code"], error_type="REPOSITORY_ERROR", message="Database error"
+            ),
         )
 
     except Exception as exc:
@@ -250,8 +240,8 @@ async def exception_handling_middleware(request: Request, call_next):
                 request_id=request_id,
                 error_code=em["code"],
                 error_type="INTERNAL_SERVER_ERROR",
-                message="Internal server error"
-            )
+                message="Internal server error",
+            ),
         )
 
 
@@ -271,7 +261,7 @@ async def request_validation_exception_handler(request: Request, exc: RequestVal
                 error_code=em["code"],
                 error_type="INVALID_UUID_FORMAT",
                 message="The provided ID is not a valid UUID format",
-                details={"expected": "xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx"}
+                details={"expected": "xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx"},
             ),
         )
     em = ERROR_MAP["validation"]

@@ -10,8 +10,8 @@ from app.db.session import get_engine
 
 logger = logging.getLogger("create_superuser")
 
-async def create_default_superuser(engine) -> int:
 
+async def create_default_superuser(engine) -> int:
     """Create a default superuser if configured and none exists."""
 
     # Check if creation is enabled
@@ -64,9 +64,11 @@ async def create_default_superuser(engine) -> int:
         logger.exception("Error while creating superuser: %s", exc)
         return 3
 
+
 async def main() -> int:
     engine = get_engine()
     return await create_default_superuser(engine)
+
 
 if __name__ == "__main__":
     logging.basicConfig(level=logging.INFO, stream=sys.stdout)

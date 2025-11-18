@@ -1,8 +1,5 @@
-
-
 class RepositoryError(Exception):
-
-    """ General repository error """
+    """General repository error"""
 
     status_code = 500
 
@@ -11,8 +8,7 @@ class RepositoryError(Exception):
 
 
 class EntityAlreadyExists(Exception):
-    
-    """ Entity already exists in the database """
+    """Entity already exists in the database"""
 
     status_code = 409
 
@@ -21,7 +17,6 @@ class EntityAlreadyExists(Exception):
 
 
 class NotFoundError(Exception):
-
     """Entity not found"""
 
     status_code = 404
@@ -31,7 +26,6 @@ class NotFoundError(Exception):
 
 
 class DomainError(Exception):
-
     """Business logic/validation errors"""
 
     status_code = 400
@@ -41,7 +35,6 @@ class DomainError(Exception):
 
 
 class UnauthorizedError(Exception):
-
     """Authentication/authorization failures (HTTP 401)."""
 
     status_code = 401

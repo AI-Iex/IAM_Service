@@ -20,11 +20,11 @@ from app.core.logging_config import setup_logging, configure_third_party_loggers
 from app.core.permissions_loader import Permissions
 
 logger = setup_logging()
-configure_third_party_loggers(level = logging.WARNING, attach_json_handler = False)
+configure_third_party_loggers(level=logging.WARNING, attach_json_handler=False)
+
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
-    
     """Lifespan handler.
 
     NOTE: Database schema creation and seeding are expected to be performed by an external migration step.
@@ -33,7 +33,7 @@ async def lifespan(app: FastAPI):
     # Startup: verify database engine is ready
     engine = get_engine()
     logger.info("Application startup - database engine initialized")
-    
+
     try:
         yield
     finally:
@@ -41,22 +41,23 @@ async def lifespan(app: FastAPI):
         await engine.dispose()
         logger.info("Application shutdown - database connections closed")
 
+
 app = FastAPI(
-    title = settings.SERVICE_NAME,
-    version = settings.SERVICE_VERSION,
-    description = settings.SERVICE_DESCRIPTION,
-    license_info = {"name": settings.SERVICE_LICENSE},
-    docs_url = "/docs",
-    redoc_url = "/redoc",
-    lifespan = lifespan,
+    title=settings.SERVICE_NAME,
+    version=settings.SERVICE_VERSION,
+    description=settings.SERVICE_DESCRIPTION,
+    license_info={"name": settings.SERVICE_LICENSE},
+    docs_url="/docs",
+    redoc_url="/redoc",
+    lifespan=lifespan,
 )
 
 app.add_middleware(
     CORSMiddleware,
-    allow_origins = settings.CORS_ORIGINS,
-    allow_credentials = True,
-    allow_methods = ["GET", "POST", "PUT", "DELETE", "PATCH", "OPTIONS"],
-    allow_headers = ["Authorization", "Content-Type", "X-Requested-With"],
+    allow_origins=settings.CORS_ORIGINS,
+    allow_credentials=True,
+    allow_methods=["GET", "POST", "PUT", "DELETE", "PATCH", "OPTIONS"],
+    allow_headers=["Authorization", "Content-Type", "X-Requested-With"],
 )
 
 # Register middlewares.
@@ -68,18 +69,19 @@ app.middleware("http")(context_middleware)
 # Register a FastAPI exception handler.
 app.add_exception_handler(RequestValidationError, request_validation_exception_handler)
 
-# Root endpoint - redirect to documentation
-@app.get("/", include_in_schema = False)
-async def root():
 
+# Root endpoint - redirect to documentation
+@app.get("/", include_in_schema=False)
+async def root():
     """Redirect root to API documentation"""
 
     return RedirectResponse(url="/docs")
 
+
 # Include routers
-app.include_router(health_router, prefix = settings.route_prefix)
-app.include_router(auth_router, prefix = settings.route_prefix)
-app.include_router(client_router, prefix = settings.route_prefix)
-app.include_router(users_router, prefix = settings.route_prefix)
-app.include_router(role_router, prefix = settings.route_prefix)
-app.include_router(permission_router, prefix = settings.route_prefix)
+app.include_router(health_router, prefix=settings.route_prefix)
+app.include_router(auth_router, prefix=settings.route_prefix)
+app.include_router(client_router, prefix=settings.route_prefix)
+app.include_router(users_router, prefix=settings.route_prefix)
+app.include_router(role_router, prefix=settings.route_prefix)
+app.include_router(permission_router, prefix=settings.route_prefix)

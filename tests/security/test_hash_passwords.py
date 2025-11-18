@@ -1,9 +1,9 @@
 import pytest
 from app.core.security import hash_password, verify_password
 
-def test_password_hash_and_verify():
 
-    ''' Test that hashing and verifying passwords works as expected. '''
+def test_password_hash_and_verify():
+    """Test that hashing and verifying passwords works as expected."""
 
     try:
         plain = "SuperSecure123!"
@@ -17,10 +17,10 @@ def test_password_hash_and_verify():
     except Exception as e:
         pytest.fail(f"Error: Password hash/verify test: {e}")
 
-def test_empty_password_raises_error():
 
-    ''' Test that hashing or verifying empty passwords raises ValueError. '''
-    
+def test_empty_password_raises_error():
+    """Test that hashing or verifying empty passwords raises ValueError."""
+
     with pytest.raises(ValueError):
         hash_password("")
 
@@ -29,6 +29,6 @@ def test_empty_password_raises_error():
 
     with pytest.raises(ValueError):
         verify_password("", "")
-    
+
     with pytest.raises(ValueError):
         verify_password("plain", "")

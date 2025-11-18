@@ -9,8 +9,8 @@ from app.core.config import settings
 
 logger = logging.getLogger("migrate")
 
-async def seed_permissions_and_roles(engine):
 
+async def seed_permissions_and_roles(engine):
     """Seed permissions from permissions_map.json and create admin role."""
 
     import importlib
@@ -20,7 +20,11 @@ async def seed_permissions_and_roles(engine):
     from sqlalchemy.ext.asyncio import async_sessionmaker
 
     # Load permissions map
-    perms_path = Path(settings.SERVICE_PERMISSIONS_PATH) if isinstance(settings.SERVICE_PERMISSIONS_PATH, str) else settings.SERVICE_PERMISSIONS_PATH
+    perms_path = (
+        Path(settings.SERVICE_PERMISSIONS_PATH)
+        if isinstance(settings.SERVICE_PERMISSIONS_PATH, str)
+        else settings.SERVICE_PERMISSIONS_PATH
+    )
 
     if not perms_path.exists():
         logger.warning("permissions_map.json not found, skipping permission seeding")
@@ -52,17 +56,14 @@ async def seed_permissions_and_roles(engine):
 
             # Create admin role
             role_table = Role.__table__
-            stmt_role = pg_insert(role_table).values({
-                "name": "admin",
-                "description": "Administrator role with all permissions"
-            })
+            stmt_role = pg_insert(role_table).values(
+                {"name": "admin", "description": "Administrator role with all permissions"}
+            )
             stmt_role = stmt_role.on_conflict_do_nothing(index_elements=[role_table.c.name])
             await session.execute(stmt_role)
 
             # Assign all permissions to admin role
-            res_role = await session.execute(
-                select(role_table.c.id).where(role_table.c.name == "admin").limit(1)
-            )
+            res_role = await session.execute(select(role_table.c.id).where(role_table.c.name == "admin").limit(1))
             role_row = res_role.first()
             if role_row:
                 role_id = role_row[0]
@@ -80,8 +81,8 @@ async def seed_permissions_and_roles(engine):
 
                 logger.info("Seeded %d permissions and ensured admin role", len(perm_rows))
 
+
 async def main():
-   
     """Run Alembic migrations and seed initial data."""
 
     engine = get_engine()
@@ -98,6 +99,7 @@ async def main():
     # Seed permissions and roles
     await seed_permissions_and_roles(engine)
     logger.info("Permissions and roles seeded successfully")
+
 
 if __name__ == "__main__":
     logging.basicConfig(level=logging.INFO, stream=sys.stdout)

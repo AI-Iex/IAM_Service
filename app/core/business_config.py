@@ -3,15 +3,13 @@ from functools import lru_cache
 from pathlib import Path
 from app.core.config import settings
 
-class BusinessConfig:
 
+class BusinessConfig:
     """Class to load and cache business configuration rules from a JSON file."""
-    
+
     @staticmethod
     @lru_cache(maxsize=1)
-
     def load() -> dict:
-
         """Load and cache the business configuration from a JSON file."""
 
         # Load configuration file

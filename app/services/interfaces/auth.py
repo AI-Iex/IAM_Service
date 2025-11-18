@@ -8,13 +8,20 @@ from app.schemas.user import UserRead
 
 class IAuthService(ABC):
     @abstractmethod
-    async def login(self, email: str, password: str, ip: Optional[str] = None, user_agent: Optional[str] = None) -> UserAndToken:
+    async def login(
+        self, email: str, password: str, ip: Optional[str] = None, user_agent: Optional[str] = None
+    ) -> UserAndToken:
         """Autentica un usuario y devuelve user + tokens."""
         pass
 
     @abstractmethod
-    async def refresh_with_refresh_token(self, presented_raw: str, presented_jti: Optional[UUID],
-                                         ip: Optional[str] = None, user_agent: Optional[str] = None) -> dict:
+    async def refresh_with_refresh_token(
+        self,
+        presented_raw: str,
+        presented_jti: Optional[UUID],
+        ip: Optional[str] = None,
+        user_agent: Optional[str] = None,
+    ) -> dict:
         """Rota el refresh token y genera nuevo access."""
         pass
 

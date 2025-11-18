@@ -10,6 +10,7 @@ from app.repositories.interfaces.user import IUserRepository
 from uuid import UUID
 from app.models.user_role import UserRole
 
+
 class UserRepository(IUserRepository):
 
     # region CREATE
@@ -17,24 +18,24 @@ class UserRepository(IUserRepository):
     async def create(self, db: AsyncSession, dto: UserCreateInDB) -> User:
         try:
             user = User(
-                email = dto.email,
-                full_name = dto.full_name,
-                hashed_password = dto.hashed_password,
-                is_active = dto.is_active,
-                is_superuser = dto.is_superuser,
-                require_password_change = dto.require_password_change
+                email=dto.email,
+                full_name=dto.full_name,
+                hashed_password=dto.hashed_password,
+                is_active=dto.is_active,
+                is_superuser=dto.is_superuser,
+                require_password_change=dto.require_password_change,
             )
 
             db.add(user)
             await db.flush()
             await db.refresh(user)
             return user
-        
+
         except IntegrityError as e:
             if "unique" in str(e).lower() or "duplicate" in str(e).lower():
                 raise EntityAlreadyExists("User with that email already exists") from e
             raise RepositoryError("Database integrity error: " + str(e)) from e
-        
+
         except Exception as e:
             raise RepositoryError("Unexpected database error: " + str(e)) from e
 
@@ -50,9 +51,9 @@ class UserRepository(IUserRepository):
         active: Optional[bool] = None,
         is_superuser: Optional[bool] = None,
         skip: int = 0,
-        limit: int = 100
+        limit: int = 100,
     ) -> List[User]:
-        
+
         try:
 
             query = select(User)
@@ -73,33 +74,27 @@ class UserRepository(IUserRepository):
 
             result = await db.execute(query)
             return result.scalars().all()
-        
+
         except Exception as e:
             raise RepositoryError(f"Error retrieving users with filters: {str(e)}") from e
 
     async def read_by_id(self, db: AsyncSession, user_id: UUID) -> Optional[User]:
-        
+
         try:
 
-            result = await db.execute(
-                select(User)
-                .where(User.id == user_id)
-            )
+            result = await db.execute(select(User).where(User.id == user_id))
             return result.scalar_one_or_none()
-        
+
         except Exception as e:
             raise RepositoryError(f"Error retrieving user by ID: {str(e)}") from e
 
     async def read_by_email(self, db: AsyncSession, email: str) -> Optional[User]:
-        
+
         try:
 
-            result = await db.execute(
-                select(User)
-                .where(User.email == email)
-            )
+            result = await db.execute(select(User).where(User.email == email))
             return result.scalar_one_or_none()
-        
+
         except Exception as e:
             raise RepositoryError(f"Error retrieving user by email: {str(e)}") from e
 
@@ -108,13 +103,13 @@ class UserRepository(IUserRepository):
     # region UPDATE
 
     async def update(self, db: AsyncSession, user_id: UUID, update_data: UserUpdateInDB) -> User:
-        
+
         try:
-            
+
             user = await self.read_by_id(db, user_id)
 
             if hasattr(update_data, "model_dump"):
-                data = update_data.model_dump(exclude_unset = True, exclude_none = True)
+                data = update_data.model_dump(exclude_unset=True, exclude_none=True)
             else:
                 data = dict(update_data or {})
 
@@ -124,58 +119,57 @@ class UserRepository(IUserRepository):
             await db.flush()
             await db.refresh(user)
             return user
-            
+
         except Exception as e:
             raise RepositoryError(f"Error updating user: {str(e)}") from e
 
     async def update_last_login(self, db: AsyncSession, user_id: UUID) -> User:
-        
+
         try:
-            
+
             user = await self.read_by_id(db, user_id)
 
             user.last_login = datetime.now(timezone.utc)
-            
+
             await db.flush()
             await db.refresh(user)
             return user
-        
+
         except Exception as e:
             raise RepositoryError(f"Error updating last_login: {str(e)}") from e
-        
+
     async def assign_role(self, db: AsyncSession, user_id: UUID, role_id: UUID) -> User:
 
         try:
-            
-            await db.execute(UserRole.__table__.insert().values(user_id = user_id, role_id = role_id))
+
+            await db.execute(UserRole.__table__.insert().values(user_id=user_id, role_id=role_id))
             await db.flush()
 
             user = await self.read_by_id(db, user_id)
 
             await db.refresh(user)
             return user
-        
+
         except Exception as e:
             raise RepositoryError(f"Error adding role to user: {str(e)}") from e
-        
+
     async def remove_role(self, db: AsyncSession, user_id: UUID, role_id: UUID) -> User:
-        
+
         try:
-           
+
             user = await self.read_by_id(db, user_id)
 
             # Delete association if exists
             await db.execute(
                 delete(UserRole.__table__).where(
-                    UserRole.__table__.c.user_id == user_id,
-                    UserRole.__table__.c.role_id == role_id
+                    UserRole.__table__.c.user_id == user_id, UserRole.__table__.c.role_id == role_id
                 )
             )
 
             await db.flush()
             await db.refresh(user)
             return user
-        
+
         except Exception as e:
             raise RepositoryError(f"Error removing role from user: {str(e)}") from e
 
@@ -188,13 +182,12 @@ class UserRepository(IUserRepository):
         try:
             result = await db.execute(
                 select(UserRole.__table__).where(
-                    UserRole.__table__.c.user_id == user_id,
-                    UserRole.__table__.c.role_id == role_id
+                    UserRole.__table__.c.user_id == user_id, UserRole.__table__.c.role_id == role_id
                 )
             )
-            
+
             return result.first() is not None
-        
+
         except Exception as e:
             raise RepositoryError(f"Error checking user role existence: {str(e)}") from e
 
@@ -203,14 +196,11 @@ class UserRepository(IUserRepository):
     # region DELETE
 
     async def delete(self, db: AsyncSession, user_id: UUID) -> None:
-        
+
         try:
-             await db.execute( delete(User).where(User.id == user_id))
+            await db.execute(delete(User).where(User.id == user_id))
 
         except Exception as e:
             raise RepositoryError(f"Error deleting user: {str(e)}") from e
 
     # endregion DELETE
-
-
-
