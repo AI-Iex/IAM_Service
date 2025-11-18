@@ -256,7 +256,7 @@ async def test_change_email_and_password(async_client: AsyncClient, db_session, 
     
     admin_email2 = f"admin_self_{uuid4().hex[:6]}@gmail.com"
     admin_password2 = "StrongPass1!"
-    admin_dto = UserCreateInDB(email=admin_email2, full_name="Tmp Admin", hashed_password=hash_password(admin_password2), is_active=True, is_superuser=True, require_password_change=False)
+    UserCreateInDB(email=admin_email2, full_name="Tmp Admin", hashed_password=hash_password(admin_password2), is_active=True, is_superuser=True, require_password_change=False)
     await _create_admin(db_session, admin_email2, admin_password2)
     admin_headers = await token_headers(admin_email2, admin_password2)
     create_resp = await async_client.post(f"{settings.route_prefix}/users", json = create_payload, headers = admin_headers)
@@ -308,7 +308,7 @@ async def test_assign_and_remove_role(async_client: AsyncClient, db_session, tok
     await _create_admin(db_session, admin_email, admin_password)
 
     # Create target user
-    target = UserCreateInDB(
+    UserCreateInDB(
         email = f"role_user_{uuid4().hex[:6]}@gmail.com",
         full_name = "Role Target",
         hashed_password = hash_password("StrongPass1!"),
@@ -377,7 +377,7 @@ async def test_delete_user(async_client: AsyncClient, db_session, token_headers)
     await _create_admin(db_session, admin_email, admin_password)
 
     # Create user to delete
-    target = UserCreateInDB(
+    UserCreateInDB(
         email=f"del_{uuid4().hex[:6]}@gmail.com",
         full_name="To Delete",
         hashed_password=hash_password("StrongPass1!"),

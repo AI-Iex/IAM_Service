@@ -289,11 +289,11 @@ async def token_endpoint(
         if grant_type == "client_credentials":
             res = await auth_service.client_credentials(form_data.username, form_data.password)
         elif grant_type == "password":
-            res = await auth_service.login(form_data.username, form_data.password, ip=ip, user_agent=ua)
+            res = await auth_service.login(form_data.username, form_data.password, ip = ip, user_agent = ua)
         else:
-            raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=f"Unsupported grant_type: {grant_type}")
-    except Exception as e:
-        raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Invalid credentials")
+            raise HTTPException(status_code = status.HTTP_400_BAD_REQUEST, detail = f"Unsupported grant_type: {grant_type}")
+    except Exception:
+        raise HTTPException(status_code = status.HTTP_401_UNAUTHORIZED, detail = "Invalid credentials")
 
     tokens = res.token
 
@@ -346,7 +346,7 @@ async def authenticate_client(
     
     # Validate grant_type
     if payload.grant_type != "client_credentials":
-        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Unsupported grant_type")
+        raise HTTPException(status_code = status.HTTP_400_BAD_REQUEST, detail = "Unsupported grant_type")
 
     # Authenticate client
     try:
@@ -354,6 +354,6 @@ async def authenticate_client(
         token = await auth_service.client_credentials(client_id_uuid, payload.client_secret)
         
         return ClientAuthResponse(client_id = payload.client_id, token = token)
-    except Exception as e:
-        raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Invalid client credentials")
+    except Exception:
+        raise HTTPException(status_code = status.HTTP_401_UNAUTHORIZED, detail = "Invalid client credentials")
 

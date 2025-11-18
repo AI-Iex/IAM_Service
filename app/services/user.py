@@ -5,7 +5,8 @@ from app.db.unit_of_work import UnitOfWorkFactory
 from app.schemas.user import UserCreateByAdmin, UserCreateInDB, UserRead, UserUpdate, UserUpdateInDB, UserChangeEmail, UserRegister, PasswordChange
 from app.core.security import hash_password, verify_password
 from app.core.exceptions import EntityAlreadyExists, DomainError, NotFoundError
-import logging, re
+import logging
+import re
 from app.core.business_config import BusinessConfig
 from uuid import UUID
 from app.repositories.interfaces.role import IRoleRepository
@@ -156,10 +157,6 @@ class UserService(IUserService):
         local_part = email.split('@')[0]
         if local_part.startswith('.') or local_part.endswith('.'):
             raise DomainError("Invalid email format - local part cannot start or end with a dot")
-    
-    # Update the last login timestamp for a user
-    def _update_last_login(self,user_id: UUID):
-        n=0
         
 
 # endregion Internal Methods

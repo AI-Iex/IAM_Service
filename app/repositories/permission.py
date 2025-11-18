@@ -1,7 +1,7 @@
 from typing import Optional, List
 from uuid import UUID
 from sqlalchemy.ext.asyncio import AsyncSession
-from sqlalchemy import select, delete, update
+from sqlalchemy import select, delete
 from app.repositories.interfaces.permission import IPermissionRepository
 from app.models.permission import Permission
 from app.schemas.permission import PermissionCreate, PermissionUpdateInDB

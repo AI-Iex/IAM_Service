@@ -7,7 +7,8 @@ from app.core.security import (
     generate_raw_refresh_token, hash_refresh_token,
     refresh_token_expiry_datetime
 )
-import hmac, logging
+import hmac
+import logging
 from uuid import UUID
 from app.repositories.interfaces.user import IUserRepository
 from app.repositories.interfaces.refresh_token import IRefreshTokenRepository
@@ -210,12 +211,6 @@ class AuthService(IAuthService):
         Revokes a refresh token using only its JTI
         Used when access token is expired and user_id is unknown
         """
-
-        # Check is uuid
-        try:
-            jti_a = UUID(jti)
-        except Exception:
-            raise DomainError("jti malformed - invalid UUID format")
 
         # 0. Log the attempt
         logger.info(

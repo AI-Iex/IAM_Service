@@ -51,7 +51,7 @@ async def test_uow_rolls_back_on_exception(engine, monkeypatch, db_session):
     # Exception inside the UoW should trigger rollback
     try:
         async with uow_factory() as db:
-            r = await role_repo.create(db, RoleCreate(name="uow-should-rollback", description="desc"))
+            await role_repo.create(db, RoleCreate(name="uow-should-rollback", description="desc"))
             # Force an error to trigger rollback
             raise RuntimeError("force rollback")
     except RuntimeError:

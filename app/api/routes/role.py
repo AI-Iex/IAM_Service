@@ -8,7 +8,6 @@ from app.schemas.role import RoleCreate, RoleRead, RoleUpdate
 from app.services.role import RoleService
 from app.dependencies.services import get_role_service
 from app.schemas.auth import Principal
-from uuid import UUID
 from app.core.permissions import requires_permission
 from app.core.permissions_loader import Permissions
 

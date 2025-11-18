@@ -10,7 +10,7 @@ def _ensure_engine_and_sessionmaker():
 
     ''' Ensure that the async engine and sessionmaker are created '''
 
-    global engine, _sessionmaker, AsyncSessionLocal
+    global engine, _sessionmaker
 
     if _sessionmaker is None:
 
@@ -26,13 +26,11 @@ def _ensure_engine_and_sessionmaker():
 
         _sessionmaker = sessionmaker(
             engine,
-            class_=AsyncSession,
-            autocommit=False,
-            autoflush=False,
-            expire_on_commit=False,
+            class_ = AsyncSession,
+            autocommit = False,
+            autoflush = False,
+            expire_on_commit = False,
         )
-
-        AsyncSessionLocal = _sessionmaker
 
 
 def AsyncSessionLocal() -> AsyncSession:

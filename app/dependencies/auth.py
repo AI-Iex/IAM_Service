@@ -28,7 +28,7 @@ async def get_current_principal_optional(
 
     # Decode token to check validity, if not provided/invalid/expired return None
     try:
-        payload = decode_token(token)
+        decode_token(token)
     except Exception:
         return None
 

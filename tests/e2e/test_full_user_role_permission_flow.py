@@ -40,8 +40,8 @@ async def test_full_flow_user_role_permission(async_client: AsyncClient, db_sess
     admin_headers = await token_headers(admin_email, admin_password)
 
     # 2. Admin creates 'CREATE' and 'READ' permissions for users
-    perm_create_name = f"users:create"
-    perm_read_name = f"users:read"
+    perm_create_name = "users:create"
+    perm_read_name = "users:read"
 
     # 'Create' permission
     perm_create_resp = await async_client.post(

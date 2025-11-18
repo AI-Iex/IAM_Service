@@ -9,7 +9,6 @@ from app.core.exceptions import EntityAlreadyExists, RepositoryError
 from app.repositories.interfaces.user import IUserRepository
 from uuid import UUID
 from app.models.user_role import UserRole
-from app.core.exceptions import RepositoryError
 
 class UserRepository(IUserRepository):
 
@@ -34,10 +33,10 @@ class UserRepository(IUserRepository):
         except IntegrityError as e:
             if "unique" in str(e).lower() or "duplicate" in str(e).lower():
                 raise EntityAlreadyExists("User with that email already exists") from e
-            raise RepositoryError("Database integrity error") from e
+            raise RepositoryError("Database integrity error: " + str(e)) from e
         
         except Exception as e:
-            raise RepositoryError("Unexpected database error") from e
+            raise RepositoryError("Unexpected database error: " + str(e)) from e
 
     # endregion CREATE
 
@@ -206,7 +205,7 @@ class UserRepository(IUserRepository):
     async def delete(self, db: AsyncSession, user_id: UUID) -> None:
         
         try:
-            result = await db.execute( delete(User).where(User.id == user_id))
+             await db.execute( delete(User).where(User.id == user_id))
 
         except Exception as e:
             raise RepositoryError(f"Error deleting user: {str(e)}") from e

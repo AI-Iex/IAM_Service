@@ -1,4 +1,4 @@
-from sqlalchemy import select, delete, update
+from sqlalchemy import select, delete
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import selectinload
 from app.models.client import Client
@@ -114,27 +114,6 @@ class ClientRepository(IClientRepository):
 
         except Exception as e:
             raise RepositoryError(f"Error updating client: {str(e)}") from e
-
-
-   
-
-        try:
-            
-            db_role = await self.read_by_id(db, role_id)
-
-            await db.execute(delete(role_permissions).where(role_permissions.c.role_id == role_id))
-
-            if permission_ids:
-                for pid in permission_ids:
-                    await db.execute(role_permissions.insert().values(role_id = role_id, permission_id = pid))
-
-            await db.flush()
-            await db.refresh(db_role)
-
-            return db_role
-        
-        except Exception as e:
-            raise RepositoryError(f"Error setting permissions for role: {str(e)}") from e
 
     async def assign_permission(self, db: AsyncSession, client_id: UUID, permission_id: UUID) -> Client:
        

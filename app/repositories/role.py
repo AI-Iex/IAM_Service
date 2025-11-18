@@ -1,6 +1,6 @@
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import selectinload
-from sqlalchemy import select, delete, update
+from sqlalchemy import select, delete
 from app.schemas.role import RoleCreate, RoleRead, RoleUpdateInDB
 from app.repositories.interfaces.role import IRoleRepository
 from app.models.role import Role
