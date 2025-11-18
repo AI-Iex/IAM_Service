@@ -15,7 +15,6 @@ Este proyecto usa **Docker Compose Profiles** para separar contextos:
 - **`db`** (dev interno) y **`db_test`** (tests) son containers **completamente separados**
 - **NO comparten volúmenes** → `db_data` (dev) vs `db_test_data` (tests)
 - Puedes correr dev interno + tests **simultáneamente sin conflictos**
-- `docker compose --profile test down -v` **SOLO borra `db_test`**, NO afecta a `db` ni `web`
 
 **Ejemplos:**
 ```bash
