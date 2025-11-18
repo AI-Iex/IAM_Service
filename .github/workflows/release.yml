@@ -71,6 +71,7 @@ jobs:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
       
       - name: Upload tools as release assets
+        if: github.event_name == 'release' 
         uses: softprops/action-gh-release@v1
         with:
           files: |
