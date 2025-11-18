@@ -1,0 +1,220 @@
+services:
+  db:
+    image: postgres:15-alpine
+    container_name: iam_db
+    restart: unless-stopped
+    profiles:
+      - with-db  # Development with internal DB only
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+      POSTGRES_DB: ${POSTGRES_DB}
+      POSTGRES_INITDB_ARGS: "--encoding=UTF8 --lc-collate=C --lc-ctype=C"
+    command: 
+      - "postgres"
+      - "-c"
+      - "log_min_messages=WARNING"
+      - "-c"
+      - "log_error_verbosity=terse"
+    volumes:
+      - db_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER} -d ${POSTGRES_DB}"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 10s
+    deploy:
+      resources:
+        limits:
+          cpus: '1'
+          memory: 512M
+        reservations:
+          cpus: '0.25'
+          memory: 256M
+    labels:
+      com.iam-service.description: "PostgreSQL database (development)"
+      com.iam-service.service: "database"
+    networks:
+      - backend
+
+  db_test:
+    image: postgres:15-alpine
+    container_name: iam_db_test
+    restart: "no"
+    profiles:
+      - test  # Only for tests
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+      POSTGRES_DB: ${POSTGRES_TEST_DB:-IAMS_DB_Test}
+      POSTGRES_INITDB_ARGS: "--encoding=UTF8 --lc-collate=C --lc-ctype=C"
+    command: 
+      - "postgres"
+      - "-c"
+      - "log_min_messages=WARNING"
+      - "-c"
+      - "log_error_verbosity=terse"
+    volumes:
+      - db_test_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER} -d ${POSTGRES_TEST_DB:-IAMS_DB_Test}"]
+      interval: 5s
+      timeout: 3s
+      retries: 3
+      start_period: 5s
+    deploy:
+      resources:
+        limits:
+          cpus: '0.5'
+          memory: 256M
+    labels:
+      com.iam-service.description: "PostgreSQL database (tests only)"
+      com.iam-service.service: "testing"
+    networks:
+      - backend
+
+  web:
+    build:
+      context: .
+      dockerfile: Dockerfile
+      cache_from:
+        - iam_service-web:latest
+    image: iam_service-web:latest
+    container_name: iam_web
+    ports:
+      - "${PORT:-8000}:8000"
+    env_file:
+      - .env
+    environment:
+      DATABASE_URL: ${DATABASE_URL}
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:${PORT:-8000}/${SERVICE_VERSION:-1.0}/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
+    deploy:
+      resources:
+        limits:
+          cpus: '2'
+          memory: 1G
+        reservations:
+          cpus: '0.5'
+          memory: 512M
+    labels:
+      com.iam-service.description: "IAM Service API"
+      com.iam-service.service: "api"
+    networks:
+      - backend
+
+  migrate:
+    build:
+      context: .
+      dockerfile: Dockerfile
+      cache_from:
+        - iam_service-web:latest
+    image: iam_service-migrate:latest
+    container_name: iam_migrate
+    env_file:
+      - .env
+    environment:
+      DATABASE_URL: ${DATABASE_URL}
+    command: ["python", "scripts/migrate_and_seed.py"]
+    restart: "no"
+    deploy:
+      resources:
+        limits:
+          cpus: '0.5'
+          memory: 512M
+    labels:
+      com.iam-service.description: "Database migration and seeding"
+      com.iam-service.service: "migration"
+    networks:
+      - backend
+
+  create_superuser:
+    build:
+      context: .
+      dockerfile: Dockerfile
+      cache_from:
+        - iam_service-web:latest
+    image: iam_service-superuser:latest
+    container_name: iam_superuser
+    depends_on:
+      migrate:
+        condition: service_completed_successfully
+    env_file:
+      - .env
+    environment:
+      DATABASE_URL: ${DATABASE_URL}
+    command: ["python", "scripts/create_superuser.py"]
+    restart: "no"
+    deploy:
+      resources:
+        limits:
+          cpus: '0.25'
+          memory: 256M
+    labels:
+      com.iam-service.description: "Superuser creation"
+      com.iam-service.service: "setup"
+    networks:
+      - backend
+
+  tests:
+    build:
+      context: .
+      dockerfile: Dockerfile
+      cache_from:
+        - iam_service-web:latest
+    image: iam_service-tests:latest
+    container_name: iam_tests
+    profiles:
+      - test  # Explicit profile for testing
+    depends_on:
+      db_test:
+        condition: service_healthy  # Uses dedicated test DB
+    env_file:
+      - .env
+    environment:
+      POSTGRES_TEST_DB: ${POSTGRES_TEST_DB:-IAMS_DB_Test}
+      TEST_DATABASE_URL: postgresql://postgres:admin@db_test:5432/IAMS_DB_Test
+      PYTEST_ARGS: ${PYTEST_ARGS:--q --tb=short}
+    command: >
+      sh -c '
+        python scripts/setup_test_db.py &&
+        pytest $$PYTEST_ARGS || 
+        if [ $$? -eq 5 ]; then exit 0; else exit $$?; fi
+      '
+    restart: "no"
+    deploy:
+      resources:
+        limits:
+          cpus: '1'
+          memory: 1G
+        reservations:
+          cpus: '0.25'
+          memory: 256M
+    labels:
+      com.iam-service.description: "Test suite execution"
+      com.iam-service.service: "testing"
+    networks:
+      - backend
+
+volumes:
+  db_data:
+    driver: local
+    labels:
+      com.iam-service.description: "PostgreSQL data volume (development)"
+  
+  db_test_data:
+    driver: local
+    labels:
+      com.iam-service.description: "PostgreSQL data volume (tests only)"
+
+networks:
+  backend:
+    driver: bridge
+    labels:
+      com.iam-service.description: "Backend network for IAM services"

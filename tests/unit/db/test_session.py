@@ -1,9 +1,9 @@
 import pytest
 from sqlalchemy import text
 
+
 @pytest.mark.anyio
 async def test_engine_connect(engine):
-
     """Sanity-check that the test engine is connectable and can execute a simple query."""
 
     async with engine.connect() as conn:

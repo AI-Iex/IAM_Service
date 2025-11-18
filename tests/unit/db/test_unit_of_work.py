@@ -6,22 +6,23 @@ from app.db.unit_of_work import get_uow_factory
 from app.repositories.role import RoleRepository
 from app.schemas.role import RoleCreate
 
-def _make_session_factory(engine):
 
+def _make_session_factory(engine):
     """Return a callable factory that produces AsyncSession instances bound to the provided engine."""
 
     def factory():
         Session = sessionmaker(bind=engine, class_=AsyncSession, expire_on_commit=False)
         return Session()
+
     return factory
+
 
 @pytest.mark.anyio
 async def test_uow_commits(engine, monkeypatch, db_session):
-
     """SQLAlchemyUnitOfWork should commit changes when exiting the context without exceptions."""
 
     factory = _make_session_factory(engine)
-   
+
     monkeypatch.setattr(db_session_module, "AsyncSessionLocal", factory)
     monkeypatch.setattr("app.db.unit_of_work.AsyncSessionLocal", factory)
 
@@ -37,11 +38,11 @@ async def test_uow_commits(engine, monkeypatch, db_session):
     found = await role_repo.read_by_id(db_session, created_id)
     assert found is not None and found.id == created_id
 
+
 @pytest.mark.anyio
 async def test_uow_rolls_back_on_exception(engine, monkeypatch, db_session):
-
     """SQLAlchemyUnitOfWork should rollback if an exception is raised inside the context."""
-    
+
     factory = _make_session_factory(engine)
     monkeypatch.setattr(db_session_module, "AsyncSessionLocal", factory)
     monkeypatch.setattr("app.db.unit_of_work.AsyncSessionLocal", factory)
@@ -51,7 +52,7 @@ async def test_uow_rolls_back_on_exception(engine, monkeypatch, db_session):
     # Exception inside the UoW should trigger rollback
     try:
         async with uow_factory() as db:
-            r = await role_repo.create(db, RoleCreate(name="uow-should-rollback", description="desc"))
+            await role_repo.create(db, RoleCreate(name="uow-should-rollback", description="desc"))
             # Force an error to trigger rollback
             raise RuntimeError("force rollback")
     except RuntimeError:

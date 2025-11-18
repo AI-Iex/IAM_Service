@@ -5,23 +5,24 @@ from sqlalchemy.sql import func
 from sqlalchemy.orm import relationship
 
 from app.db.base import Base
-from app.models.user_role import UserRole   
+from app.models.user_role import UserRole
+
 
 class User(Base):
-   __tablename__ = "users"
+    __tablename__ = "users"
 
-   id = Column(UUID(as_uuid = True), primary_key = True, default = uuid.uuid4, index = True)
-   full_name = Column(String, nullable = False, unique = False, index = True)
-   email = Column(String, nullable = False, unique = True, index = True)
-   hashed_password  = Column(String, nullable = False)
-   is_active = Column(Boolean, default = True)
-   is_superuser = Column(Boolean, default = False)
-   require_password_change = Column(Boolean, default = False)
-   created_at = Column(DateTime(timezone = True), server_default = func.now())
-   updated_at = Column(DateTime(timezone = True), onupdate = func.now())
-   last_login = Column(DateTime(timezone = True), nullable = True)
+    id = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4, index=True)
+    full_name = Column(String, nullable=False, unique=False, index=True)
+    email = Column(String, nullable=False, unique=True, index=True)
+    hashed_password = Column(String, nullable=False)
+    is_active = Column(Boolean, default=True)
+    is_superuser = Column(Boolean, default=False)
+    require_password_change = Column(Boolean, default=False)
+    created_at = Column(DateTime(timezone=True), server_default=func.now())
+    updated_at = Column(DateTime(timezone=True), onupdate=func.now())
+    last_login = Column(DateTime(timezone=True), nullable=True)
 
-   roles = relationship("Role", secondary = UserRole.__table__, back_populates = "users", lazy = "selectin")
+    roles = relationship("Role", secondary=UserRole.__table__, back_populates="users", lazy="selectin")
 
-   def __repr__(self):
-      return f"<User id={self.id} email={self.email}>"
+    def __repr__(self):
+        return f"<User id={self.id} email={self.email}>"

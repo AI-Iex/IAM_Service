@@ -1,5 +1,6 @@
 import logging
 from fastapi import FastAPI
+from fastapi.responses import RedirectResponse
 from contextlib import asynccontextmanager
 from fastapi.middleware.cors import CORSMiddleware
 from app.api.routes.user import router as users_router
@@ -11,42 +12,34 @@ from app.api.routes.client import router as client_router
 from app.middleware.logging import access_log_middleware
 from app.middleware.context import context_middleware
 from app.middleware.auth_context import auth_context_middleware
-from app.middleware.exception_handler import (
-    exception_handling_middleware,
-    request_validation_exception_handler,
-)
+from app.middleware.exception_handler import exception_handling_middleware, request_validation_exception_handler
 from fastapi.exceptions import RequestValidationError
-from app.db.base import init_db
-from app.db.bootstrap import create_default_superuser, seed_permissions_and_roles
 from app.db.session import get_engine
 from app.core.config import settings
 from app.core.logging_config import setup_logging, configure_third_party_loggers
 from app.core.permissions_loader import Permissions
 
-
 logger = setup_logging()
-configure_third_party_loggers(level = logging.WARNING, attach_json_handler = False)
+configure_third_party_loggers(level=logging.WARNING, attach_json_handler=False)
 
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
+    """Lifespan handler.
+
+    NOTE: Database schema creation and seeding are expected to be performed by an external migration step.
+    """
+
+    # Startup: verify database engine is ready
     engine = get_engine()
+    logger.info("Application startup - database engine initialized")
+
     try:
-        await init_db(engine)
-        logger.info("Database initialized successfully")
-        # Seed base permissions and roles first (idempotent)
-        await seed_permissions_and_roles(engine)
-        logger.info("Permissions and default roles seeded")
-
-        if settings.CREATE_SUPERUSER_ON_STARTUP:
-            await create_default_superuser(engine)
-            logger.info("Default superuser created on startup")
-
         yield
     finally:
-        engine = get_engine()
+        # Shutdown: cleanup database connections
         await engine.dispose()
-        logger.info("Database connections closed")
+        logger.info("Application shutdown - database connections closed")
 
 
 app = FastAPI(
@@ -59,7 +52,6 @@ app = FastAPI(
     lifespan=lifespan,
 )
 
-
 app.add_middleware(
     CORSMiddleware,
     allow_origins=settings.CORS_ORIGINS,
@@ -68,23 +60,28 @@ app.add_middleware(
     allow_headers=["Authorization", "Content-Type", "X-Requested-With"],
 )
 
-# Register middlewares so that the access-log middleware is the outermost wrapper.
+# Register middlewares.
 app.middleware("http")(access_log_middleware)
 app.middleware("http")(exception_handling_middleware)
 app.middleware("http")(auth_context_middleware)
 app.middleware("http")(context_middleware)
 
-# Register a FastAPI exception handler so that validation errors raised during
-# routing (before middleware) are normalized to the same error payload used
-# by the middleware.
+# Register a FastAPI exception handler.
 app.add_exception_handler(RequestValidationError, request_validation_exception_handler)
 
-# Lifespan handler registered above handles startup and shutdown work.
+
+# Root endpoint - redirect to documentation
+@app.get("/", include_in_schema=False)
+async def root():
+    """Redirect root to API documentation"""
+
+    return RedirectResponse(url="/docs")
+
 
 # Include routers
-app.include_router(health_router, prefix = settings.route_prefix)
-app.include_router(auth_router, prefix = settings.route_prefix)
-app.include_router(client_router, prefix = settings.route_prefix)
-app.include_router(users_router, prefix = settings.route_prefix)
-app.include_router(role_router, prefix = settings.route_prefix)
-app.include_router(permission_router, prefix = settings.route_prefix)
+app.include_router(health_router, prefix=settings.route_prefix)
+app.include_router(auth_router, prefix=settings.route_prefix)
+app.include_router(client_router, prefix=settings.route_prefix)
+app.include_router(users_router, prefix=settings.route_prefix)
+app.include_router(role_router, prefix=settings.route_prefix)
+app.include_router(permission_router, prefix=settings.route_prefix)

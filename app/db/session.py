@@ -7,10 +7,9 @@ _sessionmaker = None
 
 
 def _ensure_engine_and_sessionmaker():
+    """Ensure that the async engine and sessionmaker are created"""
 
-    ''' Ensure that the async engine and sessionmaker are created '''
-
-    global engine, _sessionmaker, AsyncSessionLocal
+    global engine, _sessionmaker
 
     if _sessionmaker is None:
 
@@ -32,12 +31,9 @@ def _ensure_engine_and_sessionmaker():
             expire_on_commit=False,
         )
 
-        AsyncSessionLocal = _sessionmaker
-
 
 def AsyncSessionLocal() -> AsyncSession:
-
-    """ Factory function compatible with previous usage. Call to obtain a new AsyncSession """
+    """Factory function compatible with previous usage. Call to obtain a new AsyncSession"""
 
     _ensure_engine_and_sessionmaker()
 
@@ -45,16 +41,14 @@ def AsyncSessionLocal() -> AsyncSession:
 
 
 def get_engine():
-    
-    """ Return the async engine, creating it if necessary """
+    """Return the async engine, creating it if necessary"""
 
     _ensure_engine_and_sessionmaker()
     return engine
 
 
 async def get_db() -> AsyncGenerator[AsyncSession, None]:
-
-    """ Provides an async database session """
+    """Provides an async database session"""
 
     db = AsyncSessionLocal()
     try:

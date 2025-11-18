@@ -3,17 +3,17 @@ from sqlalchemy import create_engine, text
 from sqlalchemy.exc import OperationalError
 from app.core.config import settings
 
+
 @pytest.fixture(scope="module")
 def db_engine():
-
     """Fixture to provide a SQLAlchemy engine connected to the test database."""
 
-    engine = create_engine(settings.DATABASE_URL)
+    engine = create_engine(settings.TEST_DATABASE_URL)
     yield engine
     engine.dispose()
 
-def test_db_connection(db_engine):
 
+def test_db_connection(db_engine):
     """Test that a connection to the database can be established."""
 
     try:

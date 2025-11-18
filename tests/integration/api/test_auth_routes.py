@@ -4,9 +4,9 @@ from httpx import AsyncClient
 from app.core.security import hash_password
 from app.core.config import settings
 
+
 @pytest.mark.anyio
 async def test_login_and_get_tokens_logout(async_client: AsyncClient, db_session, token_headers):
-    
     """User can log in and receive access and refresh tokens."""
 
     email = f"auth_login_{uuid4().hex[:6]}@gmail.com"
@@ -18,12 +18,12 @@ async def test_login_and_get_tokens_logout(async_client: AsyncClient, db_session
         "full_name": "Auth Login User",
         "password": password,
     }
-    reg_resp = await async_client.post(f"{settings.route_prefix}/auth", json = register_payload)
+    reg_resp = await async_client.post(f"{settings.route_prefix}/auth", json=register_payload)
     assert reg_resp.status_code == 201
 
     # Login to get tokens
     payload = {"username": email, "password": password}
-    resp = await async_client.post(f"{settings.route_prefix}/auth/login", data = payload)
+    resp = await async_client.post(f"{settings.route_prefix}/auth/login", data=payload)
     assert resp.status_code == 200
 
     # Extract tokens from response
@@ -39,21 +39,21 @@ async def test_login_and_get_tokens_logout(async_client: AsyncClient, db_session
 
     # Logout using body refresh_token
     logout_payload = {"refresh_token": token["refresh_token"]}
-    logout_resp = await async_client.post(f"{settings.route_prefix}/auth/logout", json = logout_payload, headers = headers)
+    logout_resp = await async_client.post(f"{settings.route_prefix}/auth/logout", json=logout_payload, headers=headers)
     assert logout_resp.status_code == 204
+
 
 @pytest.mark.anyio
 async def test_login_invalid_credentials(async_client: AsyncClient, db_session):
-    
     """Invalid credentials should return 401."""
 
     payload = {"username": "nonexistent@gmail.com", "password": "BadPass1!"}
-    resp = await async_client.post(f"{settings.route_prefix}/auth/login", data = payload)
+    resp = await async_client.post(f"{settings.route_prefix}/auth/login", data=payload)
     assert resp.status_code == 401
+
 
 @pytest.mark.anyio
 async def test_refresh_access_token(async_client: AsyncClient, db_session, token_headers):
-    
     """Refresh endpoint should issue a new access token from a valid refresh token."""
 
     email = f"auth_refresh_{uuid4().hex[:6]}@gmail.com"
@@ -86,9 +86,9 @@ async def test_refresh_access_token(async_client: AsyncClient, db_session, token
     assert token["token_type"].lower() == "bearer"
     assert data["user"]["email"] == email
 
+
 @pytest.mark.anyio
 async def test_client_credentials_auth(async_client: AsyncClient, db_session, token_headers):
-    
     """Client can authenticate with client_id and secret."""
 
     from app.repositories.user import UserRepository
@@ -113,7 +113,9 @@ async def test_client_credentials_auth(async_client: AsyncClient, db_session, to
 
     # Create client via API using admin credentials
     client_payload = {"name": f"auth_client_{uuid4().hex[:6]}", "is_active": True}
-    client_resp = await async_client.post(f"{settings.route_prefix}/clients", json = client_payload, headers = admin_headers)
+    client_resp = await async_client.post(
+        f"{settings.route_prefix}/clients", json=client_payload, headers=admin_headers
+    )
     assert client_resp.status_code == 201
 
     # Authenticate using client credentials
@@ -123,7 +125,7 @@ async def test_client_credentials_auth(async_client: AsyncClient, db_session, to
         "client_secret": client_data["secret"],
         "grant_type": "client_credentials",
     }
-    auth_resp = await async_client.post(f"{settings.route_prefix}/auth/client", json = client_auth_payload)
+    auth_resp = await async_client.post(f"{settings.route_prefix}/auth/client", json=client_auth_payload)
     assert auth_resp.status_code == 200
     auth_data = auth_resp.json()
     assert auth_data["client_id"] == str(client_data["client_id"])

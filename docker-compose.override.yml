@@ -1,0 +1,54 @@
+# docker-compose.override.yml
+# Configuración para desarrollo local
+# Este archivo se aplica automáticamente sobre docker-compose.yml en desarrollo
+
+services:
+  web:
+    # En desarrollo, habilitar hot reload y debug
+    environment:
+      - DEBUG=true
+      - LOG_LEVEL=DEBUG
+    
+    # Montar código fuente para hot reload
+    # Descomenta estas líneas para desarrollo activo:
+    volumes:
+      - ./app:/app/app        # Código de la aplicación
+      - ./scripts:/app/scripts # Scripts
+      # - ./tests:/app/tests   # Tests (opcional)
+    
+    # Gunicorn con Uvicorn Workers
+    # command: 
+    #   - "gunicorn"
+    #   - "-k"
+    #   - "uvicorn.workers.UvicornWorker"
+    #   - "--bind"
+    #   - "0.0.0.0:8000"
+    #   - "--workers"
+    #   - "1"
+    #   - "--reload"
+    #   - "--log-level"
+    #   - "info"
+    #   - "app.main:app"
+    
+    # Uvicorn
+    command:
+      - "uvicorn"
+      - "app.main:app"
+      - "--host"
+      - "0.0.0.0"
+      - "--port"
+      - "8000"
+      - "--reload"
+      - "--log-level"
+      - "info"
+    
+  db:
+    # En desarrollo, exponer puerto de PostgreSQL
+    ports:
+      - "5432:5432"
+    
+  # En desarrollo, saltar tests para startup más rápido
+  # Para ejecutar tests manualmente: docker compose --profile testing up tests
+  #tests:
+    #profiles:
+      #- testing

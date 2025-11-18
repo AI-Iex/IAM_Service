@@ -1,0 +1,51 @@
+
+# Use with : docker compose -f docker-compose.yml -f docker-compose.prod.yml up
+
+services:
+  web:
+    restart: always
+    deploy:
+      replicas: 3
+      resources:
+        limits:
+          cpus: '4'
+          memory: 2G
+        reservations:
+          cpus: '1'
+          memory: 1G
+      update_config:
+        parallelism: 1
+        delay: 10s
+        order: start-first
+      rollback_config:
+        parallelism: 1
+        delay: 5s
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "10m"
+        max-file: "3"
+    
+  db:
+    container_name: null  
+    restart: always
+    deploy:
+      resources:
+        limits:
+          cpus: '2'
+          memory: 2G
+        reservations:
+          cpus: '0.5'
+          memory: 512M
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "50m"
+        max-file: "5"
+    # En producción, NO exponer puerto de DB al host
+    # Solo accesible desde la red interna
+    
+  # En producción, tests solo se ejecutan en CI/CD
+  tests:
+    profiles:
+      - testing

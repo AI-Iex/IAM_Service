@@ -4,7 +4,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 
 class IUnitOfWork(ABC):
-    
+
     @abstractmethod
     async def __aenter__(self) -> AsyncSession:
         """Enter the context and return the session."""

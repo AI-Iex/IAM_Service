@@ -3,7 +3,15 @@ from uuid import UUID
 import uuid
 import logging
 from app.services.interfaces.client import IClientService
-from app.schemas.client import ClientCreate, ClientRead, ClientUpdate, ClientUpdateInDB, ClientPermissionAssign, ClientCreateResponse, ClientCreateInDB
+from app.schemas.client import (
+    ClientCreate,
+    ClientRead,
+    ClientUpdate,
+    ClientUpdateInDB,
+    ClientPermissionAssign,
+    ClientCreateResponse,
+    ClientCreateInDB,
+)
 from app.db.unit_of_work import UnitOfWorkFactory
 from app.core.exceptions import DomainError, NotFoundError, EntityAlreadyExists
 import secrets
@@ -13,13 +21,13 @@ from app.repositories.interfaces.permission import IPermissionRepository
 
 logger = logging.getLogger(__name__)
 
+
 class ClientService(IClientService):
 
-    def __init__(self, 
-                 client_repo: IClientRepository, 
-                 permission_repo: IPermissionRepository, 
-                 uow_factory: UnitOfWorkFactory):
-        
+    def __init__(
+        self, client_repo: IClientRepository, permission_repo: IPermissionRepository, uow_factory: UnitOfWorkFactory
+    ):
+
         self._client_repo = client_repo
         self._permission_repo = permission_repo
         self._uow_factory = uow_factory
@@ -27,19 +35,18 @@ class ClientService(IClientService):
     # region CREATE
 
     async def create(self, payload: ClientCreate) -> ClientCreateResponse:
-
         """Create a new client."""
 
         # 0. Log the attempt
-        logger.info("Trying to create a new client", extra = {"client_name": payload.name})
+        logger.info("Trying to create a new client", extra={"client_name": payload.name})
 
         async with self._uow_factory() as db:
 
             # 1. Check if the name is not already taken by another client
-            client_with_name = await self._client_repo.read_with_filters( db = db, name = [payload.name], limit=1)
+            client_with_name = await self._client_repo.read_with_filters(db=db, name=[payload.name], limit=1)
             if client_with_name:
                 raise EntityAlreadyExists("Another client with the same name already exists")
-            
+
             # 2. Generate client_id and secret
             client_id = uuid.uuid4()
             secret = secrets.token_hex(32)
@@ -48,27 +55,24 @@ class ClientService(IClientService):
             hashed_secret = hash_password(secret)
 
             client = ClientCreateInDB(
-                name = payload.name,
-                secret_hashed = hashed_secret,
-                client_id = client_id,
-                is_active = payload.is_active
+                name=payload.name, secret_hashed=hashed_secret, client_id=client_id, is_active=payload.is_active
             )
 
             # 4. Create client
-            client_created = await self._client_repo.create(db = db, client = client)
+            client_created = await self._client_repo.create(db=db, client=client)
 
             # 5. Log the success
-            logger.info("Client created successfully", extra = {"client_id": client_created.id})
+            logger.info("Client created successfully", extra={"client_id": client_created.id})
 
             # Return with plain secret
             return ClientCreateResponse(
-                id = client_created.id,
-                client_id = client_created.client_id,
-                name = client_created.name,
-                is_active = client_created.is_active,
-                created_at = client_created.created_at,
-                permissions = [],  # New client has no permissions yet
-                secret = secret
+                id=client_created.id,
+                client_id=client_created.client_id,
+                name=client_created.name,
+                is_active=client_created.is_active,
+                created_at=client_created.created_at,
+                permissions=[],  # New client has no permissions yet
+                secret=secret,
             )
 
     # endregion CREATE
@@ -76,11 +80,10 @@ class ClientService(IClientService):
     # region READ
 
     async def read_by_id(self, client_id: UUID) -> ClientRead:
-
         """Get a client by its ID."""
 
         # 0. Log the attempt
-        logger.info("Reading client by ID", extra = {"client_id": client_id})
+        logger.info("Reading client by ID", extra={"client_id": client_id})
 
         async with self._uow_factory() as db:
 
@@ -92,32 +95,28 @@ class ClientService(IClientService):
                 raise NotFoundError("Client not found")
 
             # 3. Log the success
-            logger.info("Client retrieved successfully", extra = {"client_id": client.id})
+            logger.info("Client retrieved successfully", extra={"client_id": client.id})
 
             return ClientRead.model_validate(client)
 
-    async def read_with_filters(self, name: Optional[str] = None, is_active: Optional[bool] = None, skip: int = 0, limit: int = 100) -> List[ClientRead]:
-
+    async def read_with_filters(
+        self, name: Optional[str] = None, is_active: Optional[bool] = None, skip: int = 0, limit: int = 100
+    ) -> List[ClientRead]:
         """Get clients with filters."""
 
         # 0. Log the attempt
         logger.info(
-            "Reading clients by filters", 
-            extra={
-                "name_filter": name, 
-                "is_active_filter": is_active, 
-                "skip": skip, 
-                "limit": limit
-            }
+            "Reading clients by filters",
+            extra={"name_filter": name, "is_active_filter": is_active, "skip": skip, "limit": limit},
         )
 
         async with self._uow_factory() as db:
 
-            #1 . Retrieve clients
+            # 1 . Retrieve clients
             clients = await self._client_repo.read_with_filters(db, name, is_active, skip, limit)
 
             # 2. Log the success
-            logger.info("Clients retrieved successfully", extra = {"retrieved_count": len(clients)})
+            logger.info("Clients retrieved successfully", extra={"retrieved_count": len(clients)})
 
             return [ClientRead.model_validate(client) for client in clients]
 
@@ -126,30 +125,30 @@ class ClientService(IClientService):
     # region UPDATE
 
     async def update(self, client_id: UUID, payload: ClientUpdate) -> ClientRead:
-
         """Update a client by its ID."""
 
         # 0. Log the attempt
         logger.info("Updating client by ID", extra={"client_id": client_id})
 
         async with self._uow_factory() as db:
-            
+
             # 1. Retrieve the client and check existence
             existing = await self._client_repo.read_by_id(db, client_id)
             if not existing:
                 raise NotFoundError("Client not found")
-            
+
             # 2. Check if the new name (if provided) is not already taken by another client
             if payload.name and payload.name != existing.name:
-                client_with_name = await self._client_repo.read_with_filters( db = db, name = [payload.name], limit=1)
+                client_with_name = await self._client_repo.read_with_filters(db=db, name=[payload.name], limit=1)
                 if client_with_name:
                     raise EntityAlreadyExists("Another client with the same name already exists")
-                
-            # 3. Prepare update data dict from ClientUpdate and separate permissions
-            update_data = payload.model_dump(exclude_unset=True, exclude={'id'})  # exclude id and parameters that are not set
-            permission_ids: list[UUID] | None = None  # initialize permission_ids
-            perms_names = update_data.pop('permissions', None)  # separate permissions names to update it separately
 
+            # 3. Prepare update data dict from ClientUpdate and separate permissions
+            update_data = payload.model_dump(
+                exclude_unset=True, exclude={"id"}
+            )  # exclude id and parameters that are not set
+            permission_ids: list[UUID] | None = None  # initialize permission_ids
+            perms_names = update_data.pop("permissions", None)  # separate permissions names to update it separately
 
             # 4. If permissions are provided, validate they exist and collect their ids
             if perms_names is not None:
@@ -192,22 +191,15 @@ class ClientService(IClientService):
                 updated_client = await self._client_repo.assign_list_permissions(db, client_id, permission_ids)
 
             # 7. Log the success
-            logger.info("Client updated successfully", extra={ "updated_client_id": updated_client.id})
+            logger.info("Client updated successfully", extra={"updated_client_id": updated_client.id})
 
             return ClientRead.model_validate(updated_client)
-        
+
     async def assign_permission(self, client_id: UUID, permission_id: UUID) -> ClientRead:
-        
-        """ Add permission to a client. """
+        """Add permission to a client."""
 
         # 0. Log the attempt
-        logger.info(
-            "Adding permission to client",
-            extra={
-                "client_id": client_id,
-                "permission_id": permission_id
-            }
-        )
+        logger.info("Adding permission to client", extra={"client_id": client_id, "permission_id": permission_id})
 
         async with self._uow_factory() as db:
 
@@ -232,29 +224,19 @@ class ClientService(IClientService):
             # 5. Log the success
             logger.info(
                 "Permission added to client successfully",
-                extra={
-                    "client_id": client_id,
-                    "permission_id": permission_id
-                }
+                extra={"client_id": client_id, "permission_id": permission_id},
             )
 
             return ClientRead.model_validate(updated)
 
     async def remove_permission(self, client_id: UUID, permission_id: UUID) -> ClientRead:
-        
         """Remove a permission from a client."""
 
         # 0. Log the attempt
-        logger.info(
-            "Removing permission from client",
-            extra={
-                "client_id": client_id,
-                "permission_id": permission_id
-            }
-        )
+        logger.info("Removing permission from client", extra={"client_id": client_id, "permission_id": permission_id})
 
         async with self._uow_factory() as db:
-            
+
             # 1. Verify client exists
             client = await self._client_repo.read_by_id(db, client_id)
             if not client:
@@ -264,7 +246,7 @@ class ClientService(IClientService):
             permission = await self._permission_repo.read_by_id(db, permission_id)
             if not permission:
                 raise NotFoundError("Permission not found")
-            
+
             # 3. If not assigned, raise error
             exists = await self._client_repo.has_permission(db, client_id, permission_id)
             if not exists:
@@ -275,11 +257,7 @@ class ClientService(IClientService):
 
             # 5. Log the success
             logger.info(
-                "Permission removed from client",
-                extra={
-                    "client_id": client_id,
-                    "permission_id": permission_id
-                }
+                "Permission removed from client", extra={"client_id": client_id, "permission_id": permission_id}
             )
 
             return ClientRead.model_validate(updated)
@@ -289,7 +267,6 @@ class ClientService(IClientService):
     # region DELETE
 
     async def delete(self, client_id: UUID) -> None:
-        
         """Delete a client by its ID."""
 
         # 0. Log the attempt

@@ -1,5 +1,6 @@
 fastapi
 uvicorn[standard]
+gunicorn[standard]
 sqlalchemy
 alembic
 psycopg2-binary
@@ -12,6 +13,7 @@ pydantic-settings
 python-dotenv
 pytest
 pytest-anyio
+pytest-cov
 asyncpg
 jsonschema
 python-multipart

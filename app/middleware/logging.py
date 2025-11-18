@@ -11,7 +11,6 @@ logger = logging.getLogger("access")
 
 
 async def access_log_middleware(request: Request, call_next):
-    
     """Structured access log middleware.
 
     Responsibilities:

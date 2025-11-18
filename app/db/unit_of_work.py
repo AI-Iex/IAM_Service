@@ -11,16 +11,14 @@ class SQLAlchemyUnitOfWork(IUnitOfWork):
 
     # Called when entering the async with block (async with self.uow_factory() as db)
     async def __aenter__(self) -> AsyncSession:
-
-        ''' Enter the async context manager, creating a new AsyncSession '''
+        """Enter the async context manager, creating a new AsyncSession"""
 
         self._db = AsyncSessionLocal()
         return self._db
 
     # Called when exiting the async with block
     async def __aexit__(self, exc_type, exc_val, exc_tb) -> None:
-
-        ''' Exit the async context manager, committing or rolling back as needed '''
+        """Exit the async context manager, committing or rolling back as needed"""
 
         try:
             if exc_type:
@@ -30,8 +28,10 @@ class SQLAlchemyUnitOfWork(IUnitOfWork):
         finally:
             await self._db.close()
 
+
 # Factory type for creating UnitOfWork instances
 UnitOfWorkFactory = Callable[[], IUnitOfWork]
+
 
 def get_uow_factory() -> UnitOfWorkFactory:
     return SQLAlchemyUnitOfWork

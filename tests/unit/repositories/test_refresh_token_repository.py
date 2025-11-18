@@ -8,23 +8,23 @@ from app.core.security import hash_password
 
 
 def _make_user_dto(email: str, full_name: str, is_active: bool = True, is_superuser: bool = False) -> UserCreateInDB:
-    
-    '''Creates a UserCreateInDB DTO for testing.'''
+    """Creates a UserCreateInDB DTO for testing."""
 
     return UserCreateInDB(
-        email = email,
-        full_name = full_name,
-        hashed_password = hash_password("testpasS_123"),
-        is_active = is_active,
-        is_superuser = is_superuser,
-        require_password_change = False,
+        email=email,
+        full_name=full_name,
+        hashed_password=hash_password("testpasS_123"),
+        is_active=is_active,
+        is_superuser=is_superuser,
+        require_password_change=False,
     )
+
 
 # region CREATE / READ
 
+
 @pytest.mark.anyio
 async def test_create_and_get_by_hash(db_session):
-
     """Create a refresh token and retrieve it by its hashed value."""
 
     repo = RefreshTokenRepository()
@@ -41,9 +41,9 @@ async def test_create_and_get_by_hash(db_session):
     by_hash = await repo.get_by_token_hash(db_session, "h1")
     assert by_hash is not None and by_hash.jti == jti
 
+
 @pytest.mark.anyio
 async def test_get_refresh_token_by_jti(db_session):
-
     """Retrieve a refresh token using its JTI."""
 
     repo = RefreshTokenRepository()
@@ -58,13 +58,14 @@ async def test_get_refresh_token_by_jti(db_session):
     row = await repo.get_refresh_token_by_jti(db_session, jti)
     assert row is not None and row.jti == jti
 
+
 # endregion CREATE / READ
 
 # region UPDATE / FLAGS
 
+
 @pytest.mark.anyio
 async def test_update_last_used(db_session):
-
     """Update the last_used_at timestamp for a refresh token."""
 
     repo = RefreshTokenRepository()
@@ -80,9 +81,9 @@ async def test_update_last_used(db_session):
     updated = await repo.get_refresh_token_by_jti(db_session, jti)
     assert updated.last_used_at is not None
 
+
 @pytest.mark.anyio
 async def test_revoke_refresh_token(db_session):
-
     """Mark a refresh token revoked and verify its revoked flag."""
 
     repo = RefreshTokenRepository()
@@ -98,9 +99,9 @@ async def test_revoke_refresh_token(db_session):
     rt = await repo.get_refresh_token_by_jti(db_session, jti)
     assert rt.revoked is True
 
+
 @pytest.mark.anyio
 async def test_mark_refresh_token_replaced(db_session):
-
     """Mark a token as replaced by another JTI and verify the replaced_by value."""
 
     repo = RefreshTokenRepository()
@@ -117,9 +118,9 @@ async def test_mark_refresh_token_replaced(db_session):
     rt = await repo.get_refresh_token_by_jti(db_session, jti)
     assert rt.replaced_by == new_jti
 
+
 @pytest.mark.anyio
 async def test_revoke_all_refresh_tokens_for_user(db_session):
-
     """Revoke all tokens for a user and verify all are flagged revoked."""
 
     repo = RefreshTokenRepository()
@@ -140,5 +141,5 @@ async def test_revoke_all_refresh_tokens_for_user(db_session):
     r2 = await repo.get_by_token_hash(db_session, "ha2")
     assert r1.revoked is True and r2.revoked is True
 
-# endregion UPDATE / FLAGS
 
+# endregion UPDATE / FLAGS
