@@ -21,7 +21,10 @@ from app.dependencies.services import get_user_service, get_auth_service
 from app.dependencies.auth import get_current_principal, get_current_principal_optional
 from app.schemas.auth import Principal
 from app.core.security import decode_token
+from app.core.exceptions import UnauthorizedError
+import logging
 
+logger = logging.getLogger(__name__)
 router = APIRouter(prefix="/auth", tags=["Auth"])
 
 
@@ -270,64 +273,81 @@ async def refresh_token(
 # Token endpoint (for Swagger / dev tools)
 @router.post(
     "/token",
-    response_model=AuthResponse,
+    response_model=TokenPair,
     status_code=status.HTTP_200_OK,
-    summary="Token endpoint for Swagger, OAuth2 password and client_credentials flows",
-    description="**Token endpoint supporting both client_credentials and password grants.**\n\n"
-    "- `grant_type=client_credentials`: username=client_id, password=client_secret  \n"
-    "- `grant_type=password`: username=email, password=password",
-    response_description="Returns access and refresh tokens",
+    summary="OAuth2 Token Endpoint (Swagger compatible)",
+    description="**OAuth2-compatible token endpoint supporting both client_credentials and password grants.**\n\n"
+    "**For Users (password grant):**\n"
+    "- `username`: User email address\n"
+    "- `password`: User password\n"
+    "- `grant_type`: 'password' (optional, auto-detected)\n\n"
+    "**For Clients (client_credentials grant):**\n"
+    "- `username`: Client ID (UUID format)\n"
+    "- `password`: Client secret\n"
+    "- `grant_type`: 'client_credentials' (optional, auto-detected)\n\n"
+    "Returns OAuth2-standard token response with access_token and token_type.",
+    response_description="OAuth2 token response",
 )
 async def token_endpoint(
     form_data: OAuth2PasswordRequestForm = Depends(),
     auth_service: AuthService = Depends(get_auth_service),
     request: Request = None,
-):
-    grant_type = getattr(form_data, "grant_type", None) or "client_credentials"
+) -> TokenPair:
+    """OAuth2-compatible token endpoint supporting both user and client authentication."""
+
     ip = request.client.host if request and request.client else None
     ua = request.headers.get("user-agent") if request else None
 
+    # Get grant_type from form_data scopes or auto-detect based on username format
+    grant_type = None
+
+    if hasattr(form_data, "scopes") and form_data.scopes:
+        for scope in form_data.scopes:
+            if scope in ["client_credentials", "password"]:
+                grant_type = scope
+                break
+
+    # Auto-detect if not explicitly provided
+    if not grant_type:
+        try:
+            UUID(form_data.username)
+            grant_type = "client_credentials"
+        except (ValueError, AttributeError):
+            grant_type = "password"
+
     try:
         if grant_type == "client_credentials":
-            res = await auth_service.client_credentials(form_data.username, form_data.password)
+            # Client authentication
+            try:
+                client_id = UUID(form_data.username)
+            except ValueError:
+                raise HTTPException(
+                    status_code=status.HTTP_400_BAD_REQUEST, detail="Invalid client_id format. Must be a valid UUID."
+                )
+
+            token_pair = await auth_service.client_credentials(client_id, form_data.password)
+            return token_pair
+
         elif grant_type == "password":
+            # User authentication
             res = await auth_service.login(form_data.username, form_data.password, ip=ip, user_agent=ua)
+            return res.token
         else:
             raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=f"Unsupported grant_type: {grant_type}")
-    except Exception:
-        raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Invalid credentials")
 
-    tokens = res.token
-
-    # Build token response
-    token_data = TokenPair(
-        access_token=tokens.access_token,
-        refresh_token=tokens.refresh_token,
-        jti=tokens.jti,
-        token_type="bearer",
-        expires_in=tokens.expires_in,
-    )
-
-    content = jsonable_encoder(token_data)
-
-    # Create response
-    response = JSONResponse(content=content)
-
-    # Only set refresh cookie for password grant
-    if grant_type == "password":
-        response.set_cookie(
-            key="refresh",  # Name of the cookie
-            value=f"{tokens.refresh_token}::{tokens.jti}",  # Token + JTI for tracking
-            httponly=True,  # Prevent access via JavaScript for more security
-            secure=not settings.is_development,  # Only over HTTPS
-            samesite="lax",  # Protection against CSRF
-            max_age=settings.REFRESH_TOKEN_EXPIRE_DAYS * 24 * 3600,  # Expiration time in seconds
-            path=(
-                f"{settings.route_prefix}/auth" if settings.is_development else f"{settings.route_prefix}/auth/refresh"
-            ),  # Only send to specific routes
+    except HTTPException:
+        raise
+    except UnauthorizedError as e:
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED, detail=str(e), headers={"WWW-Authenticate": "Bearer"}
         )
-
-    return response
+    except Exception as e:
+        logger.error(f"Token endpoint error: {str(e)}", exc_info=True)
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="Invalid credentials",
+            headers={"WWW-Authenticate": "Bearer"},
+        )
 
 
 # Client authentication (OAuth2 Client Credentials)
