@@ -18,7 +18,7 @@ def _emit_and_capture_log(capsys, privacy_level: str):
     # Set a request context with a user id (UUID) and request id
     req_id = "req-abc-123"
     user_id = uuid4()
-    req_token, user_token = set_request_context(req_id, user_id)
+    req_token, user_token, client_token = set_request_context(req_id, user_id)
 
     # Log a message with extras that should be masked: email and a uuid-like token
     extra = {
@@ -29,7 +29,7 @@ def _emit_and_capture_log(capsys, privacy_level: str):
     logger.info("User login", extra=extra)
 
     # Reset context to avoid leaking state into other tests
-    reset_request_context(req_token, user_token)
+    reset_request_context(req_token, user_token, client_token)
 
     # Capture stdout where the JSONFormatter writes
     out = capsys.readouterr().out.strip()
