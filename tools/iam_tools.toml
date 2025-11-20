@@ -270,7 +270,7 @@ type = "array"
 title = "Detail"
 [[tools]]
 name = "token_endpoint_api_v1_auth_token_post"
-description = "Token endpoint for Swagger, OAuth2 password and client_credentials flows"
+description = "OAuth2 Token Endpoint (Swagger compatible)"
 method = "POST"
 path = "/api/v1/auth/token"
 parameters = []
@@ -282,28 +282,43 @@ required = true
 content_type = "application/json"
 description = ""
 [tools.responses.200]
-description = "Returns access and refresh tokens"
+description = "OAuth2 token response"
 [tools.responses.422]
 description = "Validation Error"
 [tools.responses.200.schema]
 type = "object"
-title = "AuthResponse"
-required = [ "user_id", "email", "token",]
+title = "TokenPair"
+required = [ "access_token", "expires_in",]
 [tools.responses.422.schema]
 type = "object"
 title = "HTTPValidationError"
-[tools.responses.200.schema.properties.user_id]
+[tools.responses.200.schema.properties.access_token]
+type = "string"
+title = "Access Token"
+[tools.responses.200.schema.properties.refresh_token]
+title = "Refresh Token"
+[[tools.responses.200.schema.properties.refresh_token.anyOf]]
+type = "string"
+
+[[tools.responses.200.schema.properties.refresh_token.anyOf]]
+type = "null"
+
+[tools.responses.200.schema.properties.jti]
+title = "Jti"
+[[tools.responses.200.schema.properties.jti.anyOf]]
 type = "string"
 format = "uuid"
-title = "User Id"
-[tools.responses.200.schema.properties.email]
+
+[[tools.responses.200.schema.properties.jti.anyOf]]
+type = "null"
+
+[tools.responses.200.schema.properties.token_type]
 type = "string"
-format = "email"
-title = "Email"
-[tools.responses.200.schema.properties.token]
-type = "object"
-title = "TokenPair"
-required = [ "access_token", "expires_in",]
+default = "bearer"
+title = "Token Type"
+[tools.responses.200.schema.properties.expires_in]
+type = "integer"
+title = "Expires In"
 [tools.responses.422.schema.properties.detail]
 type = "array"
 title = "Detail"
@@ -3195,7 +3210,7 @@ type = "array"
 title = "Detail"
 
 [metadata]
-generated_at = "2025-11-18T19:05:32.943954Z"
+generated_at = "2025-11-20T21:01:08.801346Z"
 version = "1.0.0"
 total_tools = 37
 format = "IAM Service Tool Definitions"

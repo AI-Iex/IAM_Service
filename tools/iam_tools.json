@@ -1,6 +1,6 @@
 {
   "metadata": {
-    "generated_at": "2025-11-18T19:05:32.951052Z",
+    "generated_at": "2025-11-20T21:01:08.808429Z",
     "version": "1.0.0",
     "total_tools": 37,
     "format": "IAM Service Tool Definitions"
@@ -464,7 +464,7 @@
     },
     {
       "name": "token_endpoint_api_v1_auth_token_post",
-      "description": "Token endpoint for Swagger, OAuth2 password and client_credentials flows",
+      "description": "OAuth2 Token Endpoint (Swagger compatible)",
       "method": "POST",
       "path": "/api/v1/auth/token",
       "parameters": [],
@@ -476,41 +476,51 @@
       },
       "responses": {
         "200": {
-          "description": "Returns access and refresh tokens",
+          "description": "OAuth2 token response",
           "schema": {
             "type": "object",
-            "title": "AuthResponse",
+            "title": "TokenPair",
             "properties": {
-              "user_id": {
+              "access_token": {
                 "type": "string",
-                "format": "uuid",
-                "title": "User Id"
+                "title": "Access Token"
               },
-              "email": {
-                "type": "string",
-                "format": "email",
-                "title": "Email"
-              },
-              "token": {
-                "type": "object",
-                "title": "TokenPair",
-                "properties": {
-                  "access_token": {},
-                  "refresh_token": {},
-                  "jti": {},
-                  "token_type": {},
-                  "expires_in": {}
-                },
-                "required": [
-                  "access_token",
-                  "expires_in"
+              "refresh_token": {
+                "title": "Refresh Token",
+                "anyOf": [
+                  {
+                    "type": "string"
+                  },
+                  {
+                    "type": "null"
+                  }
                 ]
+              },
+              "jti": {
+                "title": "Jti",
+                "anyOf": [
+                  {
+                    "type": "string",
+                    "format": "uuid"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ]
+              },
+              "token_type": {
+                "type": "string",
+                "default": "bearer",
+                "title": "Token Type"
+              },
+              "expires_in": {
+                "type": "integer",
+                "title": "Expires In"
               }
             },
             "required": [
-              "user_id",
-              "email",
-              "token"
+              "access_token",
+              "expires_in"
             ]
           }
         },
