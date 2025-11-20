@@ -2,7 +2,6 @@
 
 [![Python 3.12+](https://img.shields.io/badge/python-3.12+-blue.svg)](https://www.python.org/downloads/)
 [![FastAPI](https://img.shields.io/badge/FastAPI-0.100+-00a393.svg)](https://fastapi.tiangolo.com)
-[![Licencia](https://img.shields.io/badge/licencia-MIT-green.svg)](LICENSE)
 [![Tests](https://img.shields.io/badge/tests-170+-brightgreen.svg)](tests/)
 [![Docker](https://img.shields.io/badge/docker-listo-blue.svg)](Dockerfile)
 [![MCP Compatible](https://img.shields.io/badge/MCP-compatible-purple.svg)](tools/)
@@ -85,9 +84,38 @@ Este servicio IAM es una versión ligera y personal derivada de un proyecto prof
   - Tests de seguridad para detección de vulnerabilidades
   - Tests de rendimiento para validación de carga
 - **Más del 90% de Cobertura de Código**
-- **Pipeline CI/CD Automatizado** con análisis de seguridad y código
 - **Type Checking** con Pydantic v2
 - **Linting y Formateo** con Ruff y Black
+
+### 🚀 Pipeline CI/CD
+
+- **Workflow Automatizado con GitHub Actions** activado en cada push y PR:
+  - **Verificación de Calidad de Código**: Linter Ruff + verificación de formato Black
+  - **Escaneo de Seguridad**: Safety (vulnerabilidades en dependencias) + Bandit (problemas de seguridad en código)
+  - **Suite de Tests**: Ejecución completa de tests con reporte de cobertura (integración con Codecov)
+  - **Build de Producción**: Verificación de construcción de imagen Docker
+  - **Gate de Estado**: Bloqueo de merge si alguna verificación falla
+- **Pipeline Multi-Etapa**: Ejecución paralela para feedback más rápido
+- **Retención de Artefactos**: Reportes de seguridad almacenados por 7 días
+- **Testing Basado en Docker**: Entorno de pruebas aislado con PostgreSQL
+
+### 📊 Sistema de Logging Estructurado
+
+- **Logs Formateados en JSON** para fácil parsing y análisis
+- **Trazabilidad de Requests**: `request_id` único para rastrear peticiones a través del sistema
+- **Contexto de Usuario**: Inyección automática de `user_id`/`client_id`  en todas las entradas de log
+- **Enmascaramiento de Privacidad**: Niveles de privacidad configurables (none, standard, strict)
+  - Enmascaramiento de emails: `usuario@dominio.com` → `u***@d***.com`
+  - Enmascaramiento de UUIDs: UUIDs completos acortados por seguridad
+  - Protección de datos sensibles en logs
+- **Métricas de Rendimiento**: Seguimiento automático de duración para todas las peticiones HTTP
+- **Información Contextual**:
+  - Timestamp (ISO 8601 UTC)
+  - Nivel de log (DEBUG, INFO, WARNING, ERROR, CRITICAL)
+  - Nombre de módulo y función
+  - Método HTTP, path, ruta, código de estado
+- **Header X-Request-Id**: Header de respuesta para correlación del lado del cliente
+- **Gestión de Loggers de Terceros**: Logging controlado para uvicorn, SQLAlchemy, asyncio
 
 ### 🤖 Herramientas de IA y Desarrollo
 
@@ -100,7 +128,7 @@ Este servicio IAM es una versión ligera y personal derivada de un proyecto prof
 
 ## 🏗️ Arquitectura
 
-Este proyecto sigue los principios de **Domain-Driven Design (DDD)** y patrones modernos de arquitectura de software:
+Este proyecto sigue los principios de **Clean Architecture** y **Arquitectura en Capas (Layered Architecture)** con patrones modernos de diseño de software:
 
 ### Patrones de Diseño y Principios
 

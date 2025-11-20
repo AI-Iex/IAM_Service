@@ -1,6 +1,7 @@
 from fastapi import APIRouter, Depends, Path, Query, status, HTTPException
 from uuid import UUID
 from typing import List, Optional
+from app.dependencies.auth import get_current_principal
 from app.schemas.client import (
     ClientCreate,
     ClientRead,
@@ -72,9 +73,7 @@ async def read_clients(
     description="**Get the profile of the currently authenticated client**",
     response_description="The current client",
 )
-async def get_current_client_profile(
-    principal: Principal = requires_permission(Permissions.CLIENTS_READ),
-) -> ClientRead:
+async def get_current_client_profile(principal: Principal = Depends(get_current_principal)) -> ClientRead:
 
     # Ensure the principal is a client
     if principal.kind != AccessTokenType.CLIENT.value or not principal.client:

@@ -12,7 +12,7 @@ async def test_request_sets_request_id_header_and_context(async_client):
     # Register a small test route that returns the current request context
     @app.get("/__test/get_context")
     async def _get_context():
-        rid, uid = get_request_context()
+        rid, uid, cid = get_request_context()
         return {"request_id": rid, "user_id": str(uid) if uid is not None else None}
 
     resp = await async_client.get("/__test/get_context")
@@ -37,7 +37,7 @@ async def test_auth_context_sets_user_id_in_context(async_client, create_user):
     # Reuse the same test route to inspect context
     @app.get("/__test/get_context_auth")
     async def _get_context_auth():
-        rid, uid = get_request_context()
+        rid, uid, cid = get_request_context()
         # Return user id as string when present
         return {"request_id": rid, "user_id": str(uid) if uid is not None else None}
 
