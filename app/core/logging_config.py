@@ -9,6 +9,7 @@ from uuid import UUID
 
 _request_id_ctx: ContextVar[Optional[str]] = ContextVar("request_id", default=None)
 _user_id_ctx: ContextVar[Optional[UUID]] = ContextVar("user_id", default=None)
+_client_id_ctx: ContextVar[Optional[UUID]] = ContextVar("client_id", default=None)
 
 
 # region Privacy Masking Methods
@@ -168,10 +169,10 @@ def setup_logging(
     handler.setFormatter(JSONFormatter(privacy_level=privacy_level))
 
     class RequestIdFilter(logging.Filter):
-        """Class to add request_id and request_by_user_id from contextvars to log records"""
+        """Class to add request_id, request_by_user_id and request_by_client_id from contextvars to log records"""
 
         def filter(self, record: logging.LogRecord) -> bool:
-            """Add request_id and request_by_user_id to log record if available"""
+            """Add request_id, request_by_user_id and request_by_client_id to log record if available"""
 
             try:
                 rid = _request_id_ctx.get(None)
@@ -182,10 +183,15 @@ def setup_logging(
             try:
                 uid = _user_id_ctx.get(None)
                 if uid is not None:
-                    # attach as request_by_user_id to avoid legacy 'user_id' key
                     record.request_by_user_id = str(uid)
             except Exception:
                 record.request_by_user_id = None
+            try:
+                cid = _client_id_ctx.get(None)
+                if cid is not None:
+                    record.request_by_client_id = str(cid)
+            except Exception:
+                record.request_by_client_id = None
 
             return True
 
@@ -234,33 +240,39 @@ def configure_third_party_loggers(level: int = logging.WARNING, attach_json_hand
 
 
 def get_request_context():
-    """Get current request_id and user_id from contextvars."""
+    """Get current request_id, user_id and client_id from contextvars."""
 
-    return _request_id_ctx.get(None), _user_id_ctx.get(None)
+    return _request_id_ctx.get(None), _user_id_ctx.get(None), _client_id_ctx.get(None)
 
 
-def set_request_context(request_id: str, user_id: Optional[UUID] = None):
+def set_request_context(request_id: str, user_id: Optional[UUID] = None, client_id: Optional[UUID] = None):
     """
-    Set request_id and optionally user_id in contextvars.
-    Returns a tuple of tokens (request_token, user_token) that can be used to reset context.
+    Set request_id and optionally user_id or client_id in contextvars.
+    Returns a tuple of tokens (request_token, user_token, client_token) that can be used to reset context.
     """
 
     request_token = _request_id_ctx.set(request_id)
     user_token = None
+    client_token = None
 
     if user_id is not None:
         user_token = _user_id_ctx.set(user_id)
 
-    return request_token, user_token
+    if client_id is not None:
+        client_token = _client_id_ctx.set(client_id)
+
+    return request_token, user_token, client_token
 
 
-def reset_request_context(request_token, user_token=None):
-    """Reset request_id and user_id in contextvars using provided tokens"""
+def reset_request_context(request_token, user_token=None, client_token=None):
+    """Reset request_id, user_id and client_id in contextvars using provided tokens"""
 
     if request_token is not None:
         _request_id_ctx.reset(request_token)
     if user_token is not None:
         _user_id_ctx.reset(user_token)
+    if client_token is not None:
+        _client_id_ctx.reset(client_token)
 
 
 # endregion ContextVar Management Methods (Request ID and User ID)

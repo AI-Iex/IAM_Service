@@ -2,7 +2,6 @@
 
 [![Python 3.12+](https://img.shields.io/badge/python-3.12+-blue.svg)](https://www.python.org/downloads/)
 [![FastAPI](https://img.shields.io/badge/FastAPI-0.100+-00a393.svg)](https://fastapi.tiangolo.com)
-[![License](https://img.shields.io/badge/license-MIT-green.svg)](LICENSE)
 [![Tests](https://img.shields.io/badge/tests-170+-brightgreen.svg)](tests/)
 [![Docker](https://img.shields.io/badge/docker-ready-blue.svg)](Dockerfile)
 [![MCP Compatible](https://img.shields.io/badge/MCP-compatible-purple.svg)](tools/)
@@ -85,9 +84,38 @@ This IAM Service is a lightweight, personal version derived from a real professi
   - Security tests for vulnerability detection
   - Performance tests for load validation
 - **90%+ Code Coverage**
-- **Automated CI/CD Pipeline** with security and code analysis
 - **Type Checking** with Pydantic v2
 - **Linting & Formatting** with Ruff and Black
+
+### 🚀 CI/CD Pipeline
+
+- **Automated GitHub Actions Workflow** triggered on every push and PR:
+  - **Code Quality Check**: Ruff linter + Black formatter verification
+  - **Security Scan**: Safety (dependency vulnerabilities) + Bandit (code security issues)
+  - **Test Suite**: Full test execution with coverage reporting (Codecov integration)
+  - **Production Build**: Docker image build verification
+  - **Status Gate**: Merge blocking if any check fails
+- **Multi-Stage Pipeline**: Parallel execution for faster feedback
+- **Artifact Retention**: Security reports stored for 7 days
+- **Docker-based Testing**: Isolated test environment with PostgreSQL
+
+### 📊 Structured Logging System
+
+- **JSON Formatted Logs** for easy parsing and analysis
+- **Request Tracing**: Unique `request_id` for tracking requests across the system
+- **User Context**: Automatic `user_id`/`client_id` injection in all log entries
+- **Privacy Masking**: Configurable privacy levels (none, standard, strict)
+  - Email masking: `user@domain.com` → `u***@d***.com`
+  - UUID masking: Full UUIDs shortened for log safety
+  - Sensitive data protection in logs
+- **Performance Metrics**: Automatic duration tracking for all HTTP requests
+- **Contextual Information**:
+  - Timestamp (ISO 8601 UTC)
+  - Log level (DEBUG, INFO, WARNING, ERROR, CRITICAL)
+  - Module and function name
+  - HTTP method, path, route, status code
+- **X-Request-Id Header**: Response header for client-side correlation
+- **Third-Party Logger Management**: Controlled logging for uvicorn, SQLAlchemy, asyncio
 
 ### 🤖 AI & Developer Tools
 
@@ -100,7 +128,7 @@ This IAM Service is a lightweight, personal version derived from a real professi
 
 ## 🏗️ Architecture
 
-This project follows **Domain-Driven Design (DDD)** principles and modern software architecture patterns:
+This project follows **Clean Architecture** and **Layered Architecture** principles with modern software design patterns:
 
 ### Design Patterns & Principles
 

@@ -26,7 +26,7 @@ async def access_log_middleware(request: Request, call_next):
     request.state.request_id = request_id
 
     # Set request context so RequestIdFilter can pick it up for all logs in this request
-    request_token, user_token = set_request_context(request_id)
+    request_token, user_token, client_token = set_request_context(request_id)
 
     try:
         response: Response = await call_next(request)
@@ -55,6 +55,8 @@ async def access_log_middleware(request: Request, call_next):
                 "status_code": status_code,
                 "duration_ms": round(duration_ms, 2),
                 "client_ip": request.client.host if request.client else None,
+                "request_by_user_id": getattr(request.state, "user_id", None),
+                "request_by_client_id": getattr(request.state, "client_id", None),
                 # short summary only
                 "error_type": type(exc).__name__,
                 "error_message": str(exc)[:200],
@@ -62,26 +64,35 @@ async def access_log_middleware(request: Request, call_next):
         )
         # cleanup context before re-raising so outer exception handlers/middlewares can run
         try:
-            reset_request_context(request_token, user_token)
+            reset_request_context(request_token, user_token, client_token)
         except Exception:
             pass
         raise
 
     # Compute duration and log
     duration_ms = (time.perf_counter() - start) * 1000
-    logger.info(
-        "HTTP request completed",
-        extra={
-            "request_id": request_id,
-            "method": request.method,
-            "path": request.url.path,
-            "route": getattr(request.scope.get("route"), "name", None),
-            "status_code": response.status_code,
-            "duration_ms": round(duration_ms, 2),
-            "client_ip": request.client.host if request.client else None,
-            "request_by_user_id": getattr(request.state, "user_id", None),
-        },
-    )
+
+    # Build extra log data with conditional user_id or client_id
+    log_extra = {
+        "request_id": request_id,
+        "method": request.method,
+        "path": request.url.path,
+        "route": getattr(request.scope.get("route"), "name", None),
+        "status_code": response.status_code,
+        "duration_ms": round(duration_ms, 2),
+        "client_ip": request.client.host if request.client else None,
+    }
+
+    # Add user_id or client_id based on what's in request.state
+    user_id = getattr(request.state, "user_id", None)
+    client_id = getattr(request.state, "client_id", None)
+
+    if user_id is not None:
+        log_extra["request_by_user_id"] = user_id
+    if client_id is not None:
+        log_extra["request_by_client_id"] = client_id
+
+    logger.info("HTTP request completed", extra=log_extra)
 
     # Ensure header for correlation
     if isinstance(response, Response):
@@ -89,7 +100,7 @@ async def access_log_middleware(request: Request, call_next):
 
     # Cleanup context after logging
     try:
-        reset_request_context(request_token, user_token)
+        reset_request_context(request_token, user_token, client_token)
     except Exception:
         pass
 

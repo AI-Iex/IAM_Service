@@ -12,13 +12,7 @@ import hmac
 from app.schemas.auth import TokenPair, TokenPayload
 from enum import Enum
 from app.core.exceptions import DomainError
-
-
-class AccessTokenType(str, Enum):
-    """Enum for access token types."""
-
-    USER = "user"
-    CLIENT = "client"
+from app.core.enums import AccessTokenType
 
 
 # Password hashing context
