@@ -1,6 +1,6 @@
 metadata:
   format: IAM Service Tool Definitions
-  generated_at: '2025-11-18T19:05:32.956723Z'
+  generated_at: '2025-11-20T21:01:08.814012Z'
   total_tools: 37
   version: 1.0.0
 tools:
@@ -324,8 +324,7 @@ tools:
   security: []
   tags:
   - Auth
-- description: Token endpoint for Swagger, OAuth2 password and client_credentials
-    flows
+- description: OAuth2 Token Endpoint (Swagger compatible)
   method: POST
   name: token_endpoint_api_v1_auth_token_post
   parameters: []
@@ -337,32 +336,32 @@ tools:
     schema: {}
   responses:
     '200':
-      description: Returns access and refresh tokens
+      description: OAuth2 token response
       schema:
         properties:
-          email:
-            format: email
-            title: Email
+          access_token:
+            title: Access Token
             type: string
-          token:
-            properties:
-              access_token: {}
-              expires_in: {}
-              jti: {}
-              refresh_token: {}
-              token_type: {}
-            required: *id002
-            title: TokenPair
-            type: object
-          user_id:
-            format: uuid
-            title: User Id
+          expires_in:
+            title: Expires In
+            type: integer
+          jti:
+            anyOf:
+            - format: uuid
+              type: string
+            - type: 'null'
+            title: Jti
+          refresh_token:
+            anyOf:
+            - type: string
+            - type: 'null'
+            title: Refresh Token
+          token_type:
+            default: bearer
+            title: Token Type
             type: string
-        required:
-        - user_id
-        - email
-        - token
-        title: AuthResponse
+        required: *id002
+        title: TokenPair
         type: object
     '422':
       description: Validation Error

@@ -79,7 +79,7 @@
     },
     {
       "name": "token_endpoint_api_v1_auth_token_post",
-      "description": "Token endpoint for Swagger, OAuth2 password and client_credentials flows",
+      "description": "OAuth2 Token Endpoint (Swagger compatible)",
       "input_schema": {
         "type": "object",
         "properties": {},

@@ -24,7 +24,8 @@ target_metadata = Base.metadata
 def run_migrations_offline():
     """Run migrations in offline mode."""
 
-    url = config.get_main_option("sqlalchemy.url") or settings.DATABASE_URL
+    url = settings.DATABASE_URL or config.get_main_option("sqlalchemy.url")
+
     context.configure(
         url=url,
         target_metadata=target_metadata,
@@ -39,17 +40,9 @@ def run_migrations_offline():
 def run_migrations_online():
     """Run migrations in online mode."""
 
-    url = config.get_main_option("sqlalchemy.url")
-    if url:
-        # Called programmatically with explicit URL
-        connectable = create_engine(url, poolclass=pool.NullPool)
-    else:
-        # Called via CLI with alembic.ini
-        connectable = engine_from_config(
-            config.get_section(config.config_ini_section) or {},
-            prefix="sqlalchemy.",
-            poolclass=pool.NullPool,
-        )
+    url = settings.DATABASE_URL or config.get_main_option("sqlalchemy.url")
+
+    connectable = create_engine(url, poolclass=pool.NullPool)
 
     with connectable.connect() as connection:
         context.configure(connection=connection, target_metadata=target_metadata)
