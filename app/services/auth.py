@@ -57,35 +57,39 @@ class AuthService(IAuthService):
             # 2. Verify password
             if not verify_password(password, user.hashed_password):
                 raise UnauthorizedError("Invalid credentials")
+            
+            # 3 Check if user is active
+            if user.is_active is False:
+                raise UnauthorizedError("User account is disabled, contact with the administrator")
 
-            # 3. Update last_login
+            # 4. Update last_login
             await self.user_repo.update_last_login(db, user.id)
 
-            # 3.1 Get updated user data to have permissions/roles
+            # 5. Get updated user data to have permissions/roles
             user = await self.auth_repo.get_user_for_auth(db, user.id)
 
             user_permissions = {perm.name for role in user.roles for perm in getattr(role, "permissions", [])}
 
-            # 4. Create access token
+            # 6. Create access token
             access_token_pair = create_user_access_token(
                 subject=str(user.id), permissions=list(user_permissions), is_superuser=user.is_superuser
             )
             access_token = access_token_pair.access_token
             expires_in = access_token_pair.expires_in
 
-            # 4.1 Log the created access token
+            # 7. Log the created access token
             logger.info("Access token created", extra={"request_by_user_id": user.id})
 
-            # 5. Generate refresh token (raw + jti) and save hash in DB
+            # 8. Generate refresh token (raw + jti) and save hash in DB
             raw_refresh_token, jti_refresh_token = generate_raw_refresh_token()
 
-            # 6. Hash the raw refresh token
+            # 9. Hash the raw refresh token
             hashed = hash_refresh_token(raw_refresh_token)
 
-            # 7. Calculate expiry datetime for the refresh token
+            # 10. Calculate expiry datetime for the refresh token
             expires_at = refresh_token_expiry_datetime()
 
-            # 8. Store the refresh token in the database
+            # 11. Store the refresh token in the database
             await self.refresh_repo.create_refresh_token(
                 db,
                 jti=jti_refresh_token,
@@ -96,12 +100,12 @@ class AuthService(IAuthService):
                 user_agent=user_agent,
             )
 
-            # 9. Return schema
+            # 12. Return schema
             tokens = TokenPair(
                 access_token=access_token, refresh_token=raw_refresh_token, jti=jti_refresh_token, expires_in=expires_in
             )
 
-            # 10. Log the successful login
+            # 13. Log the successful login
             logger.info("Login successful", extra={"request_by_user_id": user.id})
 
             return UserAndToken(user=UserRead.model_validate(user), token=tokens)
@@ -316,7 +320,9 @@ class AuthService(IAuthService):
             )
 
     async def client_credentials(self, client_id: UUID, client_secret: str) -> TokenPair:
-        """Validate client_id/secret and issue an access token."""
+        """
+        Validate client_id/secret and issue an access token.
+        """
 
         # 0. Log the attempt
         logger.info("Client credentials attempt", extra={"client_id": str(client_id)})
@@ -331,7 +337,7 @@ class AuthService(IAuthService):
                 raise UnauthorizedError("Invalid client credentials")
             if not client.is_active:
                 logger.info("Client not active", extra={"client_id": str(client_id)})
-                raise UnauthorizedError("Invalid client credentials")
+                raise UnauthorizedError("Client account is disabled, contact with the administrator")
 
             # 3. Verify secret
             secret_valid = verify_password(client_secret, client.hashed_secret)
