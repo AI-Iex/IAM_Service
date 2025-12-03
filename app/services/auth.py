@@ -72,7 +72,10 @@ class AuthService(IAuthService):
 
             # 6. Create access token
             access_token_pair = create_user_access_token(
-                subject=str(user.id), permissions=list(user_permissions), is_superuser=user.is_superuser
+                subject=str(user.id),
+                permissions=list(user_permissions),
+                is_superuser=user.is_superuser,
+                require_password_change=user.require_password_change,
             )
             access_token = access_token_pair.access_token
             expires_in = access_token_pair.expires_in
@@ -167,7 +170,10 @@ class AuthService(IAuthService):
             user_permissions = {perm.name for role in user.roles for perm in getattr(role, "permissions", [])}
 
             token_info = create_user_access_token(
-                subject=str(user.id), permissions=list(user_permissions), is_superuser=user.is_superuser
+                subject=str(user.id),
+                permissions=list(user_permissions),
+                is_superuser=user.is_superuser,
+                require_password_change=user.require_password_change,
             )
             access_token = token_info.access_token
             expires_in = token_info.expires_in

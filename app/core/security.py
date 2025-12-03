@@ -71,6 +71,7 @@ def create_user_access_token(
     permissions: List | None = None,
     is_superuser: bool = False,
     expires_minutes: int | None = None,
+    require_password_change: bool = False,
 ) -> TokenPair:
     """Create an access token for a user."""
 
@@ -79,6 +80,7 @@ def create_user_access_token(
         "type": AccessTokenType.USER.value,
         "permissions": permissions or [],
         "is_superuser": is_superuser,
+        "require_password_change": require_password_change,
     }
 
     return _create_access_token(payload_extra, expires_minutes=expires_minutes)

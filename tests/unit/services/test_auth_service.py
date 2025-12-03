@@ -26,6 +26,7 @@ def make_user_obj(email: str = "u@example.com", is_active: bool = True):
         hashed_password=hash_password("TestPass1!"),
         is_superuser=False,
         is_active=is_active,
+        require_password_change=False,
         roles=[],
     )
 
