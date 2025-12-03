@@ -1,4 +1,3 @@
-# app/schemas/auth.py
 from pydantic import BaseModel, EmailStr, Field
 from typing import List, Optional
 from uuid import UUID
@@ -29,6 +28,7 @@ class TokenPayload(BaseModel):
     roles: Optional[List[str]] = []
     is_superuser: Optional[bool] = False
     client_id: Optional[str] = None
+    require_password_change: Optional[bool] = False
 
 
 class TokenPair(BaseModel):
