@@ -31,7 +31,7 @@ async def test_auth_context_sets_user_id_in_context(async_client, create_user):
 
     # Create a user and issue an access token for them
     user = await create_user("ctxuser@example.com", "password123", full_name="Ctx User")
-    token_pair = create_user_access_token(subject=str(user.id), permissions=[], is_superuser=False)
+    token_pair = create_user_access_token(subject=str(user.id), permissions=[], is_superuser=False, require_password_change=False)
     token = token_pair.access_token
 
     # Reuse the same test route to inspect context
