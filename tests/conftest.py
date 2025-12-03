@@ -239,6 +239,7 @@ def token_headers(async_client: AsyncClient, db_session) -> Callable[[str, str],
             subject=str(user.id),
             permissions=list(user_permissions),
             is_superuser=user.is_superuser,
+            require_password_change=user.require_password_change,
         )
         return {"Authorization": f"Bearer {token_info.access_token}"}
 

@@ -18,13 +18,15 @@ class DummyUoW:
         return False
 
 
-def make_user_obj(email: str = "u@example.com"):
+def make_user_obj(email: str = "u@example.com", is_active: bool = True):
     return SimpleNamespace(
         id=uuid4(),
         email=email,
         full_name="Test User",
         hashed_password=hash_password("TestPass1!"),
         is_superuser=False,
+        is_active=is_active,
+        require_password_change=False,
         roles=[],
     )
 
