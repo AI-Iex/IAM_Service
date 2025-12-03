@@ -14,7 +14,9 @@ from app.core.config import settings
 def test_create_and_decode_user_token_fields():
     """Creating a user access token and decoding it should preserve all fields."""
 
-    pair = create_user_access_token(subject="123", permissions=["a", "b"], is_superuser=True, expires_minutes=5, require_password_change=False)
+    pair = create_user_access_token(
+        subject="123", permissions=["a", "b"], is_superuser=True, expires_minutes=5, require_password_change=False
+    )
 
     payload = decode_token(pair.access_token)
 
