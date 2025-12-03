@@ -57,7 +57,7 @@ class AuthService(IAuthService):
             # 2. Verify password
             if not verify_password(password, user.hashed_password):
                 raise UnauthorizedError("Invalid credentials")
-            
+
             # 3 Check if user is active
             if user.is_active is False:
                 raise UnauthorizedError("User account is disabled, contact with the administrator")
