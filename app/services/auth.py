@@ -1,7 +1,7 @@
 from app.services.interfaces.auth import IAuthService
 from app.db.unit_of_work import UnitOfWorkFactory
 from app.core.exceptions import DomainError, NotFoundError, UnauthorizedError
-from app.schemas.user import UserRead
+from app.schemas.user import UserReadDetailed
 from app.core.security import (
     verify_password,
     create_user_access_token,
@@ -111,7 +111,7 @@ class AuthService(IAuthService):
             # 13. Log the successful login
             logger.info("Login successful", extra={"request_by_user_id": user.id})
 
-            return UserAndToken(user=UserRead.model_validate(user), token=tokens)
+            return UserAndToken(user=UserReadDetailed.model_validate(user), token=tokens)
 
     async def refresh_with_refresh_token(
         self, presented_raw: str, presented_jti: UUID | None, ip: str = None, user_agent: str = None
@@ -181,7 +181,7 @@ class AuthService(IAuthService):
             await self.refresh_repo.update_refresh_token_last_used(db, jti=new_jti, used_at=datetime.now(timezone.utc))
 
             return UserAndToken(
-                user=UserRead.model_validate(user),
+                user=UserReadDetailed.model_validate(user),
                 token=TokenPair(access_token=access_token, refresh_token=new_raw, jti=new_jti, expires_in=expires_in),
             )
 
