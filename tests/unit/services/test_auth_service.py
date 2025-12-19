@@ -52,14 +52,16 @@ async def test_login_success():
 
     auth_user = make_user_obj(email=email)
 
-    auth_user.roles = [SimpleNamespace(
-        id=uuid4(), 
-        name="user", 
-        description="User role",
-        created_at=datetime.now(timezone.utc),
-        updated_at=datetime.now(timezone.utc),
-        permissions=[SimpleNamespace(id=uuid4(), name="users:read", description="Read users")]
-    )]
+    auth_user.roles = [
+        SimpleNamespace(
+            id=uuid4(),
+            name="user",
+            description="User role",
+            created_at=datetime.now(timezone.utc),
+            updated_at=datetime.now(timezone.utc),
+            permissions=[SimpleNamespace(id=uuid4(), name="users:read", description="Read users")],
+        )
+    ]
 
     auth_repo = MagicMock()
     auth_repo.get_user_for_auth = AsyncMock(return_value=auth_user)
@@ -169,14 +171,16 @@ async def test_refresh_with_valid_token_rotates():
 
     # auth repo returns user details
     user = make_user_obj()
-    user.roles = [SimpleNamespace(
-        id=uuid4(), 
-        name="user", 
-        description="User role",
-        created_at=datetime.now(timezone.utc),
-        updated_at=datetime.now(timezone.utc),
-        permissions=[SimpleNamespace(id=uuid4(), name="users:read", description="Read users")]
-    )]
+    user.roles = [
+        SimpleNamespace(
+            id=uuid4(),
+            name="user",
+            description="User role",
+            created_at=datetime.now(timezone.utc),
+            updated_at=datetime.now(timezone.utc),
+            permissions=[SimpleNamespace(id=uuid4(), name="users:read", description="Read users")],
+        )
+    ]
     auth_repo = MagicMock()
     auth_repo.get_user_for_auth = AsyncMock(return_value=user)
 
