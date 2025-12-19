@@ -4,7 +4,7 @@ from types import SimpleNamespace
 from unittest.mock import AsyncMock, MagicMock
 from app.services.auth import AuthService
 from app.core.exceptions import DomainError, NotFoundError, UnauthorizedError
-from app.schemas.user import UserRead
+from app.schemas.user import UserReadDetailed
 from app.schemas.auth import TokenPair
 from app.core.security import hash_password, generate_raw_refresh_token, hash_refresh_token
 from datetime import datetime, timezone, timedelta
@@ -28,6 +28,9 @@ def make_user_obj(email: str = "u@example.com", is_active: bool = True):
         is_active=is_active,
         require_password_change=False,
         roles=[],
+        created_at=datetime.now(timezone.utc),
+        updated_at=datetime.now(timezone.utc),
+        last_login=None,
     )
 
 
@@ -49,7 +52,14 @@ async def test_login_success():
 
     auth_user = make_user_obj(email=email)
 
-    auth_user.roles = [SimpleNamespace(id=uuid4(), name="user", permissions=[SimpleNamespace(name="users:read")])]
+    auth_user.roles = [SimpleNamespace(
+        id=uuid4(), 
+        name="user", 
+        description="User role",
+        created_at=datetime.now(timezone.utc),
+        updated_at=datetime.now(timezone.utc),
+        permissions=[SimpleNamespace(id=uuid4(), name="users:read", description="Read users")]
+    )]
 
     auth_repo = MagicMock()
     auth_repo.get_user_for_auth = AsyncMock(return_value=auth_user)
@@ -67,7 +77,7 @@ async def test_login_success():
 
     result = await svc.login(email, raw_password, ip="1.2.3.4", user_agent="agent")
 
-    assert hasattr(result, "user") and isinstance(result.user, UserRead)
+    assert hasattr(result, "user") and isinstance(result.user, UserReadDetailed)
     assert hasattr(result, "token") and isinstance(result.token, TokenPair)
     assert hasattr(result, "token") and hasattr(result.token, "access_token")
     assert result.token.refresh_token is not None
@@ -159,7 +169,14 @@ async def test_refresh_with_valid_token_rotates():
 
     # auth repo returns user details
     user = make_user_obj()
-    user.roles = [SimpleNamespace(id=uuid4(), name="user", permissions=[SimpleNamespace(name="users:read")])]
+    user.roles = [SimpleNamespace(
+        id=uuid4(), 
+        name="user", 
+        description="User role",
+        created_at=datetime.now(timezone.utc),
+        updated_at=datetime.now(timezone.utc),
+        permissions=[SimpleNamespace(id=uuid4(), name="users:read", description="Read users")]
+    )]
     auth_repo = MagicMock()
     auth_repo.get_user_for_auth = AsyncMock(return_value=user)
 
