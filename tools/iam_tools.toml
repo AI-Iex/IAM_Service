@@ -3210,7 +3210,7 @@ type = "array"
 title = "Detail"
 
 [metadata]
-generated_at = "2025-11-20T21:01:08.801346Z"
+generated_at = "2025-12-03T22:29:02.205043Z"
 version = "1.0.0"
 total_tools = 37
 format = "IAM Service Tool Definitions"
