@@ -46,7 +46,7 @@ class AuthResponse(BaseModel):
 
 
 class UserAndToken(BaseModel):
-    user: UserRead
+    user: UserReadDetailed
     token: TokenPair
 
 

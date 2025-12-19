@@ -17,6 +17,19 @@ except Exception:
     _PROJECT_ROOT = None
 
 
+def _get_cors_headers(request: Request) -> dict:
+    """Get CORS headers based on the request origin"""
+    origin = request.headers.get("origin", "")
+    if origin in settings.CORS_ORIGINS:
+        return {
+            "Access-Control-Allow-Origin": origin,
+            "Access-Control-Allow-Credentials": "true",
+            "Access-Control-Allow-Methods": "GET, POST, PUT, DELETE, PATCH, OPTIONS",
+            "Access-Control-Allow-Headers": "Authorization, Content-Type, X-Requested-With",
+        }
+    return {}
+
+
 def _sanitize_traceback(tb: str, max_lines: int = 25) -> str:
     """Sanitize traceback by redacting absolute paths and limiting number of lines"""
 
@@ -57,10 +70,17 @@ def _make_error_response(request_id: str | None, error_code: str, error_type: st
         "error_code": error_code,
         "error_type": error_type,
         "message": message,
+        "detail": message,  # For frontend compatibility
     }
     if details is not None:
         body["details"] = details
     return body
+
+
+def _json_response_with_cors(request: Request, status_code: int, content: dict) -> JSONResponse:
+    """Create a JSONResponse with CORS headers"""
+    headers = _get_cors_headers(request)
+    return JSONResponse(status_code=status_code, content=content, headers=headers)
 
 
 async def exception_handling_middleware(request: Request, call_next):
@@ -85,9 +105,10 @@ async def exception_handling_middleware(request: Request, call_next):
                     "method": request.method,
                 },
             )
-            return JSONResponse(
-                status_code=em["http"],
-                content=_make_error_response(
+            return _json_response_with_cors(
+                request,
+                em["http"],
+                _make_error_response(
                     request_id=request_id,
                     error_code=em["code"],
                     error_type="INVALID_UUID_FORMAT",
@@ -107,9 +128,10 @@ async def exception_handling_middleware(request: Request, call_next):
                     "method": request.method,
                 },
             )
-            return JSONResponse(
-                status_code=em["http"],
-                content=_make_error_response(
+            return _json_response_with_cors(
+                request,
+                em["http"],
+                _make_error_response(
                     request_id=request_id,
                     error_code=em["code"],
                     error_type="VALIDATION_ERROR",
@@ -130,9 +152,10 @@ async def exception_handling_middleware(request: Request, call_next):
                 "method": request.method,
             },
         )
-        return JSONResponse(
-            status_code=em["http"],
-            content=_make_error_response(
+        return _json_response_with_cors(
+            request,
+            em["http"],
+            _make_error_response(
                 request_id=request_id, error_code=em["code"], error_type="ENTITY_ALREADY_EXISTS", message=str(exc)
             ),
         )
@@ -149,9 +172,10 @@ async def exception_handling_middleware(request: Request, call_next):
                 "method": request.method,
             },
         )
-        return JSONResponse(
-            status_code=em["http"],
-            content=_make_error_response(
+        return _json_response_with_cors(
+            request,
+            em["http"],
+            _make_error_response(
                 request_id=request_id, error_code=em["code"], error_type="DOMAIN_ERROR", message=str(exc)
             ),
         )
@@ -168,9 +192,10 @@ async def exception_handling_middleware(request: Request, call_next):
                 "method": request.method,
             },
         )
-        return JSONResponse(
-            status_code=em["http"],
-            content=_make_error_response(
+        return _json_response_with_cors(
+            request,
+            em["http"],
+            _make_error_response(
                 request_id=request_id,
                 error_code=em["code"],
                 error_type="UNAUTHORIZED",
@@ -190,9 +215,10 @@ async def exception_handling_middleware(request: Request, call_next):
                 "method": request.method,
             },
         )
-        return JSONResponse(
-            status_code=em["http"],
-            content=_make_error_response(
+        return _json_response_with_cors(
+            request,
+            em["http"],
+            _make_error_response(
                 request_id=request_id, error_code=em["code"], error_type="NOT_FOUND", message=str(exc)
             ),
         )
@@ -212,9 +238,10 @@ async def exception_handling_middleware(request: Request, call_next):
         if getattr(settings, "DEBUG", False):
             log_extra["sanitized_traceback"] = sanitized_tb
         logger.error("Repository error while handling request (sanitized)", extra=log_extra)
-        return JSONResponse(
-            status_code=em["http"],
-            content=_make_error_response(
+        return _json_response_with_cors(
+            request,
+            em["http"],
+            _make_error_response(
                 request_id=request_id, error_code=em["code"], error_type="REPOSITORY_ERROR", message="Database error"
             ),
         )
@@ -234,9 +261,10 @@ async def exception_handling_middleware(request: Request, call_next):
         if getattr(settings, "DEBUG", False):
             log_extra["sanitized_traceback"] = sanitized_tb
         logger.error("Unhandled exception in route (sanitized)", extra=log_extra)
-        return JSONResponse(
-            status_code=em["http"],
-            content=_make_error_response(
+        return _json_response_with_cors(
+            request,
+            em["http"],
+            _make_error_response(
                 request_id=request_id,
                 error_code=em["code"],
                 error_type="INTERNAL_SERVER_ERROR",
@@ -254,9 +282,10 @@ async def request_validation_exception_handler(request: Request, exc: RequestVal
     first_error = exc.errors()[0] if exc.errors() else {}
     if first_error.get("type") == "uuid_parsing":
         em = ERROR_MAP["invalid_uuid"]
-        return JSONResponse(
-            status_code=em["http"],
-            content=_make_error_response(
+        return _json_response_with_cors(
+            request,
+            em["http"],
+            _make_error_response(
                 request_id=request_id,
                 error_code=em["code"],
                 error_type="INVALID_UUID_FORMAT",
@@ -265,9 +294,10 @@ async def request_validation_exception_handler(request: Request, exc: RequestVal
             ),
         )
     em = ERROR_MAP["validation"]
-    return JSONResponse(
-        status_code=em["http"],
-        content=_make_error_response(
+    return _json_response_with_cors(
+        request,
+        em["http"],
+        _make_error_response(
             request_id=request_id,
             error_code=em["code"],
             error_type="VALIDATION_ERROR",
