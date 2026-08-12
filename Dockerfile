@@ -34,6 +34,11 @@ WORKDIR /app
 COPY --from=builder /wheels /wheels
 RUN pip install --no-cache-dir /wheels/*
 
+# Install curl for healthcheck and any runtime utilities
+RUN apt-get update && apt-get install -y --no-install-recommends \
+        curl \
+    && rm -rf /var/lib/apt/lists/*
+
 # Copy application code
 COPY . /app
 

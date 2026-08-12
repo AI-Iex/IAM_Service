@@ -9,11 +9,9 @@ from app.core.exceptions import RepositoryError
 
 
 class PermissionRepository(IPermissionRepository):
-
     # region CREATE
 
     async def create(self, db: AsyncSession, payload: PermissionCreate) -> Permission:
-
         try:
             new_permission = Permission(name=payload.name, description=payload.description)
 
@@ -31,7 +29,6 @@ class PermissionRepository(IPermissionRepository):
     # region READ
 
     async def read_by_id(self, db: AsyncSession, permission_id: UUID) -> Optional[Permission]:
-
         try:
             result = await db.execute(select(Permission).where(Permission.id == permission_id))
 
@@ -48,7 +45,6 @@ class PermissionRepository(IPermissionRepository):
         skip: int = 0,
         limit: int = 100,
     ) -> List[Permission]:
-
         try:
             query = select(Permission)
 
@@ -68,7 +64,6 @@ class PermissionRepository(IPermissionRepository):
             raise RepositoryError(f"Error reading permission with filters: {str(e)}") from e
 
     async def read_by_names(self, db: AsyncSession, names: List[str]) -> List[Permission]:
-
         try:
             query = select(Permission).where(Permission.name.in_(names))
 
@@ -84,7 +79,6 @@ class PermissionRepository(IPermissionRepository):
     # region UPDATE
 
     async def update(self, db: AsyncSession, permission_id: UUID, payload: PermissionUpdateInDB) -> Permission:
-
         try:
             db_permission = await self.read_by_id(db, permission_id)
 
@@ -109,7 +103,6 @@ class PermissionRepository(IPermissionRepository):
     # region DELETE
 
     async def delete(self, db: AsyncSession, permission_id: UUID) -> None:
-
         try:
             await db.execute(delete(Permission).where(Permission.id == permission_id))
             await db.flush()

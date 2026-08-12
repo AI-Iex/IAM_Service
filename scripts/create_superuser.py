@@ -30,7 +30,6 @@ async def create_default_superuser(engine) -> int:
 
     try:
         async with engine.begin() as conn:
-
             # 1. If any superuser exists, do nothing
             res = await conn.execute(text("SELECT id FROM users WHERE is_superuser = true LIMIT 1"))
             row = res.first()

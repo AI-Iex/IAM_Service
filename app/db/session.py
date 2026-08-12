@@ -12,7 +12,6 @@ def _ensure_engine_and_sessionmaker():
     global engine, _sessionmaker
 
     if _sessionmaker is None:
-
         # Import inside function to avoid import-time dependency on asyncpg
         from sqlalchemy.ext.asyncio import create_async_engine
         from sqlalchemy.orm import sessionmaker

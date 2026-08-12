@@ -8,7 +8,6 @@ from app.core.config import settings
 
 
 async def _create_admin(db_session, email: str, password: str) -> None:
-
     repo = UserRepository()
     dto = UserCreateInDB(
         email=email,

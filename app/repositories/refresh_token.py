@@ -9,7 +9,6 @@ from app.models.refresh_token import RefreshToken
 
 
 class RefreshTokenRepository(IRefreshTokenRepository):
-
     async def create_refresh_token(
         self,
         db: AsyncSession,

@@ -73,7 +73,6 @@ async def read_with_filters(
     response_description="The current user",
 )
 async def get_current_user_profile(principal: Principal = Depends(get_current_principal)) -> UserRead:
-
     # Ensure the principal is a user
     if principal.kind != "user" or not principal.user:
         raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Token is not a user token")

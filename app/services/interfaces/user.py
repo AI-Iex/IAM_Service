@@ -5,7 +5,6 @@ from uuid import UUID
 
 
 class IUserService(ABC):
-
     @abstractmethod
     async def register_user(self, payload: UserRegister) -> UserRead:
         """Register a new user and return the created user."""

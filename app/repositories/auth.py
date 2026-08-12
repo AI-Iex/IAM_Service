@@ -12,12 +12,10 @@ from app.core.exceptions import RepositoryError
 
 
 class AuthRepository(IAuthRepository):
-
     async def get_user_for_auth(self, db: AsyncSession, user_id: UUID) -> Optional[User]:
         """Retrieve user with roles and permissions for authentication."""
 
         try:
-
             query = (
                 select(User).options(selectinload(User.roles).selectinload(Role.permissions)).where(User.id == user_id)
             )
@@ -31,7 +29,6 @@ class AuthRepository(IAuthRepository):
         """Retrieve active client for authentication."""
 
         try:
-
             query = select(Client).where(Client.id == client_id)
             result = await db.execute(query)
             return result.scalar_one_or_none()

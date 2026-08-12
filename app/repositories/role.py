@@ -11,11 +11,9 @@ from app.core.exceptions import RepositoryError
 
 
 class RoleRepository(IRoleRepository):
-
     # region CREATE
 
     async def create(self, db: AsyncSession, role: RoleCreate) -> Role:
-
         try:
             new_role = Role(name=role.name, description=role.description)
 
@@ -33,7 +31,6 @@ class RoleRepository(IRoleRepository):
     # region READ
 
     async def read_by_id(self, db: AsyncSession, role_id: UUID) -> Optional[Role]:
-
         try:
             result = await db.execute(select(Role).where(Role.id == role_id).options(selectinload(Role.permissions)))
 
@@ -50,7 +47,6 @@ class RoleRepository(IRoleRepository):
         skip: int = 0,
         limit: int = 100,
     ) -> List[Role]:
-
         try:
             query = select(Role).options(selectinload(Role.permissions))
 
@@ -70,7 +66,6 @@ class RoleRepository(IRoleRepository):
             raise RepositoryError(f"Error reading role with filters: {str(e)}") from e
 
     async def read_by_names(self, db: AsyncSession, names: List[str]) -> List[Role]:
-
         try:
             query = select(Role).where(Role.name.in_(names)).options(selectinload(Role.permissions))
 
@@ -86,9 +81,7 @@ class RoleRepository(IRoleRepository):
     # region UPDATE
 
     async def update(self, db: AsyncSession, role_id: UUID, update_data: RoleUpdateInDB) -> Role:
-
         try:
-
             role = await self.read_by_id(db, role_id)
 
             if hasattr(update_data, "model_dump"):
@@ -107,7 +100,6 @@ class RoleRepository(IRoleRepository):
             raise RepositoryError(f"Error updating role: {str(e)}") from e
 
     async def assign_permission(self, db: AsyncSession, role_id: UUID, permission_id: UUID) -> Role:
-
         try:
             rp = RolePermission(role_id=role_id, permission_id=permission_id)
             db.add(rp)
@@ -124,7 +116,6 @@ class RoleRepository(IRoleRepository):
         """Assign a list of permissions to a role by replacing existing ones."""
 
         try:
-
             db_role = await self.read_by_id(db, role_id)
 
             # remove existing role permissions
@@ -145,7 +136,6 @@ class RoleRepository(IRoleRepository):
             raise RepositoryError(f"Error assigning a list of permissions to a role: {str(e)}") from e
 
     async def remove_permission(self, db: AsyncSession, role_id: UUID, permission_id: UUID) -> Role:
-
         try:
             role = await self.read_by_id(db, role_id)
 
@@ -168,7 +158,6 @@ class RoleRepository(IRoleRepository):
     # region CHECK
 
     async def has_permission(self, db: AsyncSession, role_id: UUID, permission_id: UUID) -> bool:
-
         try:
             result = await db.execute(
                 select(RolePermission).where(
@@ -186,7 +175,6 @@ class RoleRepository(IRoleRepository):
     # region DELETE
 
     async def delete(self, db: AsyncSession, role_id: UUID) -> None:
-
         try:
             await db.execute(delete(Role).where(Role.id == role_id))
             await db.flush()

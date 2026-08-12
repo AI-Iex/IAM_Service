@@ -18,7 +18,6 @@ class Settings(BaseSettings):
         """Returns **API Route** prefix using the configured service version"""
 
         try:
-
             v = float(self.SERVICE_VERSION)
             if v.is_integer():
                 v = int(v)

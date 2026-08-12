@@ -25,7 +25,6 @@ logger = logging.getLogger(__name__)
 
 class UserService(IUserService):
     def __init__(self, user_repo: IUserRepository, role_repo: IRoleRepository, uow_factory: UnitOfWorkFactory):
-
         self._user_repo = user_repo
         self._role_repo = role_repo
         self._uow_factory = uow_factory
@@ -35,7 +34,6 @@ class UserService(IUserService):
 
     # Method to validate password business rules
     def _validate_password(self, password: str):
-
         # Load password policy from business config
         password_rules = self._policy["password_policy"]
 
@@ -65,7 +63,6 @@ class UserService(IUserService):
 
     # Method to validate name business rules
     def _validate_name(self, name: str):
-
         # Load name policy from business config
         name_rules = self._policy["name_policy"]
 
@@ -110,7 +107,6 @@ class UserService(IUserService):
 
     # Method to validate email business rules
     def _validate_email(self, email: str) -> bool:
-
         # Load email policy from business config
         email_policy = self._policy.get("email_policy", {})
 
@@ -155,7 +151,6 @@ class UserService(IUserService):
 
     # Additional security validations for email
     def _validate_email_security(self, email: str):
-
         # Check for consecutive dots
         if ".." in email:
             raise DomainError("Invalid email format - consecutive dots are not allowed")
@@ -189,7 +184,6 @@ class UserService(IUserService):
         self._validate_name(payload.full_name)
 
         async with self._uow_factory() as db:
-
             # 4. Check if email already exists
             existing = await self._user_repo.read_by_email(db, payload.email)
             if existing:
@@ -234,7 +228,6 @@ class UserService(IUserService):
         self._validate_name(payload.full_name)
 
         async with self._uow_factory() as db:
-
             # 4. Check if email already exists
             existing = await self._user_repo.read_by_email(db, payload.email)
             if existing:
@@ -289,7 +282,6 @@ class UserService(IUserService):
         )
 
         async with self._uow_factory() as db:
-
             # 1. Query the users
             users = await self._user_repo.read_with_filters(
                 db=db, name=name, email=email, active=active, is_superuser=is_superuser, skip=skip, limit=limit
@@ -308,7 +300,6 @@ class UserService(IUserService):
         logger.info("Reading user by ID", extra={"retrieve_user_id": user_id})
 
         async with self._uow_factory() as db:
-
             # 1. Query the user
             user = await self._user_repo.read_by_id(db, user_id)
 
@@ -333,7 +324,6 @@ class UserService(IUserService):
         logger.info("Updating user", extra={"user_id_to_update": user_id})
 
         async with self._uow_factory() as db:
-
             # 1. Verify that the user exists
             existing_user = await self._user_repo.read_by_id(db, user_id)
             if not existing_user:
@@ -379,7 +369,6 @@ class UserService(IUserService):
         )
 
         async with self._uow_factory() as db:
-
             # 1. Verify that the user exists
             user = await self._user_repo.read_by_id(db, user_id)
             if not user:
@@ -422,7 +411,6 @@ class UserService(IUserService):
         logger.info("Requesting password change", extra={"request_by_user_id": user_id})
 
         async with self._uow_factory() as db:
-
             # 1. Verify that the user exists
             user = await self._user_repo.read_by_id(db, user_id)
             if not user:
@@ -459,7 +447,6 @@ class UserService(IUserService):
         logger.info("Adding role to user", extra={"request_by_user_id": user_id, "role_id": role_id})
 
         async with self._uow_factory() as db:
-
             # 1. Verify user exists
             user = await self._user_repo.read_by_id(db, user_id)
             if not user:
@@ -491,7 +478,6 @@ class UserService(IUserService):
         logger.info("Removing role from user", extra={"request_by_user_id": user_id, "role_id": role_id})
 
         async with self._uow_factory() as db:
-
             # 1. Verify user exists
             user = await self._user_repo.read_by_id(db, user_id)
             if not user:
@@ -529,7 +515,6 @@ class UserService(IUserService):
         logger.info("Deleting user by ID", extra={"user_id_to_delete": user_id})
 
         async with self._uow_factory() as db:
-
             # 1. Verify that the user exists
             existing_user = await self._user_repo.read_by_id(db, user_id)
             if not existing_user:

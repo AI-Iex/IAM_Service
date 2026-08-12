@@ -26,7 +26,6 @@ def _mask_value(value: str, level: str) -> str:
             return _mask_email(value)
 
         if level == "strict" and len(value) > 4:
-
             if len(value) >= 8 and all(c in "0123456789abcdef-" for c in value.lower()):
                 return _mask_uuid(value)
 

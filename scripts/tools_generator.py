@@ -36,7 +36,6 @@ def generate_tools_from_openapi(app) -> List[Dict[str, Any]]:
     for path, path_item in openapi_schema.get("paths", {}).items():
         # Iterate over methods
         for method, operation in path_item.items():
-
             # Skip non-HTTP methods
             if method.lower() not in ["get", "post", "put", "patch", "delete"]:
                 continue
@@ -297,7 +296,6 @@ def generate_mcp_format(tools: List[Dict], output_dir: Path):
     mcp_tools = []
 
     for tool in tools:
-
         # Create the structure data
         mcp_tool = {
             "name": tool["name"],
@@ -359,7 +357,6 @@ def generate_langchain_format(tools: List[Dict], output_dir: Path):
     langchain_tools = []
 
     for tool in tools:
-
         # Create the structure data
         lc_tool = {
             "name": tool["name"],

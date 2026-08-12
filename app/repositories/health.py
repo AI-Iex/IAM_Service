@@ -8,7 +8,6 @@ from typing import Dict, Tuple
 
 
 class HealthRepository(IHealthRepository):
-
     async def ping(self, db: AsyncSession) -> Tuple[bool, float]:
         """Perform a light DB check with timing."""
 

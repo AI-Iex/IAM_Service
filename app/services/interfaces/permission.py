@@ -5,7 +5,6 @@ from app.schemas.permission import PermissionCreate, PermissionRead, PermissionU
 
 
 class IPermissionService(ABC):
-
     @abstractmethod
     async def create(self, payload: PermissionCreate) -> PermissionRead:
         """Create a new permission."""
