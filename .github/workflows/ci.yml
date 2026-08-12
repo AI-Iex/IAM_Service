@@ -28,7 +28,7 @@ jobs:
       - name: Install linting tools
         run: |
           pip install --upgrade pip
-          pip install ruff black
+          pip install ruff==0.7.4 black==24.10.0
 
       - name: Run Ruff linter
         run: ruff check . --output-format=github
