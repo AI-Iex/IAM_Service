@@ -17,7 +17,6 @@ def requires_permission(permission_name: str, return_user: bool = True):
     """
 
     async def checker(principal: Principal = Depends(get_current_principal)):
-
         # User principal handling
         if principal.kind == "user" and principal.user:
             current_user: UserReadDetailed = principal.user

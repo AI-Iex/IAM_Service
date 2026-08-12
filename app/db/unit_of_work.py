@@ -5,7 +5,6 @@ from app.db.interfaces.unit_of_work import IUnitOfWork
 
 
 class SQLAlchemyUnitOfWork(IUnitOfWork):
-
     def __init__(self):
         self._db: AsyncSession | None = None
 

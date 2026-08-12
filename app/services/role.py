@@ -13,11 +13,9 @@ logger = logging.getLogger(__name__)
 
 
 class RoleService(IRoleService):
-
     def __init__(
         self, role_repo: IRoleRepository, permission_repo: IPermissionRepository, uow_factory: UnitOfWorkFactory
     ):
-
         self._role_repo = role_repo
         self._permission_repo = permission_repo
         self._uow_factory = uow_factory
@@ -33,7 +31,6 @@ class RoleService(IRoleService):
         logger.info("Trying to create a new role", extra={"role_name": payload.name})
 
         async with self._uow_factory() as db:
-
             # 1. Check if the name is not null or empty
             if not payload.name or not payload.name.strip():
                 raise DomainError("Role name cannot be empty")
@@ -102,7 +99,6 @@ class RoleService(IRoleService):
         logger.info("Reading role by ID", extra={"retrieve_role_id": role_id})
 
         async with self._uow_factory() as db:
-
             # 1. Retrieve the role
             role = await self._role_repo.read_by_id(db, role_id)
 
@@ -128,7 +124,6 @@ class RoleService(IRoleService):
         )
 
         async with self._uow_factory() as db:
-
             # 1. Retrieve the roles
             roles = await self._role_repo.read_with_filters(db, name, description, skip, limit)
 
@@ -149,7 +144,6 @@ class RoleService(IRoleService):
         logger.info("Updating role by ID", extra={"role_id": role_id})
 
         async with self._uow_factory() as db:
-
             # 1. Retrieve the role and check existence
             existing_role = await self._role_repo.read_by_id(db, role_id)
             if not existing_role:
@@ -221,7 +215,6 @@ class RoleService(IRoleService):
         logger.info("Adding permission to role", extra={"role_id": role_id, "permission_id": permission_id})
 
         async with self._uow_factory() as db:
-
             # 1. Verify role exists
             role = await self._role_repo.read_by_id(db, role_id)
             if not role:
@@ -255,7 +248,6 @@ class RoleService(IRoleService):
         logger.info("Removing permission from role", extra={"role_id": role_id, "permission_id": permission_id})
 
         async with self._uow_factory() as db:
-
             # 1. Verify role exists
             role = await self._role_repo.read_by_id(db, role_id)
             if not role:
@@ -291,7 +283,6 @@ class RoleService(IRoleService):
         logger.info("Deleting role by ID", extra={"role_id": role_id})
 
         async with self._uow_factory() as db:
-
             # 1. Retrieve the role
             existing_role = await self._role_repo.read_by_id(db, role_id)
 

@@ -11,9 +11,7 @@ logger = logging.getLogger(__name__)
 
 
 class PermissionService(IPermissionService):
-
     def __init__(self, permission_repo: IPermissionRepository, uow_factory: UnitOfWorkFactory):
-
         self._permission_repo = permission_repo
         self._uow_factory = uow_factory
 
@@ -28,7 +26,6 @@ class PermissionService(IPermissionService):
         logger.info("Trying to create a new permission", extra={"permission_name": payload.name})
 
         async with self._uow_factory() as db:
-
             # 1. Check if the name is not null or empty
             if not payload.name or not payload.name.strip():
                 raise DomainError("Permission name cannot be empty")
@@ -58,7 +55,6 @@ class PermissionService(IPermissionService):
         logger.info("Reading permission by ID", extra={"retrieve_permission_id": permission_id})
 
         async with self._uow_factory() as db:
-
             # 1. Retrieve the permission
             permission = await self._permission_repo.read_by_id(db, permission_id)
 
@@ -84,7 +80,6 @@ class PermissionService(IPermissionService):
         )
 
         async with self._uow_factory() as db:
-
             # 1. Retrieve the permissions
             permissions = await self._permission_repo.read_with_filters(db, name, description, skip, limit)
 
@@ -105,7 +100,6 @@ class PermissionService(IPermissionService):
         logger.info("Updating permission by ID", extra={"permission_id": permission_id})
 
         async with self._uow_factory() as db:
-
             # 1. Retrieve the permission
             existing_permission = await self._permission_repo.read_by_id(db, permission_id)
 
@@ -144,7 +138,6 @@ class PermissionService(IPermissionService):
         logger.info("Deleting permission by ID", extra={"permission_id": permission_id})
 
         async with self._uow_factory() as db:
-
             # 1. Retrieve the permission
             existing_permission = await self._permission_repo.read_by_id(db, permission_id)
 

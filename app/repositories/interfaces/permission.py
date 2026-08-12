@@ -7,7 +7,6 @@ from app.schemas.permission import PermissionCreate, PermissionUpdateInDB
 
 
 class IPermissionRepository(ABC):
-
     @abstractmethod
     async def create(self, db: AsyncSession, payload: PermissionCreate) -> Permission:
         """Create a permission returning the created object."""

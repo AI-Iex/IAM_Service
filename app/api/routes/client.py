@@ -74,7 +74,6 @@ async def read_clients(
     response_description="The current client",
 )
 async def get_current_client_profile(principal: Principal = Depends(get_current_principal)) -> ClientRead:
-
     # Ensure the principal is a client
     if principal.kind != AccessTokenType.CLIENT.value or not principal.client:
         raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Token is not a client token")

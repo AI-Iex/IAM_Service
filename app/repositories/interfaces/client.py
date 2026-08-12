@@ -7,7 +7,6 @@ from uuid import UUID
 
 
 class IClientRepository(ABC):
-
     @abstractmethod
     async def create(self, db: AsyncSession, client: ClientCreateInDB) -> Client:
         """Create client returning the created object."""

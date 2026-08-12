@@ -24,7 +24,6 @@ logger = logging.getLogger(__name__)
 
 
 class AuthService(IAuthService):
-
     def __init__(
         self,
         uow_factory: UnitOfWorkFactory,
@@ -33,7 +32,6 @@ class AuthService(IAuthService):
         client_repo: IClientRepository,
         auth_repo: IAuthRepository,
     ):
-
         self.uow_factory = uow_factory
         self.user_repo = user_repo
         self.refresh_repo = refresh_token_repo
@@ -47,7 +45,6 @@ class AuthService(IAuthService):
         logger.info("Login user", extra={"email": email, "ip": ip})
 
         async with self.uow_factory() as db:
-
             # 1. Get user by email
             user = await self.user_repo.read_by_email(db, email)
             if not user:
@@ -119,7 +116,6 @@ class AuthService(IAuthService):
         """Rotate refresh token and issue new access token"""
 
         async with self.uow_factory() as db:
-
             # If a JTI was provided, prefer lookup by JTI (efficient). Otherwise,
             # lookup by the hashed token value.
             token_row = None
@@ -197,7 +193,6 @@ class AuthService(IAuthService):
         )
 
         async with self.uow_factory() as db:
-
             # 1. Check user exists
             user = await self.user_repo.read_by_id(db, user_id)
             if not user:
@@ -243,7 +238,6 @@ class AuthService(IAuthService):
         )
 
         async with self.uow_factory() as db:
-
             # 1. Check refresh token exists
             token = await self.refresh_repo.get_refresh_token_by_jti(db, jti)
 
@@ -279,7 +273,6 @@ class AuthService(IAuthService):
         )
 
         async with self.uow_factory() as db:
-
             # 1. Check user exists
             user = await self.user_repo.read_by_id(db, user_id)
             if not user:
@@ -300,7 +293,6 @@ class AuthService(IAuthService):
         logger.info("Start revoke refresh token by RAW")
 
         async with self.uow_factory() as db:
-
             # 1. Hash raw token and check if exists
             hashed = hash_refresh_token(raw_token)
 
@@ -334,7 +326,6 @@ class AuthService(IAuthService):
         logger.info("Client credentials attempt", extra={"client_id": str(client_id)})
 
         async with self.uow_factory() as db:
-
             # 1. Use ClientRepository to find client
             client = await self.client_repo.read_by_clientid(db, client_id)
 

@@ -11,7 +11,6 @@ from app.repositories.interfaces.client import IClientRepository
 
 
 class ClientRepository(IClientRepository):
-
     # region CREATE
 
     async def create(self, db: AsyncSession, client: ClientCreateInDB) -> Client:
@@ -36,7 +35,6 @@ class ClientRepository(IClientRepository):
     # region READ
 
     async def read_by_id(self, db: AsyncSession, client_id: UUID) -> Optional[Client]:
-
         try:
             result = await db.execute(
                 select(Client).where(Client.id == client_id).options(selectinload(Client.permissions))
@@ -48,7 +46,6 @@ class ClientRepository(IClientRepository):
             raise RepositoryError(f"Error reading client by ID: {str(e)}") from e
 
     async def read_by_clientid(self, db: AsyncSession, clientid: UUID) -> Optional[Client]:
-
         try:
             result = await db.execute(
                 select(Client).where(Client.client_id == clientid).options(selectinload(Client.permissions))
@@ -67,7 +64,6 @@ class ClientRepository(IClientRepository):
         skip: int = 0,
         limit: int = 100,
     ) -> List[Client]:
-
         try:
             query = select(Client).options(selectinload(Client.permissions))
 
@@ -91,9 +87,7 @@ class ClientRepository(IClientRepository):
     # region UPDATE
 
     async def update(self, db: AsyncSession, client_id: UUID, update_data: ClientUpdate) -> Client:
-
         try:
-
             client = await self.read_by_id(db, client_id)
 
             if hasattr(update_data, "model_dump"):
@@ -112,7 +106,6 @@ class ClientRepository(IClientRepository):
             raise RepositoryError(f"Error updating client: {str(e)}") from e
 
     async def assign_permission(self, db: AsyncSession, client_id: UUID, permission_id: UUID) -> Client:
-
         try:
             cp = ClientPermission(client_id=client_id, permission_id=permission_id)
             db.add(cp)
@@ -129,7 +122,6 @@ class ClientRepository(IClientRepository):
         """Assign a list of permissions to a client removing existing ones."""
 
         try:
-
             db_client = await self.read_by_id(db, client_id)
 
             # remove existing client permissions
@@ -150,7 +142,6 @@ class ClientRepository(IClientRepository):
             raise RepositoryError(f"Error adding permissions to a client: {str(e)}") from e
 
     async def remove_permission(self, db: AsyncSession, client_id: UUID, permission_id: UUID) -> Client:
-
         try:
             db_client = await self.read_by_id(db, client_id)
 
@@ -173,7 +164,6 @@ class ClientRepository(IClientRepository):
     # region CHECK
 
     async def has_permission(self, db: AsyncSession, client_id: UUID, permission_id: UUID) -> bool:
-
         try:
             result = await db.execute(
                 select(ClientPermission).where(
@@ -191,7 +181,6 @@ class ClientRepository(IClientRepository):
     # region DELETE
 
     async def delete(self, db: AsyncSession, client_id: UUID) -> None:
-
         try:
             await db.execute(delete(Client).where(Client.id == client_id))
             await db.flush()

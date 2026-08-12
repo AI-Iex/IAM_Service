@@ -60,7 +60,6 @@ async def login_user(
     request: Request = None,
     auth_service: AuthService = Depends(get_auth_service),
 ) -> UserAndToken:
-
     # Obtain the User IP and the User device info (agent)
     ip = request.client.host if request and request.client else None
     ua = request.headers.get("user-agent") if request else None
@@ -103,7 +102,6 @@ async def logout_user(
     auth_service: AuthService = Depends(get_auth_service),
     response: Response = None,
 ):
-
     refresh_token = None
 
     # 1️. Try to get the refresh token from cookie
@@ -147,7 +145,6 @@ async def logout_user(
 
     # Otherwise, revoke by raw token (e.g. Swagger without jti)
     else:
-
         if not raw:
             return Response(status_code=status.HTTP_400_BAD_REQUEST)
 
@@ -204,7 +201,6 @@ async def refresh_token(
     body: Optional[LogoutRequest] = None,
     auth_service: AuthService = Depends(get_auth_service),
 ) -> UserAndToken:
-
     raw = None
     jti = None
     jti_uuid = None
@@ -366,7 +362,6 @@ async def token_endpoint(
 async def authenticate_client(
     payload: ClientAuthRequest, auth_service: AuthService = Depends(get_auth_service)
 ) -> ClientAuthResponse:
-
     # Validate grant_type
     if payload.grant_type != "client_credentials":
         raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Unsupported grant_type")

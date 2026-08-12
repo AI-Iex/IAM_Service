@@ -7,7 +7,6 @@ from uuid import UUID
 
 
 class IUserRepository(ABC):
-
     @abstractmethod
     async def create(self, db: AsyncSession, dto: UserCreateInDB) -> User:
         """Create user returning the created user object."""

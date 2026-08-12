@@ -15,9 +15,7 @@ class HealthService(IHealthService):
 
     async def check_health(self) -> HealthCheckResponse:
         """Return backend service health only."""
-        checks = {
-            "service": DependencyHealth(status="healthy", response_time_ms=0.0)
-        }
+        checks = {"service": DependencyHealth(status="healthy", response_time_ms=0.0)}
         return HealthCheckResponse(status="healthy", timestamp=datetime.utcnow(), checks=checks)
 
     async def check_readiness(self) -> HealthCheckResponse:

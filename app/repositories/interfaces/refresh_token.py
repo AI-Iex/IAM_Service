@@ -8,7 +8,6 @@ from app.models.refresh_token import RefreshToken
 
 
 class IRefreshTokenRepository(ABC):
-
     @abstractmethod
     async def create_refresh_token(
         self,

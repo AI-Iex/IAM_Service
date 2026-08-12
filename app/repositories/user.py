@@ -12,7 +12,6 @@ from app.models.user_role import UserRole
 
 
 class UserRepository(IUserRepository):
-
     # region CREATE
 
     async def create(self, db: AsyncSession, dto: UserCreateInDB) -> User:
@@ -53,9 +52,7 @@ class UserRepository(IUserRepository):
         skip: int = 0,
         limit: int = 100,
     ) -> List[User]:
-
         try:
-
             query = select(User)
 
             if name is not None:
@@ -79,9 +76,7 @@ class UserRepository(IUserRepository):
             raise RepositoryError(f"Error retrieving users with filters: {str(e)}") from e
 
     async def read_by_id(self, db: AsyncSession, user_id: UUID) -> Optional[User]:
-
         try:
-
             result = await db.execute(select(User).where(User.id == user_id))
             return result.scalar_one_or_none()
 
@@ -89,9 +84,7 @@ class UserRepository(IUserRepository):
             raise RepositoryError(f"Error retrieving user by ID: {str(e)}") from e
 
     async def read_by_email(self, db: AsyncSession, email: str) -> Optional[User]:
-
         try:
-
             result = await db.execute(select(User).where(User.email == email))
             return result.scalar_one_or_none()
 
@@ -103,9 +96,7 @@ class UserRepository(IUserRepository):
     # region UPDATE
 
     async def update(self, db: AsyncSession, user_id: UUID, update_data: UserUpdateInDB) -> User:
-
         try:
-
             user = await self.read_by_id(db, user_id)
 
             if hasattr(update_data, "model_dump"):
@@ -124,9 +115,7 @@ class UserRepository(IUserRepository):
             raise RepositoryError(f"Error updating user: {str(e)}") from e
 
     async def update_last_login(self, db: AsyncSession, user_id: UUID) -> User:
-
         try:
-
             user = await self.read_by_id(db, user_id)
 
             user.last_login = datetime.now(timezone.utc)
@@ -139,9 +128,7 @@ class UserRepository(IUserRepository):
             raise RepositoryError(f"Error updating last_login: {str(e)}") from e
 
     async def assign_role(self, db: AsyncSession, user_id: UUID, role_id: UUID) -> User:
-
         try:
-
             await db.execute(UserRole.__table__.insert().values(user_id=user_id, role_id=role_id))
             await db.flush()
 
@@ -154,9 +141,7 @@ class UserRepository(IUserRepository):
             raise RepositoryError(f"Error adding role to user: {str(e)}") from e
 
     async def remove_role(self, db: AsyncSession, user_id: UUID, role_id: UUID) -> User:
-
         try:
-
             user = await self.read_by_id(db, user_id)
 
             # Delete association if exists
@@ -178,7 +163,6 @@ class UserRepository(IUserRepository):
     # region CHECK
 
     async def has_role(self, db: AsyncSession, user_id: UUID, role_id: UUID) -> bool:
-
         try:
             result = await db.execute(
                 select(UserRole.__table__).where(
@@ -196,7 +180,6 @@ class UserRepository(IUserRepository):
     # region DELETE
 
     async def delete(self, db: AsyncSession, user_id: UUID) -> None:
-
         try:
             await db.execute(delete(User).where(User.id == user_id))
 

@@ -23,11 +23,9 @@ logger = logging.getLogger(__name__)
 
 
 class ClientService(IClientService):
-
     def __init__(
         self, client_repo: IClientRepository, permission_repo: IPermissionRepository, uow_factory: UnitOfWorkFactory
     ):
-
         self._client_repo = client_repo
         self._permission_repo = permission_repo
         self._uow_factory = uow_factory
@@ -41,7 +39,6 @@ class ClientService(IClientService):
         logger.info("Trying to create a new client", extra={"client_name": payload.name})
 
         async with self._uow_factory() as db:
-
             # 1. Check if the name is not already taken by another client
             client_with_name = await self._client_repo.read_with_filters(db=db, name=[payload.name], limit=1)
             if client_with_name:
@@ -86,7 +83,6 @@ class ClientService(IClientService):
         logger.info("Reading client by ID", extra={"client_id": client_id})
 
         async with self._uow_factory() as db:
-
             # 1. Query the client
             client = await self._client_repo.read_by_id(db, client_id)
 
@@ -111,7 +107,6 @@ class ClientService(IClientService):
         )
 
         async with self._uow_factory() as db:
-
             # 1 . Retrieve clients
             clients = await self._client_repo.read_with_filters(db, name, is_active, skip, limit)
 
@@ -131,7 +126,6 @@ class ClientService(IClientService):
         logger.info("Updating client by ID", extra={"client_id": client_id})
 
         async with self._uow_factory() as db:
-
             # 1. Retrieve the client and check existence
             existing = await self._client_repo.read_by_id(db, client_id)
             if not existing:
@@ -202,7 +196,6 @@ class ClientService(IClientService):
         logger.info("Adding permission to client", extra={"client_id": client_id, "permission_id": permission_id})
 
         async with self._uow_factory() as db:
-
             # 1. Verify client exists
             client = await self._client_repo.read_by_id(db, client_id)
             if not client:
@@ -236,7 +229,6 @@ class ClientService(IClientService):
         logger.info("Removing permission from client", extra={"client_id": client_id, "permission_id": permission_id})
 
         async with self._uow_factory() as db:
-
             # 1. Verify client exists
             client = await self._client_repo.read_by_id(db, client_id)
             if not client:
@@ -273,7 +265,6 @@ class ClientService(IClientService):
         logger.info("Deleting client by ID", extra={"client_id": client_id})
 
         async with self._uow_factory() as db:
-
             # 1. Retrieve the client
             existing_client = await self._client_repo.read_by_id(db, client_id)
 

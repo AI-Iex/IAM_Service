@@ -5,7 +5,6 @@ from app.schemas.client import ClientCreate, ClientRead, ClientUpdate, ClientCre
 
 
 class IClientService(ABC):
-
     @abstractmethod
     async def create(self, payload: ClientCreate) -> ClientCreateResponse:
         """Create a new client."""

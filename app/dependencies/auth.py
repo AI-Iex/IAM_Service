@@ -66,7 +66,6 @@ async def get_current_principal(
 
     # 3. Resolve principal based on type using a unit-of-work (single DB session)
     async with uow_factory() as db:
-
         # User principal handling
         if token_type == AccessTokenType.USER.value:
             try:

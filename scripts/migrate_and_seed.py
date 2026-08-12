@@ -44,7 +44,6 @@ async def seed_permissions_and_roles(engine):
 
     async with AsyncSessionFactory() as session:
         async with session.begin():
-
             # Insert permissions
             permission_table = Permission.__table__
             to_insert = [{"name": name, "description": desc} for name, desc in permissions_dict.items()]
